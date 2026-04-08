@@ -1,13 +1,32 @@
 package it.unibo.assignment01.worker;
 
+import it.unibo.assignment01.controller.Barrier;
+
 public class BallWorker extends Thread {
     
-    // TODO: add fields for balls and barrier
+    private final Barrier barrier; 
 
-    public BallWorker(/* TODO: add parameters */) { }
+    public BallWorker(final Barrier barrier) {
+        this.barrier = barrier;
+    }
 
     @Override
     public void run() {
-        // TODO: Implement loop for first moving and computing collisions
+        try {
+            computeMovements();
+            barrier.hitAndWait();
+            computeCollisions();
+            barrier.hitAndWait();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void computeCollisions() {
+        // TODO: compute collisions
+    }
+
+    private void computeMovements() {
+        // TODO: compute movements
     }
 }
