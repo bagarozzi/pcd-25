@@ -1,6 +1,9 @@
 package it.unibo.assignment01.worker;
 
+import java.util.List;
+
 import it.unibo.assignment01.controller.Barrier;
+import it.unibo.assignment01.model.Ball;
 
 /**
  * A BallWorker is a thread that computes, in the following order, the movements
@@ -10,9 +13,11 @@ import it.unibo.assignment01.controller.Barrier;
 public class BallWorker extends Thread {
     
     private final Barrier barrier; 
+    private final List<Ball> balls;
 
-    public BallWorker(final Barrier barrier) {
+    public BallWorker(final Barrier barrier, final List<Ball> balls) {
         this.barrier = barrier;
+        this.balls = balls;
     }
 
     @Override
