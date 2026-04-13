@@ -1,39 +1,63 @@
 package it.unibo.assignment01.util;
 
 import java.util.LinkedList;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * 
- * Simple implementation of a bounded buffer
- * as a monitor, using raw mechanisms
- * 
+ *
+ * Parallel implementation of a bounded buffer
+ * as a monitor, using reentrant locks
+ * To make it parallel
  * @param <Item>
  */
 public class BoundedBufferImpl<Item> implements BoundedBuffer<Item> {
 
-	private LinkedList<Item> buffer;
-	private int maxSize;
+	private final LinkedList<Item> buffer;
+	private final int maxSize;
+
+	private final Lock lock = new ReentrantLock();
+
+	private final Condition notEmpty = lock.newCondition();
+	private final Condition notFull = lock.newCondition();
 
 	public BoundedBufferImpl(int size) {
-		buffer = new LinkedList<Item>();
-		maxSize = size;
+		this.buffer = new LinkedList<Item>();
+		this.maxSize = size;
 	}
 
-	public synchronized void put(Item item) throws InterruptedException {
-		while (isFull()) {
-			wait();
+	@Override
+	public void put(Item item) throws InterruptedException {
+		lock.lock(); // Ingresso nel Monitor
+		try {
+			while (isFull()) {
+				notFull.await(); // La GUI attende se il buffer è pieno
+			}
+			buffer.addLast(item);
+
+			// Segnala al Controller che c'è un elemento da consumare
+			notEmpty.signalAll();
+		} finally {
+			lock.unlock(); // Uscita dal Monitor
 		}
-		buffer.addLast(item);
-		notifyAll();
 	}
 
-	public synchronized Item get() throws InterruptedException {
-		while (isEmpty()) {
-			wait();
+	@Override
+	public Item get() throws InterruptedException {
+		lock.lock(); // Ingresso nel Monitor
+		try {
+			while (isEmpty()) {
+				notEmpty.await(); // Il Controller attende se il buffer è vuoto
+			}
+			Item item = buffer.removeFirst();
+
+			// Segnala alla GUI che si è liberato un posto
+			notFull.signalAll();
+			return item;
+		} finally {
+			lock.unlock(); // Uscita dal Monitor
 		}
-		Item item = buffer.removeFirst();
-		notifyAll();
-		return item;
 	}
 
 	private boolean isFull() {
