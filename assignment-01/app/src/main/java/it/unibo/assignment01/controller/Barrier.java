@@ -1,30 +1,33 @@
 package it.unibo.assignment01.controller;
 
+import java.util.List;
+
 public class Barrier {
     private int numPartecipants;
     private int numArrived;
     private boolean everyoneArrived;
 
-    public Barrier(int numPartecipants){
+    public Barrier(int numPartecipants) {
         this.numPartecipants = numPartecipants;
         numArrived = 0;
         everyoneArrived = false;
     }
-    
+
     public synchronized void hitAndWait() throws InterruptedException {
         numArrived++;
-        if(numArrived == numPartecipants){
+        if (numArrived == numPartecipants) {
             everyoneArrived = true;
             notifyAll();
-        }else{
+        } else {
             while (!everyoneArrived) {
                 wait();
             }
         }
-    }
 
-    public synchronized void reset(){
-        numArrived = 0;
+        numArrived--;
+        if (numArrived == 0) {
+            everyoneArrived = false; 
+        }
     }
 
 }
