@@ -1,9 +1,14 @@
 package it.unibo.assignment01.controller;
 
+import java.util.List;
+
 public class PoolGameController extends Thread implements Controller {
+	private List<Worker> workers = null;
+	private Barrier workersBarrier;
+	private final int NUM_WORKERS = Runtime.getRuntime().availableProcessors() + 1;
 
     public PoolGameController() {
-
+		workersBarrier = new Barrier(NUM_WORKERS);
     }
 
     @Override
@@ -21,7 +26,7 @@ public class PoolGameController extends Thread implements Controller {
 		while (true){			
 		
 			/// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
-			
+			workers.stream().forEach(w-> w.execute());
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
 			lastUpdateTime = System.currentTimeMillis();			
 
