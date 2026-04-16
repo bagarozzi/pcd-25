@@ -1,6 +1,5 @@
 package it.unibo.assignment01.controller;
 
-import java.util.List;
 
 public class Barrier {
     private int numPartecipants;
