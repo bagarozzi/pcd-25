@@ -57,7 +57,21 @@ public class PoolGameController extends Thread implements Controller {
 			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
 			lastUpdateTime = System.currentTimeMillis();
-
+			for (int i = 0; i < N_WORKERS; i++) {
+				try {
+					queueTask.put(() -> {
+						System.out.println("Worker " + Thread.currentThread().getName() + " is working...");
+					});
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			try {
+				barrier.hitAndWait();
+			} catch (InterruptedException e) {
+				
+				e.printStackTrace();
+			}
 			
 			nFrames++;
 			int framePerSec = 0;
