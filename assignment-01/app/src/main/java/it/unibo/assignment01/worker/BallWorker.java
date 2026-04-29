@@ -23,10 +23,10 @@ public class BallWorker extends Thread {
     @Override
     public void run() {
         try {
+            barrier.hitAndWait();
             computeMovements();
             barrier.hitAndWait();
             computeCollisions();
-            barrier.hitAndWait();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
