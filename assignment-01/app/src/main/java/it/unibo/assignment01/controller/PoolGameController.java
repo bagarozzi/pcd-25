@@ -11,13 +11,15 @@ import it.unibo.assignment01.worker.BallWorker;
 
 public class PoolGameController extends Thread implements Controller {
 
-	private final static int N_WORKERS = 4;
+	private final int N_WORKERS;
 
 	private final BoundedBuffer<Runnable> queueTask;
 	private final Barrier barrier;
 	private final List<BallWorker> workers;
 
     public PoolGameController() {
+		this.N_WORKERS = Runtime.getRuntime().availableProcessors();
+
 		this.queueTask = new BoundedBufferImpl<>(10);
 		this.barrier = new Barrier(N_WORKERS + 1);
 		this.workers = new ArrayList<>();
@@ -69,7 +71,7 @@ public class PoolGameController extends Thread implements Controller {
 			try {
 				barrier.hitAndWait();
 			} catch (InterruptedException e) {
-				
+
 				e.printStackTrace();
 			}
 			
