@@ -69,13 +69,17 @@ public class PoolGameController extends Thread implements Controller {
 			splitList(board.getBalls(), NUM_WORKERS).stream().
 			forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
 
-			
+			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
 				barrier.hitAndWait();
 			} catch (InterruptedException e) {
 
 				e.printStackTrace();
 			}
+
+			// Calculate collisions...
+
+			// Maybe another hitAndWait()...
 			
 			nFrames++;
 			int framePerSec = 0;
