@@ -20,6 +20,8 @@ dependencies {
     testImplementation(libs.junit.jupiter)
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+
 
     // This dependency is used by the application.
     implementation(libs.guava)
