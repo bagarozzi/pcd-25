@@ -15,12 +15,10 @@ import it.unibo.assignment01.util.BoundedBuffer;
 public class BallWorker extends Thread {
     
     private final BoundedBuffer<Runnable> queueTask; 
-    private final Barrier barrier;
     private final List<Ball> balls;
 
     public BallWorker(final BoundedBuffer<Runnable> queueTask, final List<Ball> balls, Barrier barrier) {
         this.queueTask = queueTask;
-        this.barrier = barrier;
         this.balls = balls;
     }
 
@@ -28,7 +26,6 @@ public class BallWorker extends Thread {
     public void run() {
         try {
             queueTask.get();
-            barrier.hitAndWait();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

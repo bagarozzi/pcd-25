@@ -67,7 +67,7 @@ public class PoolGameController extends Thread implements Controller {
 			lastUpdateTime = System.currentTimeMillis();
 	
 			splitList(board.getBalls(), NUM_WORKERS).stream().
-			forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board)));
+			forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
 
 			
 			try {
