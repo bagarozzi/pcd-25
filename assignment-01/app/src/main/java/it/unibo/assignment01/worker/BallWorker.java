@@ -16,16 +16,19 @@ public class BallWorker extends Thread {
     
     private final BoundedBuffer<Runnable> queueTask; 
     private final List<Ball> balls;
+    private final Barrier barrier;
 
     public BallWorker(final BoundedBuffer<Runnable> queueTask, final List<Ball> balls, Barrier barrier) {
         this.queueTask = queueTask;
         this.balls = balls;
+        this.barrier = barrier;
     }
 
     @Override
     public void run() {
         try {
-            queueTask.get();
+            barrier.hitAndWait();
+            queueTask.get().run();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
