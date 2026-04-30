@@ -4,6 +4,7 @@ import java.util.List;
 
 import it.unibo.assignment01.controller.Barrier;
 import it.unibo.assignment01.model.Ball;
+import it.unibo.assignment01.util.BoundedBuffer;
 
 /**
  * A BallWorker is a thread that computes, in the following order, the movements
@@ -12,10 +13,12 @@ import it.unibo.assignment01.model.Ball;
  */
 public class BallWorker extends Thread {
     
-    private final Barrier barrier; 
+    private final BoundedBuffer<Runnable> queueTask; 
+    private final Barrier barrier;
     private final List<Ball> balls;
 
-    public BallWorker(final Barrier barrier, final List<Ball> balls) {
+    public BallWorker(final BoundedBuffer<Runnable> queueTask, final List<Ball> balls, Barrier barrier) {
+        this.queueTask = queueTask;
         this.barrier = barrier;
         this.balls = balls;
     }
@@ -23,9 +26,7 @@ public class BallWorker extends Thread {
     @Override
     public void run() {
         try {
-            computeMovements();
-            barrier.hitAndWait();
-            computeCollisions();
+            queueTask.get().run();
             barrier.hitAndWait();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
