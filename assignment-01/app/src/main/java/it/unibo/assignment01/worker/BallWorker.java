@@ -1,6 +1,7 @@
 package it.unibo.assignment01.worker;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import it.unibo.assignment01.controller.Barrier;
 import it.unibo.assignment01.model.Ball;
@@ -26,7 +27,7 @@ public class BallWorker extends Thread {
     @Override
     public void run() {
         try {
-            queueTask.get().run();
+            queueTask.get();
             barrier.hitAndWait();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
