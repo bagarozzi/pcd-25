@@ -1,43 +1,67 @@
-package pcd.sketch01;
+package it.unibo.assignment01.view;
 
+import it.unibo.assignment01.model.Position;
 import java.util.ArrayList;
-
-record BallViewInfo(P2d pos, double radius) {}
+import java.util.List;
 
 public class ViewModel {
 
-    private ArrayList<BallViewInfo> balls;
-    private BallViewInfo player;
-    private int framePerSec;
+    // Posizioni delle palline
+    private List<Position> smallBalls;
+    private Position humanBall;
+    private Position botBall;
+
+    // Punteggi
+    private int humanScore;
+    private int botScore;
 
     public ViewModel() {
-        balls = new ArrayList<BallViewInfo>();
-        framePerSec = 0;
+        this.smallBalls = new ArrayList<>();
+        this.humanScore = 0;
+        this.botScore = 0;
     }
 
-    public synchronized void update(Board board, int framePerSec) {
-        balls.clear();
-        for (var b: board.getBalls()) {
-            balls.add(new BallViewInfo(b.getPos(), b.getRadius()));
-        }
-        this.framePerSec = framePerSec;
-        var p = board.getPlayerBall();
-        player = new BallViewInfo(p.getPos(), p.getRadius());
+    // --- GETTER ---
+
+    public List<Position> getSmallBalls() {
+        return smallBalls;
     }
 
-    public synchronized ArrayList<BallViewInfo> getBalls(){
-        var copy = new ArrayList<BallViewInfo>();
-        copy.addAll(balls);
-        return copy;
-
+    public Position getHumanBall() {
+        return humanBall;
     }
 
-    public synchronized int getFramePerSec() {
-        return framePerSec;
+    public Position getBotBall() {
+        return botBall;
     }
 
-    public synchronized BallViewInfo getPlayerBall() {
-        return player;
+    public int getHumanScore() {
+        return humanScore;
     }
 
+    public int getBotScore() {
+        return botScore;
+    }
+
+    // --- SETTER ---
+
+    public void setSmallBalls(List<Position> smallBalls) {
+        this.smallBalls = smallBalls;
+    }
+
+    public void setHumanBall(Position humanBall) {
+        this.humanBall = humanBall;
+    }
+
+    public void setBotBall(Position botBall) {
+        this.botBall = botBall;
+    }
+
+    public void setHumanScore(int humanScore) {
+        this.humanScore = humanScore;
+    }
+
+    public void setBotScore(int botScore) {
+        this.botScore = botScore;
+    }
 }

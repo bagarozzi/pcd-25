@@ -1,103 +1,65 @@
-package pcd.sketch01;
+package it.unibo.assignment01.view;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import javax.swing.*;
+import it.unibo.assignment01.controller.Controller;
+import it.unibo.assignment01.controller.MoveCmd;
 
-public class ViewFrame extends JFrame {
+import javax.swing.SwingUtilities;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
-    private VisualiserPanel panel;
-    private ViewModel model;
-    private RenderSynch sync;
+public class View {
 
-    public ViewFrame(ViewModel model, int w, int h){
-        this.model = model;
-        this.sync = new RenderSynch();
-        setTitle("Sketch 03");
-        setSize(w,h + 25);
-        setResizable(false);
-        panel = new VisualiserPanel(w,h);
-        getContentPane().add(panel);
-        addWindowListener(new WindowAdapter(){
-            public void windowClosing(WindowEvent ev){
-                System.exit(-1);
-            }
-            public void windowClosed(WindowEvent ev){
-                System.exit(-1);
+    private final ViewFrame frame;
+    private Controller controller;
+
+    public View(int width, int height) {
+        this.frame = new ViewFrame(width, height);
+
+        // Imposta il focus per catturare gli eventi della tastiera
+        this.frame.setFocusable(true);
+        this.frame.requestFocusInWindow();
+
+        // Ascoltatore per i comandi di movimento
+        this.frame.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (controller != null) {
+                    handleKeyPress(e.getKeyCode());
+                }
             }
         });
     }
 
-    public void render(){
-        long nf = sync.nextFrameToRender();
-        panel.repaint();
-        try {
-            sync.waitForFrameRendered(nf);
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
-        }
+    public void setController(Controller controller) {
+        this.controller = controller;
     }
 
-    public class VisualiserPanel extends JPanel {
-        private int ox;
-        private int oy;
-        private int delta;
+    // Mostra la finestra nell'Event Dispatch Thread (Thread UI)
+    public void display() {
+        SwingUtilities.invokeLater(() -> frame.setVisible(true));
+    }
 
-        public VisualiserPanel(int w, int h){
-            setSize(w,h + 25);
-            ox = w/2;
-            oy = h/2;
-            delta = Math.min(ox, oy);
+    // Aggiorna il rendering in modo thread-safe
+    public void update(ViewModel viewModel) {
+        SwingUtilities.invokeLater(() -> frame.updateView(viewModel));
+    }
+
+    // Mappa la pressione dei tasti ai comandi per il controller
+    private void handleKeyPress(int keyCode) {
+
+        switch (keyCode) {
+            case KeyEvent.VK_UP:
+                controller.notifyCommand(new MoveCmd(0, -1));
+                break;
+            case KeyEvent.VK_DOWN:
+                controller.notifyCommand(new MoveCmd(0, 1));
+                break;
+            case KeyEvent.VK_LEFT:
+                controller.notifyCommand(new MoveCmd(-1, 0));
+                break;
+            case KeyEvent.VK_RIGHT:
+                controller.notifyCommand(new MoveCmd(1, 0));
+                break;
         }
-
-        public void paint(Graphics g){
-            Graphics2D g2 = (Graphics2D) g;
-
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_RENDERING,
-                    RenderingHints.VALUE_RENDER_QUALITY);
-            g2.clearRect(0,0,this.getWidth(),this.getHeight());
-
-            g2.setColor(Color.LIGHT_GRAY);
-            g2.setStroke(new BasicStroke(1));
-            g2.drawLine(ox,0,ox,oy*2);
-            g2.drawLine(0,oy,ox*2,oy);
-            g2.setColor(Color.BLACK);
-
-            g2.setStroke(new BasicStroke(1));
-            for (var b: model.getBalls()) {
-                var p = b.pos();
-                int x0 = (int)(ox + p.x()*delta);
-                int y0 = (int)(oy - p.y()*delta);
-                int radiusX = (int)(b.radius()*delta);
-                int radiusY = (int)(b.radius()*delta);
-                g2.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
-            }
-
-            g2.setStroke(new BasicStroke(3));
-            var pb = model.getPlayerBall();
-            if (pb != null) {
-                var p1 = pb.pos();
-                int x0 = (int)(ox + p1.x()*delta);
-                int y0 = (int)(oy - p1.y()*delta);
-                int radiusX = (int)(pb.radius()*delta);
-                int radiusY = (int)(pb.radius()*delta);
-                g2.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
-            }
-
-            g2.setStroke(new BasicStroke(1));
-            g2.drawString("Num small balls: " + model.getBalls().size(), 20, 40);
-            g2.drawString("Frame per sec: " + model.getFramePerSec(), 20, 60);
-
-            sync.notifyFrameRendered();
-
-        }
-
     }
 }
