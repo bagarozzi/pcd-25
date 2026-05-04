@@ -18,6 +18,7 @@ public class PoolGameController extends Thread implements Controller {
 
 	private final int N_WORKERS;
 
+	private final BoundedBuffer<Cmd> cmdBuffer;
 	private final BoundedBuffer<Runnable> queueTask;
 	private final Barrier barrier;
 	private final List<BallWorker> workers;
@@ -27,6 +28,7 @@ public class PoolGameController extends Thread implements Controller {
 
 		this.board = new BoardImpl();
 		this.queueTask = new BoundedBufferImpl<>(10);
+		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.barrier = new Barrier(N_WORKERS + 1);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < N_WORKERS; i++) {
@@ -96,6 +98,14 @@ public class PoolGameController extends Thread implements Controller {
 
     }
 
+	public void notifyCommand(Cmd cmd) {
+		try {
+			cmdBuffer.put(cmd);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+
 	private void addWorkerTask(Runnable task) {
 		try {
 			queueTask.put(task);
@@ -113,4 +123,6 @@ public class PoolGameController extends Thread implements Controller {
 		}
 		return res;
 	}
+
+	
 }
