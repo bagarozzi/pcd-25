@@ -34,7 +34,7 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.N_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl();
+		this.board = new BoardImpl(null);
 		this.queueTask = new BoundedBufferImpl<>(10);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.barrier = new Barrier(N_WORKERS + 1);
