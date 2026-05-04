@@ -14,9 +14,6 @@ public class EnemyBall extends BallImpl {
 
     @Override
     public void updateState(long elapsed, Board ctx) {
-        super.updateState(elapsed, ctx);
-        /* if the player ball is stopped and 5 secs have elapsed, then kick the player ball */
-
         if (this.getVel().abs() < 0.05 && lastKickTime > KICK_INTERVAL) {
 			var angle = rand.nextDouble()*Math.PI*0.25;
 			var v = new Speed(Math.cos(angle),Math.sin(angle)).mul(1.5);
@@ -25,5 +22,6 @@ public class EnemyBall extends BallImpl {
 		} else {
             lastKickTime += elapsed;
         }
+        super.updateState(elapsed, ctx);
     }
 }
