@@ -50,8 +50,6 @@ public class PoolGameController extends Thread implements Controller {
 
 		// For enemy player movement
 		//var pb = board.getPlayerBall();
-		var rand = new Random(2);
-		var lastKickTime = t0;
 		
 		while (true){
 		
