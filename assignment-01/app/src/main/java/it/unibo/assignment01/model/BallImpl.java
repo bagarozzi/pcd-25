@@ -61,7 +61,7 @@ public class BallImpl implements Ball {
         this.vel = vel;
     }
 
-        /**
+    /**
      * 
      * Keep the ball inside the boundaries, updating the velocity in the case of bounces
      * 

@@ -21,5 +21,9 @@ public record Position(double x, double y)  {
     public double y() {
     	return y;
     }
+
+    public double dist(Position other) {
+        return Math.hypot(other.x-x, other.y-y);
+    }
 }
 
