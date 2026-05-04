@@ -53,16 +53,7 @@ public class PoolGameController extends Thread implements Controller {
 		var rand = new Random(2);
 		var lastKickTime = t0;
 		
-		while (true){		
-			
-			/* if the player ball is stopped and 5 secs have elapsed, then kick the player ball */
-
-			/*if (pb.getVel().abs() < 0.05 && System.currentTimeMillis() - lastKickTime > 2000) {
-				var angle = rand.nextDouble()*Math.PI*0.25;
-				var v = new Speed(Math.cos(angle),Math.sin(angle)).mul(1.5);
-				pb.kick(v);
-				lastKickTime = System.currentTimeMillis();
-			}*/
+		while (true){
 		
 			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
