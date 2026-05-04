@@ -87,8 +87,8 @@ public class ViewFrame extends JFrame {
             List<Position> smallBalls = viewModel.getSmallBalls();
             if (smallBalls != null) {
                 for (Position p : smallBalls) {
-                    int x = (int) p.getX();
-                    int y = (int) p.getY();
+                    int x = (int) p.x();
+                    int y = (int) p.y();
 
                     g2d.setColor(Color.WHITE);
                     g2d.fillOval(x - smallRadius, y - smallRadius, smallRadius * 2, smallRadius * 2);
@@ -119,8 +119,8 @@ public class ViewFrame extends JFrame {
 
         // Metodo di supporto per disegnare le palline grandi con la lettera centrata
         private void drawPlayerBall(Graphics2D g2d, Position pos, int radius, String text, FontMetrics fm) {
-            int cx = (int) pos.getX();
-            int cy = (int) pos.getY();
+            int cx = (int) pos.x();
+            int cy = (int) pos.y();
 
             // Sfondo bianco
             g2d.setColor(Color.WHITE);
