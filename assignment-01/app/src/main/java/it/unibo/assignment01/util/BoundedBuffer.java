@@ -1,9 +1,12 @@
 package it.unibo.assignment01.util;
 
+import java.util.Optional;
+
 public interface BoundedBuffer<Item> {
 
-    void put(Item item) throws InterruptedException;
+    public void put(Item item) throws InterruptedException;
     
-    Item get() throws InterruptedException;
+    public Item get() throws InterruptedException;
     
+    public Optional<Item> lazyGet();
 }

@@ -1,6 +1,7 @@
 package it.unibo.assignment01.util;
 
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -55,6 +56,19 @@ public class BoundedBufferImpl<Item> implements BoundedBuffer<Item> {
 			// Segnala alla GUI che si è liberato un posto
 			notFull.signalAll();
 			return item;
+		} finally {
+			lock.unlock(); // Uscita dal Monitor
+		}
+	}
+
+	public Optional<Item> lazyGet(){
+		lock.lock();
+		try {
+			if(isEmpty()) {
+				return Optional.empty();
+			}
+			Item item = buffer.removeFirst();
+			return Optional.of(item);
 		} finally {
 			lock.unlock(); // Uscita dal Monitor
 		}
