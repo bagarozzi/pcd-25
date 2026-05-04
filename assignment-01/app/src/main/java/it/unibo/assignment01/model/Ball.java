@@ -13,4 +13,10 @@ public interface Ball {
     public Speed getVel();
     
     public double getRadius();
+
+    public void setPos(Position pos);
+
+    public void setVel(Speed vel);
+
+    public boolean isColliding(Ball other);
 }

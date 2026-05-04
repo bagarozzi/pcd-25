@@ -28,7 +28,7 @@ public class BallImpl implements Ball {
         	vel = new Speed(0,0);
         }
         pos = pos.sum(vel.mul(dt_scaled));
-     	//applyBoundaryConstraints(ctx);
+     	applyBoundaryConstraints(ctx);
     }
 
     @Override
@@ -55,6 +55,47 @@ public class BallImpl implements Ball {
     @Override
     public double getRadius() {
         return this.radius;
+    }
+
+    @Override
+    public void setPos(Position pos) {
+        this.pos = pos;
+    }
+
+    @Override
+    public void setVel(Speed vel) {
+        this.vel = vel;
+    }
+
+        /**
+     * 
+     * Keep the ball inside the boundaries, updating the velocity in the case of bounces
+     * 
+     * @param ctx
+     */
+    private void applyBoundaryConstraints(Board ctx){
+        Boundary bounds = ctx.getBounds();
+        if (this.getPos().x() + radius > bounds.x1()){
+            setPos(new Position(bounds.x1() - radius, this.getPos().y()));
+            vel = vel.getSwappedX();
+        } else if (this.getPos().x() - radius < bounds.x0()){
+            setPos(new Position(bounds.x0() + radius, this.getPos().y()));
+            vel = vel.getSwappedX();
+        } else if (this.getPos().y() + radius > bounds.y1()){
+            setPos(new Position(this.getPos().x(), bounds.y1() - radius));
+            vel = vel.getSwappedY();
+        } else if (this.getPos().y() - radius < bounds.y0()){
+            this.setPos(new Position(this.getPos().x(), bounds.y0() + radius));
+            vel = vel.getSwappedY();
+        }
+    }
+
+    public boolean isColliding(Ball other) {
+        double dx   = other.getPos().x() - this.getPos().x();
+        double dy   = other.getPos().y() - this.getPos().y();
+        double dist = Math.hypot(dx, dy);
+        double minD = this.getRadius() + other.getRadius();
+        return dist < minD;
     }
     
 }
