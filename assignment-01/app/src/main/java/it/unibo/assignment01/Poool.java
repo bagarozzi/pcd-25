@@ -2,6 +2,7 @@ package it.unibo.assignment01;
 
 import it.unibo.assignment01.controller.PoolGameController;
 import it.unibo.assignment01.view.View;
+import it.unibo.assignment01.controller.Barrier;
 import it.unibo.assignment01.controller.Controller;
 
 public class Poool {
@@ -9,8 +10,9 @@ public class Poool {
     private static final int FRAME_WIDTH = 800;
     private static final int FRAME_HEIGHT = 600;
     public static void main(String[] args) {
+        Barrier VCBarrier = new Barrier(2);
         View view = new View(FRAME_WIDTH, FRAME_HEIGHT);
-        Controller controller = new PoolGameController(view);
+        Controller controller = new PoolGameController(view, VCBarrier);
         view.setController(controller);
         controller.start();
         view.display();

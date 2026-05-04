@@ -9,9 +9,15 @@ import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
+import it.unibo.assignment01.view.View;
+import it.unibo.assignment01.view.ViewModel;
 import it.unibo.assignment01.worker.BallWorker;
 
 public class PoolGameController extends Thread implements Controller {
+
+	private final View view;
+	private final Barrier VCBarrier;
+
 	private Barrier workersBarrier;
 	private final int NUM_WORKERS = Runtime.getRuntime().availableProcessors() + 1;
 	private Board board;
@@ -23,7 +29,9 @@ public class PoolGameController extends Thread implements Controller {
 	private final Barrier barrier;
 	private final List<BallWorker> workers;
 
-	public PoolGameController() {
+	public PoolGameController(final View view, final Barrier VCBarrier) {
+		this.view = view;
+		this.VCBarrier = VCBarrier;
 		this.N_WORKERS = Runtime.getRuntime().availableProcessors();
 
 		this.board = new BoardImpl();
@@ -80,9 +88,14 @@ public class PoolGameController extends Thread implements Controller {
 			}
 
             // Render the view after calculating how many frames have passed during the calculation
-			// view.update()
-			// view.render()
-			// VCBarrier.hitAndWait()
+			ViewModel vm = new ViewModel();
+			view.update(vm);
+			try {
+				VCBarrier.hitAndWait();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
     }
