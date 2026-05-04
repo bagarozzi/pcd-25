@@ -32,12 +32,6 @@ public class BallImpl implements Ball {
     }
 
     @Override
-    public void kick(Speed vel) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'kick'");
-    }
-
-    @Override
     public Position getPos() {
         return this.pos;
     }
