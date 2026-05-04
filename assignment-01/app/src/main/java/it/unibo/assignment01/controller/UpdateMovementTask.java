@@ -7,10 +7,10 @@ import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
 
 public class UpdateMovementTask implements Runnable{
-    List<Ball> ballBatch;
-    long timeElapsed;
-    Board board;
-    Barrier barrier;
+    private final List<Ball> ballBatch;
+    private final long timeElapsed;
+    private final Board board;
+    private final Barrier barrier;
     
     public UpdateMovementTask(List<Ball> ballBatch, long timeElapsed, Board board, Barrier barrier){
         this.ballBatch = ballBatch;
@@ -18,6 +18,7 @@ public class UpdateMovementTask implements Runnable{
         this.board = board;
         this.barrier = barrier;
     }
+
     @Override
     public void run() {
         System.out.println("Worker " + Thread.currentThread().getName() + " is working...");
