@@ -11,6 +11,8 @@ public interface Board {
     
     public  Boundary getBounds();
 
+    public void checkHole(Ball b);
+
     /**
      * 
      * Resolving collision between 2 balls, updating their getPosition and velocity

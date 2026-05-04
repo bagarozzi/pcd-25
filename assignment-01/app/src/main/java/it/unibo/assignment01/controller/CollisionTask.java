@@ -8,21 +8,23 @@ import it.unibo.assignment01.model.Board;
 
 public class CollisionTask implements Runnable{
 
+    private Board board;
     private List<Ball> balls;
     private Barrier barrier;
 
-    public CollisionTask(List<Ball> balls, Barrier barrier){
+    public CollisionTask(List<Ball> balls,Board board, Barrier barrier){
+        this.board = board;
         this.balls = balls;
         this.barrier = barrier;
     }
 
     @Override
     public void run() {
-        balls.stream().forEach(b -> {
+        balls.stream().peek(b -> {
             balls.stream().filter(other -> other != b)
             .filter(other -> b.isColliding(other))
-            .forEach(other -> Board.resolveCollision(other, b));
-        });
+            .peek(other -> Board.resolveCollision(other, b));
+        }).forEach(b -> board.checkHole(b));
         try {
             barrier.hitAndWait();
         } catch (InterruptedException e) {
