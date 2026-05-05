@@ -1,5 +1,6 @@
 package it.unibo.assignment01.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BoardImpl implements Board {
@@ -53,8 +54,11 @@ public class BoardImpl implements Board {
     }
 
     @Override
-    public List<CollisionPair> detectCollisions(List<Ball> balls){
-        return collisionDetector.detectCollisions(balls);
+    public List<CollisionPair> detectCollisions(){
+        List<Ball> allBalls = balls;
+        allBalls.add(playerBall);
+        return collisionDetector.detectCollisions(allBalls);
+
     }
 
     @Override

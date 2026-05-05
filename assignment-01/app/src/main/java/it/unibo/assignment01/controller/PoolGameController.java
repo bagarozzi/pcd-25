@@ -81,6 +81,8 @@ public class PoolGameController extends Thread implements Controller {
 
 			// Calculate collisions...
 
+			splitList(board.detectCollisions(), nFrames).stream()
+				.forEach(collisionBatch -> addWorkerTask(new CollisionTask(collisionBatch, board, workersBarrier)));
 			// Maybe another hitAndWait()...
 			
 			nFrames++;

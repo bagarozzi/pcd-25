@@ -4,27 +4,24 @@ import java.util.List;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
+import it.unibo.assignment01.model.CollisionPair;
 
 
 public class CollisionTask implements Runnable{
 
     private Board board;
-    private List<Ball> balls;
+    private List<CollisionPair> collisionList;
     private Barrier barrier;
 
-    public CollisionTask(List<Ball> balls,Board board, Barrier barrier){
+    public CollisionTask(List<CollisionPair> collisionList, Board board, Barrier barrier){
         this.board = board;
-        this.balls = balls;
+        this.collisionList = collisionList;
         this.barrier = barrier;
     }
 
     @Override
     public void run() {
-        balls.stream().peek(b -> {
-            balls.stream().filter(other -> other != b)
-            .filter(other -> b.isColliding(other))
-            .peek(other -> Board.resolveCollision(other, b));
-        }).forEach(b -> board.checkHole(b));
+        collisionList.stream().forEach(c -> board.resolveCollision(c));
         try {
             barrier.hitAndWait();
         } catch (InterruptedException e) {

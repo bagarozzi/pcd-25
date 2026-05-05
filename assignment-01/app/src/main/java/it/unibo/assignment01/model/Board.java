@@ -12,7 +12,7 @@ public interface Board {
 
     public void checkHole(Ball b);
     
-    public List<CollisionPair> detectCollisions(List<Ball> balls);
+    public List<CollisionPair> detectCollisions();
 
     public void resolveCollision(CollisionPair collision);
 }
