@@ -7,6 +7,7 @@ import java.util.Random;
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.BoardImpl;
+import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
 import it.unibo.assignment01.view.View;
@@ -34,7 +35,7 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.N_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl(null);
+		this.board = new BoardImpl(null, new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(10);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.barrier = new Barrier(N_WORKERS + 1);

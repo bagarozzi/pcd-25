@@ -16,11 +16,13 @@ public class BoardImpl implements Board {
     private Ball playerBall;
     private Position playerHoles = new Position(X0,Y0);
     private Position enemyHoles = new Position(X0,Y1);
+    private CollisionDetector collisionDetector;
     
 
-    public BoardImpl(List<Ball> balls) {
+    public BoardImpl(List<Ball> balls, CollisionDetector collisionDetector) {
         this.bounds = new Boundary(X0,Y0,X1,Y1);
         this.balls = balls;
+        this.collisionDetector = collisionDetector;
     }
 
 
@@ -50,5 +52,14 @@ public class BoardImpl implements Board {
         }
     }
 
+    @Override
+    public List<CollisionPair> detectCollisions(List<Ball> balls){
+        return collisionDetector.detectCollisions(balls);
+    }
+
+    @Override
+    public void resolveCollision(CollisionPair collision){
+        collisionDetector.resolveCollision(collision);
+    }
 
 }
