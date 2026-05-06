@@ -23,10 +23,12 @@ public class BallWorker extends Thread {
     @Override
     public void run() {
         System.out.println("Worker " + Thread.currentThread().getName() + " created");
-        try {
-            queueTask.get().run();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        while(true) {
+            try {
+                queueTask.get().run();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
