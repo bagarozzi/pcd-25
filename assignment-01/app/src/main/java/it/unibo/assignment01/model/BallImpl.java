@@ -17,7 +17,7 @@ public class BallImpl implements Ball {
     }
 
     @Override
-    public void updateState(long elapsed, Board ctx) {
+    public synchronized void updateState(long elapsed, Board ctx) {
         double speed = vel.abs();
         double dt_scaled = elapsed*0.001;
     	if (speed > 0.001) {
@@ -32,32 +32,32 @@ public class BallImpl implements Ball {
     }
 
     @Override
-    public Position getPos() {
+    public synchronized Position getPos() {
         return this.pos;
     }
 
     @Override
-    public double getMass() {
+    public synchronized double getMass() {
         return this.mass;
     }
 
     @Override
-    public Speed getVel() {
+    public synchronized Speed getVel() {
         return this.vel;
     }
 
     @Override
-    public double getRadius() {
+    public synchronized double getRadius() {
         return this.radius;
     }
 
     @Override
-    public void setPos(Position pos) {
+    public synchronized void setPos(Position pos) {
         this.pos = pos;
     }
 
     @Override
-    public void setVel(Speed vel) {
+    public synchronized void setVel(Speed vel) {
         this.vel = vel;
     }
 
@@ -84,7 +84,7 @@ public class BallImpl implements Ball {
         }
     }
 
-    public boolean isColliding(Ball other) {
+    public synchronized boolean isColliding(Ball other) {
         double dx   = other.getPos().x() - this.getPos().x();
         double dy   = other.getPos().y() - this.getPos().y();
         double dist = Math.hypot(dx, dy);

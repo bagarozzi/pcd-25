@@ -1,5 +1,7 @@
 package it.unibo.assignment01.view;
 
+import it.unibo.assignment01.model.Ball;
+import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.Position;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,31 +9,32 @@ import java.util.List;
 public class ViewModel {
 
     // Posizioni delle palline
-    private List<Position> smallBalls;
-    private Position humanBall;
-    private Position botBall;
+    private List<Ball> smallBalls;
+    private Ball humanBall;
+    private Ball botBall;
 
     // Punteggi
     private int humanScore;
     private int botScore;
 
-    public ViewModel() {
-        this.smallBalls = new ArrayList<>();
-        this.humanScore = 0;
-        this.botScore = 0;
+    public ViewModel(final Board board) {
+        this.smallBalls = board.getBalls();
+        this.humanScore = board.getHumanScore();
+        this.botScore = board.getBotScore();
+        this.humanBall = board.getPlayerBall();
     }
 
     // --- GETTER ---
 
-    public List<Position> getSmallBalls() {
+    public List<Ball> getSmallBalls() {
         return smallBalls;
     }
 
-    public Position getHumanBall() {
+    public Ball getHumanBall() {
         return humanBall;
     }
 
-    public Position getBotBall() {
+    public Ball getBotBall() {
         return botBall;
     }
 
@@ -45,15 +48,15 @@ public class ViewModel {
 
     // --- SETTER ---
 
-    public void setSmallBalls(List<Position> smallBalls) {
+    public void setSmallBalls(List<Ball> smallBalls) {
         this.smallBalls = smallBalls;
     }
 
-    public void setHumanBall(Position humanBall) {
+    public void setHumanBall(Ball humanBall) {
         this.humanBall = humanBall;
     }
 
-    public void setBotBall(Position botBall) {
+    public void setBotBall(Ball botBall) {
         this.botBall = botBall;
     }
 

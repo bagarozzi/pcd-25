@@ -1,13 +1,20 @@
 package it.unibo.assignment01.controller;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import it.unibo.assignment01.model.Ball;
+import it.unibo.assignment01.model.BallImpl;
 import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.BoardImpl;
+import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.model.SimpleCollisionDetector;
+import it.unibo.assignment01.model.Speed;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
 import it.unibo.assignment01.view.View;
@@ -35,20 +42,16 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.N_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl(null, new SimpleCollisionDetector());
+		this.board = new BoardImpl(createBalls(100), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(10);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.barrier = new Barrier(N_WORKERS + 1);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < N_WORKERS; i++) {
-			this.workers.add(new BallWorker(queueTask, null, barrier));
+			var worker = new BallWorker(queueTask, null, barrier);
+			this.workers.add(worker);
+			worker.start();
 		}
-	}
-
-	@Override
-	public void start() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'start'");
 	}
 
 	@Override
@@ -61,6 +64,8 @@ public class PoolGameController extends Thread implements Controller {
 		//var pb = board.getPlayerBall();
 		
 		while (true){
+
+			System.out.println("Started");
 		
 			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
@@ -68,8 +73,12 @@ public class PoolGameController extends Thread implements Controller {
 			
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
+			System.out.println("done buffer");
+
 			splitList(board.getBalls(), NUM_WORKERS).stream().
 			forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
+
+			System.out.println("done split");
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
@@ -93,14 +102,14 @@ public class PoolGameController extends Thread implements Controller {
 			}
 
             // Render the view after calculating how many frames have passed during the calculation
-			ViewModel vm = new ViewModel();
-			view.update(vm);
-			try {
+			ViewModel vm = new ViewModel(board);
+			view.update(vm, nFrames);
+			/*try {
 				VCBarrier.hitAndWait();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
 		}
 
     }
@@ -129,6 +138,21 @@ public class PoolGameController extends Thread implements Controller {
 			res.add(list.subList(start, end));
 		}
 		return res;
+	}
+
+	private List<Ball> createBalls(int n) {
+		var ballRadius = 0.01;
+        var balls = new ArrayList<Ball>();
+
+        for (int row = 0; row < 20; row++) {
+            for (int col = 0; col < 20; col++) {
+                var px = -0.25 + col* 0.025;
+                var py =  row*0.025;
+                var b = new BallImpl(new Position(px, py), new Speed(0,0), ballRadius, 0.25);
+                balls.add(b);
+            }
+        }
+        return balls;
 	}
 
 	
