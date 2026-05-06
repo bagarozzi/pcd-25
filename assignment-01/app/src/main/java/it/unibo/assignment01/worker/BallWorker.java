@@ -15,30 +15,19 @@ import it.unibo.assignment01.util.BoundedBuffer;
 public class BallWorker extends Thread {
     
     private final BoundedBuffer<Runnable> queueTask; 
-    private final List<Ball> balls;
-    private final Barrier barrier;
 
-    public BallWorker(final BoundedBuffer<Runnable> queueTask, final List<Ball> balls, Barrier barrier) {
+    public BallWorker(final BoundedBuffer<Runnable> queueTask) {
         this.queueTask = queueTask;
-        this.balls = balls;
-        this.barrier = barrier;
     }
 
     @Override
     public void run() {
+        System.out.println("Worker " + Thread.currentThread().getName() + " created");
         try {
-            barrier.hitAndWait();
             queueTask.get().run();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
 
-    private void computeCollisions() {
-        // TODO: compute collisions
-    }
-
-    private void computeMovements() {
-        // TODO: compute movements
-    }
 }
