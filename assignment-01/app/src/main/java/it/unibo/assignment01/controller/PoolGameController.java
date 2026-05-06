@@ -1,13 +1,20 @@
 package it.unibo.assignment01.controller;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import it.unibo.assignment01.model.Ball;
+import it.unibo.assignment01.model.BallImpl;
 import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.BoardImpl;
+import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.model.SimpleCollisionDetector;
+import it.unibo.assignment01.model.Speed;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
 import it.unibo.assignment01.view.View;
@@ -41,7 +48,9 @@ public class PoolGameController extends Thread implements Controller {
 		this.barrier = new Barrier(N_WORKERS + 1);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < N_WORKERS; i++) {
-			this.workers.add(new BallWorker(queueTask, null, barrier));
+			var worker = new BallWorker(queueTask, null, barrier);
+			this.workers.add(worker);
+			worker.start();
 		}
 	}
 
@@ -89,12 +98,12 @@ public class PoolGameController extends Thread implements Controller {
             // Render the view after calculating how many frames have passed during the calculation
 			ViewModel vm = new ViewModel(board);
 			view.update(vm);
-			try {
+			/*try {
 				VCBarrier.hitAndWait();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
 		}
 
     }
