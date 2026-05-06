@@ -10,8 +10,8 @@ public class ViewModel {
 
     // Posizioni delle palline
     private List<Ball> smallBalls;
-    private Position humanBall;
-    private Position botBall;
+    private Ball humanBall;
+    private Ball botBall;
 
     // Punteggi
     private int humanScore;
@@ -21,7 +21,7 @@ public class ViewModel {
         this.smallBalls = board.getBalls();
         this.humanScore = board.getHumanScore();
         this.botScore = board.getBotScore();
-        this.humanBall = board.getPlayerBall().getPos();
+        this.humanBall = board.getPlayerBall();
     }
 
     // --- GETTER ---
@@ -30,11 +30,11 @@ public class ViewModel {
         return smallBalls;
     }
 
-    public Position getHumanBall() {
+    public Ball getHumanBall() {
         return humanBall;
     }
 
-    public Position getBotBall() {
+    public Ball getBotBall() {
         return botBall;
     }
 
@@ -52,11 +52,11 @@ public class ViewModel {
         this.smallBalls = smallBalls;
     }
 
-    public void setHumanBall(Position humanBall) {
+    public void setHumanBall(Ball humanBall) {
         this.humanBall = humanBall;
     }
 
-    public void setBotBall(Position botBall) {
+    public void setBotBall(Ball botBall) {
         this.botBall = botBall;
     }
 
