@@ -109,7 +109,6 @@ public class ViewFrame extends JFrame {
             }
 
             // 5. Disegna le Palline dei Giocatori (H e B)
-            int bigRadius = 18;
             g2d.setFont(new Font("SansSerif", Font.BOLD, 14));
             FontMetrics fmPlayers = g2d.getFontMetrics();
 
