@@ -15,6 +15,7 @@ public class BoardImpl implements Board {
     private Boundary bounds;
     private List<Ball> balls;
     private Ball playerBall;
+    private Ball enemyBall;
     private Position playerHoles = new Position(X0,Y0);
     private Position enemyHoles = new Position(X0,Y1);
     private CollisionDetector collisionDetector;
@@ -25,7 +26,7 @@ public class BoardImpl implements Board {
         this.balls = balls;
         this.collisionDetector = collisionDetector;
         this.playerBall = new BallImpl(new Position(-0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
-        //Ball enemyBall = new EnemyBall(new Position(0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
+        enemyBall = new EnemyBall(new Position(0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
     }
 
 
@@ -37,6 +38,11 @@ public class BoardImpl implements Board {
     @Override
     public Ball getPlayerBall() {
         return playerBall;
+    }
+
+    @Override
+    public Ball getEnemyBall() {
+        return enemyBall;
     }
 
     @Override

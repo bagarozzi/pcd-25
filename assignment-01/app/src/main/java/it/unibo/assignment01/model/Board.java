@@ -8,6 +8,8 @@ public interface Board {
     
     public Ball getPlayerBall();
 
+    public Ball getEnemyBall();
+
     public int getHumanScore();
 
     public int getBotScore();

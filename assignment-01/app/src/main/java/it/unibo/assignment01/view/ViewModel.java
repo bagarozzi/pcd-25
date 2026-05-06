@@ -22,6 +22,7 @@ public class ViewModel {
         this.humanScore = board.getHumanScore();
         this.botScore = board.getBotScore();
         this.humanBall = board.getPlayerBall();
+        this.botBall = board.getEnemyBall();
     }
 
     // --- GETTER ---
