@@ -40,8 +40,8 @@ public class View {
     }
 
     // Aggiorna il rendering in modo thread-safe
-    public void update(ViewModel viewModel) {
-        SwingUtilities.invokeLater(() -> frame.updateView(viewModel));
+    public void update(ViewModel viewModel, final long frameNumber) {
+        SwingUtilities.invokeLater(() -> frame.updateView(viewModel, frameNumber));
     }
 
     // Mappa la pressione dei tasti ai comandi per il controller
