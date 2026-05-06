@@ -7,6 +7,10 @@ public interface Board {
     public List<Ball> getBalls();
     
     public Ball getPlayerBall();
+
+    public int getHumanScore();
+
+    public int getBotScore();
     
     public  Boundary getBounds();
 

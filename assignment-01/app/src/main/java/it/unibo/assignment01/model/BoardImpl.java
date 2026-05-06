@@ -66,4 +66,16 @@ public class BoardImpl implements Board {
         collisionDetector.resolveCollision(collision);
     }
 
+
+    @Override
+    public int getHumanScore() {
+        return playerScore;
+    }
+
+
+    @Override
+    public int getBotScore() {
+        return enemyScore;
+    }
+
 }
