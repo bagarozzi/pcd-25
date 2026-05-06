@@ -46,12 +46,6 @@ public class PoolGameController extends Thread implements Controller {
 	}
 
 	@Override
-	public void start() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'start'");
-	}
-
-	@Override
     public void run() {
 		int nFrames = 0;
 		long t0 = System.currentTimeMillis();
