@@ -9,7 +9,7 @@ import java.util.List;
 public class ViewModel {
 
     // Posizioni delle palline
-    private List<Position> smallBalls;
+    private List<Ball> smallBalls;
     private Position humanBall;
     private Position botBall;
 
@@ -18,7 +18,7 @@ public class ViewModel {
     private int botScore;
 
     public ViewModel(final Board board) {
-        this.smallBalls = board.getBalls().stream().map(Ball::getPos).toList();
+        this.smallBalls = board.getBalls();
         this.humanScore = board.getHumanScore();
         this.botScore = board.getBotScore();
         this.humanBall = board.getPlayerBall().getPos();
@@ -26,7 +26,7 @@ public class ViewModel {
 
     // --- GETTER ---
 
-    public List<Position> getSmallBalls() {
+    public List<Ball> getSmallBalls() {
         return smallBalls;
     }
 
@@ -48,7 +48,7 @@ public class ViewModel {
 
     // --- SETTER ---
 
-    public void setSmallBalls(List<Position> smallBalls) {
+    public void setSmallBalls(List<Ball> smallBalls) {
         this.smallBalls = smallBalls;
     }
 
