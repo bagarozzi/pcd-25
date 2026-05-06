@@ -47,7 +47,7 @@ public class PoolGameController extends Thread implements Controller {
 		this.workersBarrier = new Barrier(N_WORKERS + 1);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < N_WORKERS; i++) {
-			var worker = new BallWorker(queueTask, null, workersBarrier);
+			var worker = new BallWorker(queueTask);
 			this.workers.add(worker);
 			worker.start();
 		}
