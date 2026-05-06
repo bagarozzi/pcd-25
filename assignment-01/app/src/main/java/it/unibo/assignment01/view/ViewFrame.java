@@ -114,22 +114,24 @@ public class ViewFrame extends JFrame {
             FontMetrics fmPlayers = g2d.getFontMetrics();
 
             // Disegna H (Human)
-            Position humanBall = viewModel.getHumanBall();
+            Ball humanBall = viewModel.getHumanBall();
             if (humanBall != null) {
-                drawPlayerBall(g2d, humanBall, bigRadius, "H", fmPlayers);
+                drawPlayerBall(g2d, humanBall, "H", fmPlayers);
             }
 
             // Disegna B (Bot)
-            Position botBall = viewModel.getBotBall();
+            Ball botBall = viewModel.getBotBall();
             if (botBall != null) {
-                drawPlayerBall(g2d, botBall, bigRadius, "B", fmPlayers);
+                drawPlayerBall(g2d, botBall, "B", fmPlayers);
             }
 
             sync.notifyFrameRendered();
         }
 
         // Metodo di supporto per disegnare le palline grandi con la lettera centrata
-        private void drawPlayerBall(Graphics2D g2d, Position pos, int radius, String text, FontMetrics fm) {
+        private void drawPlayerBall(Graphics2D g2d, Ball ball, String text, FontMetrics fm) {
+            Position pos = ball.getPos();
+            int radius = (int)(ball.getRadius()*delta);
             int cx = (int) pos.x();
             int cy = (int) pos.y();
 
