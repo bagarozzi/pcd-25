@@ -1,5 +1,7 @@
 package it.unibo.assignment01.view;
 
+import it.unibo.assignment01.model.Ball;
+import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.Position;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,10 +17,11 @@ public class ViewModel {
     private int humanScore;
     private int botScore;
 
-    public ViewModel() {
-        this.smallBalls = new ArrayList<>();
-        this.humanScore = 0;
-        this.botScore = 0;
+    public ViewModel(final Board board) {
+        this.smallBalls = board.getBalls().stream().map(Ball::getPos).toList();
+        this.humanScore = board.getHumanScore();
+        this.botScore = board.getBotScore();
+        this.humanBall = board.getPlayerBall().getPos();
     }
 
     // --- GETTER ---

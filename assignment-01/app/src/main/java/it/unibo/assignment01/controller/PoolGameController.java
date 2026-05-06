@@ -93,7 +93,7 @@ public class PoolGameController extends Thread implements Controller {
 			}
 
             // Render the view after calculating how many frames have passed during the calculation
-			ViewModel vm = new ViewModel();
+			ViewModel vm = new ViewModel(board);
 			view.update(vm);
 			try {
 				VCBarrier.hitAndWait();
