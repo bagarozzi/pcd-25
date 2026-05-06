@@ -1,5 +1,6 @@
 package it.unibo.assignment01.view;
 
+import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.util.RenderSynch;
 
@@ -95,19 +96,15 @@ public class ViewFrame extends JFrame {
             g2d.drawString(botScoreStr, bScoreX, scoreY);
 
             // 4. Disegna le migliaia di Palline Piccole (bianche con bordo nero)
-            int smallRadius = 4;
-            List<Position> smallBalls = viewModel.getSmallBalls();
+            List<Ball> smallBalls = viewModel.getSmallBalls();
             if (smallBalls != null) {
-                for (Position p : smallBalls) {
-                    int x = (int) p.x();
-                    int y = (int) p.y();
-
-                    g2d.setColor(Color.WHITE);
-                    g2d.fillOval(x - smallRadius, y - smallRadius, smallRadius * 2, smallRadius * 2);
-
-                    g2d.setColor(Color.BLACK);
-                    g2d.setStroke(new BasicStroke(1));
-                    g2d.drawOval(x - smallRadius, y - smallRadius, smallRadius * 2, smallRadius * 2);
+                for (Ball ball : smallBalls) {
+                    Position p = ball.getPos();
+	            	int x0 = (int)(ox + p.x()*delta);
+	                int y0 = (int)(oy - p.y()*delta);
+                    int radiusX = (int)(ball.getRadius()*delta);
+	                int radiusY = (int)(ball.getRadius()*delta);
+                    g2d.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
                 }
             }
 
