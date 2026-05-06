@@ -34,7 +34,6 @@ public class PoolGameController extends Thread implements Controller {
 
 	private final BoundedBuffer<Cmd> cmdBuffer;
 	private final BoundedBuffer<Runnable> queueTask;
-	private final Barrier barrier;
 	private final List<BallWorker> workers;
 
 	public PoolGameController(final View view, final Barrier VCBarrier) {
@@ -42,13 +41,13 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.N_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl(createBalls(100), new SimpleCollisionDetector());
-		this.queueTask = new BoundedBufferImpl<>(10);
+		this.board = new BoardImpl(createBalls(20), new SimpleCollisionDetector());
+		this.queueTask = new BoundedBufferImpl<>(N_WORKERS + 1);
 		cmdBuffer = new BoundedBufferImpl<>(10);
-		this.barrier = new Barrier(N_WORKERS + 1);
+		this.workersBarrier = new Barrier(N_WORKERS + 1);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < N_WORKERS; i++) {
-			var worker = new BallWorker(queueTask, null, barrier);
+			var worker = new BallWorker(queueTask, null, workersBarrier);
 			this.workers.add(worker);
 			worker.start();
 		}
@@ -82,7 +81,7 @@ public class PoolGameController extends Thread implements Controller {
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
-				barrier.hitAndWait();
+				workersBarrier.hitAndWait();
 			} catch (InterruptedException e) {
 
 				e.printStackTrace();
@@ -135,7 +134,7 @@ public class PoolGameController extends Thread implements Controller {
 		for (int i = 0; i < nList; i++) {
 			int start = i * list.size() / nList;
 			int end = (i + 1) * list.size() / nList;
-			res.add(list.subList(start, end));
+			res.add(List.copyOf(list.subList(start, end)));
 		}
 		return res;
 	}
