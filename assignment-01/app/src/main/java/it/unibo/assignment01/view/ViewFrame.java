@@ -1,6 +1,8 @@
 package it.unibo.assignment01.view;
 
 import it.unibo.assignment01.model.Position;
+import it.unibo.assignment01.util.RenderSynch;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -8,40 +10,50 @@ import java.util.List;
 public class ViewFrame extends JFrame {
 
     private final PooolPanel panel;
+    private final RenderSynch sync;
 
     public ViewFrame(int width, int height) {
-        setTitle("Poool Sketch");
-        setSize(width, height);
+        setTitle("Poool");
+        setSize(width, height + 25);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
+        sync = new RenderSynch();
 
         panel = new PooolPanel(width, height);
         getContentPane().add(panel);
     }
 
-    public void updateView(ViewModel viewModel) {
-        panel.updateViewModel(viewModel);
+    public void updateView(ViewModel viewModel, final long frameNumber) {
+        panel.updateViewModel(viewModel, frameNumber);
     }
 
     public PooolPanel getPanel() {
         return panel;
     }
 
-    public static class PooolPanel extends JPanel {
+    public class PooolPanel extends JPanel {
         private ViewModel viewModel;
-        private final int width;
-        private final int height;
+        private final int ox;
+        private final int oy;
+        private final int delta;
 
         public PooolPanel(int w, int h) {
-            this.width = w;
-            this.height = h;
-            setPreferredSize(new Dimension(w, h));
+            setSize(w,h + 25);
+            ox = w/2;
+            oy = h/2;
+            delta = Math.min(ox, oy);
             setBackground(Color.WHITE); // Sfondo bianco
         }
 
-        public void updateViewModel(ViewModel vm) {
+        public void updateViewModel(ViewModel vm, final long frameNumber) {
+            long nf = sync.nextFrameToRender();
             this.viewModel = vm;
             repaint();
+            try {
+			    sync.waitForFrameRendered(nf);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         }
 
         @Override
@@ -51,18 +63,18 @@ public class ViewFrame extends JFrame {
 
             // Antialiasing per curve morbide
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             // 1. Disegna la griglia a croce (linee grigie sottili)
             g2d.setColor(Color.LIGHT_GRAY);
             g2d.setStroke(new BasicStroke(1));
-            g2d.drawLine(width / 2, 0, width / 2, height); // Linea verticale
-            g2d.drawLine(0, height / 2, width, height / 2); // Linea orizzontale
+            g2d.drawLine(ox, 0, ox, oy * 2); // Linea verticale
+            g2d.drawLine(0, oy, ox * 2, oy); // Linea orizzontale
 
             // 2. Disegna le due buche nere (angoli superiori)
             int holeRadius = 60;
             g2d.setColor(Color.BLACK);
             g2d.fillOval(-holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2); // Buca sx
-            g2d.fillOval(width - holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2); // Buca dx
+            g2d.fillOval(ox*2 - holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2); // Buca dx
 
             if (viewModel == null) return;
 
@@ -75,9 +87,9 @@ public class ViewFrame extends JFrame {
             String botScoreStr = String.valueOf(viewModel.getBotScore());
 
             // Posiziona i punteggi a 1/4 e 3/4 della larghezza, a circa 3/4 dell'altezza
-            int hScoreX = (width / 4) - (fmScores.stringWidth(humanScoreStr) / 2);
-            int bScoreX = (width * 3 / 4) - (fmScores.stringWidth(botScoreStr) / 2);
-            int scoreY = height * 3 / 4;
+            int hScoreX = (ox / 2) - (fmScores.stringWidth(humanScoreStr) / 2);
+            int bScoreX = (ox * 3 / 2) - (fmScores.stringWidth(botScoreStr) / 2);
+            int scoreY = oy * 3 / 2;
 
             g2d.drawString(humanScoreStr, hScoreX, scoreY);
             g2d.drawString(botScoreStr, bScoreX, scoreY);
@@ -115,6 +127,8 @@ public class ViewFrame extends JFrame {
             if (botBall != null) {
                 drawPlayerBall(g2d, botBall, bigRadius, "B", fmPlayers);
             }
+
+            sync.notifyFrameRendered();
         }
 
         // Metodo di supporto per disegnare le palline grandi con la lettera centrata
