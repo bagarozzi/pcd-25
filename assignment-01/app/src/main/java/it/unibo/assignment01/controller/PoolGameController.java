@@ -27,10 +27,8 @@ public class PoolGameController extends Thread implements Controller {
 	private final Barrier VCBarrier;
 
 	private Barrier workersBarrier;
-	private final int NUM_WORKERS = Runtime.getRuntime().availableProcessors() + 1;
+	private final int NUM_WORKERS;
 	private Board board;
-
-	private final int N_WORKERS;
 
 	private final BoundedBuffer<Cmd> cmdBuffer;
 	private final BoundedBuffer<Runnable> queueTask;
@@ -39,14 +37,14 @@ public class PoolGameController extends Thread implements Controller {
 	public PoolGameController(final View view, final Barrier VCBarrier) {
 		this.view = view;
 		this.VCBarrier = VCBarrier;
-		this.N_WORKERS = Runtime.getRuntime().availableProcessors();
+		this.NUM_WORKERS = 1; // Runtime.getRuntime().availableProcessors();
 
 		this.board = new BoardImpl(createBalls(20), new SimpleCollisionDetector());
-		this.queueTask = new BoundedBufferImpl<>(N_WORKERS + 1);
+		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
-		this.workersBarrier = new Barrier(N_WORKERS + 1);
+		this.workersBarrier = new Barrier(NUM_WORKERS + 1);
 		this.workers = new ArrayList<>();
-		for (int i = 0; i < N_WORKERS; i++) {
+		for (int i = 0; i < NUM_WORKERS; i++) {
 			var worker = new BallWorker(queueTask);
 			this.workers.add(worker);
 			worker.start();
@@ -63,8 +61,6 @@ public class PoolGameController extends Thread implements Controller {
 		//var pb = board.getPlayerBall();
 		
 		while (true){
-
-			System.out.println("Started");
 		
 			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
@@ -72,12 +68,8 @@ public class PoolGameController extends Thread implements Controller {
 			
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
-			System.out.println("done buffer");
+			splitList(board.getBalls(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
 
-			splitList(board.getBalls(), NUM_WORKERS).stream().
-			forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
-
-			System.out.println("done split");
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
@@ -89,8 +81,8 @@ public class PoolGameController extends Thread implements Controller {
 
 			// Calculate collisions...
 
-			splitList(board.detectCollisions(), nFrames).stream()
-				.forEach(collisionBatch -> addWorkerTask(new CollisionTask(collisionBatch, board, workersBarrier)));
+			//splitList(board.detectCollisions(), NUM_WORKERS).stream()
+			//	.forEach(collisionBatch -> addWorkerTask(new CollisionTask(collisionBatch, board, workersBarrier)));
 			// Maybe another hitAndWait()...
 			
 			nFrames++;

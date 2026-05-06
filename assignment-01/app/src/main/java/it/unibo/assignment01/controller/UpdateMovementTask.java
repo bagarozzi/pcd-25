@@ -21,7 +21,6 @@ public class UpdateMovementTask implements Runnable{
 
     @Override
     public void run() {
-        System.out.println("Worker " + Thread.currentThread().getName() + " is working...");
         ballBatch.stream().forEach(ball -> ball.updateState(timeElapsed, board));
         try {
             barrier.hitAndWait();
