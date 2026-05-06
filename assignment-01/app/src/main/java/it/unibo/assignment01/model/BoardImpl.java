@@ -24,6 +24,8 @@ public class BoardImpl implements Board {
         this.bounds = new Boundary(X0,Y0,X1,Y1);
         this.balls = balls;
         this.collisionDetector = collisionDetector;
+        this.playerBall = new BallImpl(new Position(-0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
+        //Ball enemyBall = new EnemyBall(new Position(0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
     }
 
 
