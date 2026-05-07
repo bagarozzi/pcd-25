@@ -58,7 +58,7 @@ public class BallImpl implements Ball {
 
     @Override
     public synchronized void setVel(Speed vel) {
-        this.vel = vel;
+        this.vel = this.vel.sum(vel);
     }
 
     /**

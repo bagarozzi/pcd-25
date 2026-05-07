@@ -164,16 +164,16 @@ public class ViewFrame extends JFrame {
         protected void handleKeyPress(int keyCode) {
             switch (keyCode) {
                 case KeyEvent.VK_UP:
-                    controller.notifyCommand(new MoveCmd(0, 1));
+                    controller.notifyCommand(MoveCmd.UP_CMD());
                     break;
                 case KeyEvent.VK_DOWN:
-                    controller.notifyCommand(new MoveCmd(0, -1));
+                    controller.notifyCommand(MoveCmd.DOWN_CMD());
                     break;
                 case KeyEvent.VK_LEFT:
-                    controller.notifyCommand(new MoveCmd(-1, 0));
+                    controller.notifyCommand(MoveCmd.LEFT_CMD());
                     break;
                 case KeyEvent.VK_RIGHT:
-                    controller.notifyCommand(new MoveCmd(1, 0));
+                    controller.notifyCommand(MoveCmd.RIGHT_CMD());
                     break;
             }
         }

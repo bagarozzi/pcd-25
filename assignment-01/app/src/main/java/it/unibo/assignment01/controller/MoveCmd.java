@@ -9,6 +9,8 @@ import it.unibo.assignment01.model.Speed;
  */
 public class MoveCmd implements Cmd {
 
+    private final static double IMPULSE = 0.4;
+
     private final double dx;
     private final double dy;
 
@@ -28,5 +30,21 @@ public class MoveCmd implements Cmd {
     @Override
     public void execute(Ball ball) {
         ball.setVel(ball.getVel().sum(new Speed(dx, dy)));
+    }
+
+    public static MoveCmd UP_CMD() {
+        return new MoveCmd(0, IMPULSE);
+    }
+
+    public static MoveCmd DOWN_CMD() {
+        return new MoveCmd(0, -IMPULSE);
+    }
+
+    public static MoveCmd LEFT_CMD() {
+        return new MoveCmd(-IMPULSE, 0);
+    }
+
+    public static MoveCmd RIGHT_CMD() {
+        return new MoveCmd(IMPULSE, 0);
     }
 }
