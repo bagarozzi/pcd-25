@@ -120,6 +120,8 @@ public class ViewFrame extends JFrame {
                 drawBall(g2d, botBall, new BasicStroke(3), Optional.of("B"), Optional.of(fmPlayers));
             }
 
+            g2d.drawString("Balls remaining: " + viewModel.getSmallBalls().size(), 15, oy*2 - 40);
+
             sync.notifyFrameRendered();
         }
 
