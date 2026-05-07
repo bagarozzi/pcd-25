@@ -3,6 +3,7 @@ package it.unibo.assignment01.model;
 public class BallImpl implements Ball {
 
     private static final double FRICTION_FACTOR = 0.1;
+    private static final double MAX_SPEED = 0.6;
 
     private Position pos;
     private Speed vel;
@@ -58,7 +59,7 @@ public class BallImpl implements Ball {
 
     @Override
     public synchronized void setVel(Speed vel) {
-        this.vel = this.vel.sum(vel);
+        this.vel = this.vel.ceilSum(vel, 0.6);
     }
 
     /**
