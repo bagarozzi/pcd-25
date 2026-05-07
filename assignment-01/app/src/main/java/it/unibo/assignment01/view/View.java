@@ -36,12 +36,12 @@ public class View {
 
     // Mostra la finestra nell'Event Dispatch Thread (Thread UI)
     public void display() {
-        SwingUtilities.invokeLater(() -> frame.setVisible(true));
+       frame.setVisible(true);
     }
 
     // Aggiorna il rendering in modo thread-safe
     public void update(ViewModel viewModel, final long frameNumber) {
-        SwingUtilities.invokeLater(() -> frame.updateView(viewModel, frameNumber));
+        frame.updateView(viewModel, frameNumber);
     }
 
     // Mappa la pressione dei tasti ai comandi per il controller
