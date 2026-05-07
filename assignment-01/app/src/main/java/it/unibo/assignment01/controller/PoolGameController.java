@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -39,7 +40,7 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.NUM_WORKERS = 1; // Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl(createBalls(20), new SimpleCollisionDetector());
+		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.workersBarrier = new Barrier(NUM_WORKERS + 1);
@@ -131,16 +132,22 @@ public class PoolGameController extends Thread implements Controller {
 		return res;
 	}
 
-	private List<Ball> createBalls(int n) {
-		var ballRadius = 0.01;
+	private List<Ball> createBalls(final int rows, final int cols) {
+
         var balls = new ArrayList<Ball>();
 
-        for (int row = 0; row < 20; row++) {
-            for (int col = 0; col < 20; col++) {
-                var px = -0.25 + col* 0.025;
-                var py =  row*0.025;
-                var b = new BallImpl(new Position(px, py), new Speed(0,0), ballRadius, 0.25);
+		double startX = -((cols / 2.0) * (0.01 + Ball.BALL_RADIUS));
+		double startY = Math.max(-0.25, -(rows / 3.0) * (0.01 + Ball.BALL_RADIUS));
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                var px = startX + j * (0.01 + Ball.BALL_RADIUS);
+                var py = startY + i * (0.01 + Ball.BALL_RADIUS);
+                var b = new BallImpl(new Position(px, py), new Speed(0,0), 1.0, Ball.BALL_RADIUS);
                 balls.add(b);
+				if (balls.size() >= rows*cols) {
+					break;
+				}
             }
         }
         return balls;
