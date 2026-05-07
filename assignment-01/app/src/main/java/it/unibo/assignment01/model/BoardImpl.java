@@ -2,6 +2,7 @@ package it.unibo.assignment01.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BoardImpl implements Board {
     private static final double Y1 = 1.0;
@@ -23,7 +24,7 @@ public class BoardImpl implements Board {
 
     public BoardImpl(List<Ball> balls, CollisionDetector collisionDetector) {
         this.bounds = new Boundary(X0,Y0,X1,Y1);
-        this.balls = balls;
+        this.balls = new CopyOnWriteArrayList<>(balls);
         this.collisionDetector = collisionDetector;
         this.playerBall = new BallImpl(new Position(-0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
         enemyBall = new EnemyBall(new Position(0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
