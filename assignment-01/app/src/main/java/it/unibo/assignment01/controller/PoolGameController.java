@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -36,6 +35,12 @@ public class PoolGameController extends Thread implements Controller {
 	private final BoundedBuffer<Cmd> cmdBuffer;
 	private final BoundedBuffer<Runnable> queueTask;
 	private final List<BallWorker> workers;
+	
+	// Key indices for boolean array
+	private static final int UP = 0;
+	private static final int DOWN = 1;
+	private static final int LEFT = 2;
+	private static final int RIGHT = 3;
 
 	public PoolGameController(final View view, final Barrier VCBarrier) {
 		this.view = view;
@@ -120,22 +125,18 @@ public class PoolGameController extends Thread implements Controller {
 	}
 
 	private void processHeldKeys() {
-		Set<Integer> pressedKeys = view.getPressedKeys();
-		for (int keyCode : pressedKeys) {
-			switch (keyCode) {
-				case KeyEvent.VK_UP:
-					board.getPlayerBall().setVel(new Speed(0, 0.4));
-					break;
-				case KeyEvent.VK_DOWN:
-					board.getPlayerBall().setVel(new Speed(0, -0.4));
-					break;
-				case KeyEvent.VK_LEFT:
-					board.getPlayerBall().setVel(new Speed(-0.4, 0));
-					break;
-				case KeyEvent.VK_RIGHT:
-					board.getPlayerBall().setVel(new Speed(0.4, 0));
-					break;
-			}
+		boolean[] keys = view.getPressedKeys();
+		if (keys[UP]) {
+			board.getPlayerBall().setVel(new Speed(0, 0.4));
+		}
+		if (keys[DOWN]) {
+			board.getPlayerBall().setVel(new Speed(0, -0.4));
+		}
+		if (keys[LEFT]) {
+			board.getPlayerBall().setVel(new Speed(-0.4, 0));
+		}
+		if (keys[RIGHT]) {
+			board.getPlayerBall().setVel(new Speed(0.4, 0));
 		}
 	}
 

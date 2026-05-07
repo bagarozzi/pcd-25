@@ -50,7 +50,13 @@ public class ViewFrame extends JFrame {
         private final int oy;
         private final int delta;
         private long fps = 0;
-        private final Set<Integer> pressedKeys = Collections.synchronizedSet(new HashSet<>());
+        
+        // Key state tracking - more efficient than Set
+        private volatile boolean[] keys = new boolean[4];
+        private static final int UP = 0;
+        private static final int DOWN = 1;
+        private static final int LEFT = 2;
+        private static final int RIGHT = 3;
 
         public PooolPanel(int w, int h) {
             setSize(w,h + 25);
@@ -61,18 +67,44 @@ public class ViewFrame extends JFrame {
             this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                pressedKeys.add(e.getKeyCode());
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_UP:
+                        keys[UP] = true;
+                        break;
+                    case KeyEvent.VK_DOWN:
+                        keys[DOWN] = true;
+                        break;
+                    case KeyEvent.VK_LEFT:
+                        keys[LEFT] = true;
+                        break;
+                    case KeyEvent.VK_RIGHT:
+                        keys[RIGHT] = true;
+                        break;
+                }
             }
             
             @Override
             public void keyReleased(KeyEvent e) {
-                pressedKeys.remove(e.getKeyCode());
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_UP:
+                        keys[UP] = false;
+                        break;
+                    case KeyEvent.VK_DOWN:
+                        keys[DOWN] = false;
+                        break;
+                    case KeyEvent.VK_LEFT:
+                        keys[LEFT] = false;
+                        break;
+                    case KeyEvent.VK_RIGHT:
+                        keys[RIGHT] = false;
+                        break;
+                }
             }
         });
         }
 
-        public Set<Integer> getPressedKeys() {
-            return new HashSet<>(pressedKeys);
+        public boolean[] getPressedKeys() {
+            return keys;
         }
 
         public void updateViewModel(ViewModel vm, final long frameNumber) {
