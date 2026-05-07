@@ -45,7 +45,7 @@ public class PoolGameController extends Thread implements Controller {
 	public PoolGameController(final View view, final Barrier VCBarrier) {
 		this.view = view;
 		this.VCBarrier = VCBarrier;
-		this.NUM_WORKERS = 1; // Runtime.getRuntime().availableProcessors();
+		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
@@ -79,7 +79,7 @@ public class PoolGameController extends Thread implements Controller {
 			
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
-			splitList(board.getBalls(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
+			splitList(board.getBalls().stream().filter(b -> b.getVel().abs() > 0.001).toList(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
 			board.getPlayerBall().updateState(elapsed, board);
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
