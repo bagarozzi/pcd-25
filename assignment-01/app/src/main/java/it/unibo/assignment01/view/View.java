@@ -7,6 +7,7 @@ import it.unibo.assignment01.controller.PoolGameController;
 import javax.swing.SwingUtilities;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Set;
 
 public class View {
 
@@ -35,6 +36,10 @@ public class View {
     public void setController(Controller controller) {
         this.controller = controller;
         this.frame.setController(controller);
+    }
+
+    public Set<Integer> getPressedKeys() {
+        return frame.getPanel().getPressedKeys();
     }
 
 }

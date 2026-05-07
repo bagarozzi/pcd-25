@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.*;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,6 +50,7 @@ public class ViewFrame extends JFrame {
         private final int oy;
         private final int delta;
         private long fps = 0;
+        private final Set<Integer> pressedKeys = Collections.synchronizedSet(new HashSet<>());
 
         public PooolPanel(int w, int h) {
             setSize(w,h + 25);
@@ -59,11 +61,18 @@ public class ViewFrame extends JFrame {
             this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (controller != null) {
-                    handleKeyPress(e.getKeyCode());
-                }
+                pressedKeys.add(e.getKeyCode());
+            }
+            
+            @Override
+            public void keyReleased(KeyEvent e) {
+                pressedKeys.remove(e.getKeyCode());
             }
         });
+        }
+
+        public Set<Integer> getPressedKeys() {
+            return new HashSet<>(pressedKeys);
         }
 
         public void updateViewModel(ViewModel vm, final long frameNumber) {

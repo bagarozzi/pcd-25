@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -21,6 +22,7 @@ import it.unibo.assignment01.util.BoundedBufferImpl;
 import it.unibo.assignment01.view.View;
 import it.unibo.assignment01.view.ViewModel;
 import it.unibo.assignment01.worker.BallWorker;
+import java.awt.event.KeyEvent;
 
 public class PoolGameController extends Thread implements Controller {
 
@@ -67,6 +69,9 @@ public class PoolGameController extends Thread implements Controller {
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
 			lastUpdateTime = System.currentTimeMillis();
 			
+			// Process continuous keyboard input
+			processHeldKeys();
+			
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
 			splitList(board.getBalls(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
@@ -111,6 +116,26 @@ public class PoolGameController extends Thread implements Controller {
 			cmdBuffer.put(cmd);
 		} catch (Exception ex) {
 			ex.printStackTrace();
+		}
+	}
+
+	private void processHeldKeys() {
+		Set<Integer> pressedKeys = view.getPressedKeys();
+		for (int keyCode : pressedKeys) {
+			switch (keyCode) {
+				case KeyEvent.VK_UP:
+					board.getPlayerBall().setVel(new Speed(0, 0.4));
+					break;
+				case KeyEvent.VK_DOWN:
+					board.getPlayerBall().setVel(new Speed(0, -0.4));
+					break;
+				case KeyEvent.VK_LEFT:
+					board.getPlayerBall().setVel(new Speed(-0.4, 0));
+					break;
+				case KeyEvent.VK_RIGHT:
+					board.getPlayerBall().setVel(new Speed(0.4, 0));
+					break;
+			}
 		}
 	}
 
