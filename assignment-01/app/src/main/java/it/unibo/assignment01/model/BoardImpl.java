@@ -17,8 +17,8 @@ public class BoardImpl implements Board {
     private List<Ball> balls;
     private Ball playerBall;
     private Ball enemyBall;
-    private Position playerHoles = new Position(X0,Y0);
-    private Position enemyHoles = new Position(X0,Y1);
+    private Position playerHoles = new Position(X0,Y1);
+    private Position enemyHoles = new Position(X1,Y1);
     private CollisionDetector collisionDetector;
     
 
