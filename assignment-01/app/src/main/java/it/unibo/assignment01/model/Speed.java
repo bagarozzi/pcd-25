@@ -6,6 +6,13 @@ public record Speed(double x, double y)  {
         return new Speed(x+v.x,y+v.y);
     }
 
+    public Speed ceilSum(Speed v, double max) {
+        return new Speed(
+            Math.max(-max, Math.min(max, x + v.x)),
+            Math.max(-max, Math.min(max, y + v.y))
+        );
+    }
+
     public double abs(){
         return (double)Math.sqrt(x*x+y*y);
     }
