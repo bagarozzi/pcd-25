@@ -2,6 +2,7 @@ package it.unibo.assignment01.view;
 
 import it.unibo.assignment01.controller.Controller;
 import it.unibo.assignment01.controller.MoveCmd;
+import it.unibo.assignment01.controller.PoolGameController;
 
 import javax.swing.SwingUtilities;
 import java.awt.event.KeyAdapter;
@@ -17,26 +18,13 @@ public class View {
 
         // Imposta il focus per catturare gli eventi della tastiera
         this.frame.setFocusable(true);
-        this.frame.requestFocusInWindow();
-
-        // Ascoltatore per i comandi di movimento
-        this.frame.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (controller != null) {
-                    handleKeyPress(e.getKeyCode());
-                }
-            }
-        });
-    }
-
-    public void setController(Controller controller) {
-        this.controller = controller;
     }
 
     // Mostra la finestra nell'Event Dispatch Thread (Thread UI)
     public void display() {
        frame.setVisible(true);
+       // Request focus on the panel after the window is visible
+       SwingUtilities.invokeLater(() -> frame.getPanel().requestFocusInWindow());
     }
 
     // Aggiorna il rendering in modo thread-safe
@@ -44,22 +32,9 @@ public class View {
         frame.updateView(viewModel, frameNumber);
     }
 
-    // Mappa la pressione dei tasti ai comandi per il controller
-    private void handleKeyPress(int keyCode) {
-
-        switch (keyCode) {
-            case KeyEvent.VK_UP:
-                controller.notifyCommand(new MoveCmd(0, -1));
-                break;
-            case KeyEvent.VK_DOWN:
-                controller.notifyCommand(new MoveCmd(0, 1));
-                break;
-            case KeyEvent.VK_LEFT:
-                controller.notifyCommand(new MoveCmd(-1, 0));
-                break;
-            case KeyEvent.VK_RIGHT:
-                controller.notifyCommand(new MoveCmd(1, 0));
-                break;
-        }
+    public void setController(Controller controller) {
+        this.controller = controller;
+        this.frame.setController(controller);
     }
+
 }

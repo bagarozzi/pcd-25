@@ -1,11 +1,15 @@
 package it.unibo.assignment01.view;
 
+import it.unibo.assignment01.controller.Controller;
+import it.unibo.assignment01.controller.MoveCmd;
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.util.RenderSynch;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +17,7 @@ public class ViewFrame extends JFrame {
 
     private final PooolPanel panel;
     private final RenderSynch sync;
+    private Controller controller;
 
     public ViewFrame(int width, int height) {
         setTitle("Poool");
@@ -22,11 +27,16 @@ public class ViewFrame extends JFrame {
         sync = new RenderSynch();
 
         panel = new PooolPanel(width, height);
+        panel.setFocusable(true);
         getContentPane().add(panel);
     }
 
     public void updateView(ViewModel viewModel, final long frameNumber) {
         panel.updateViewModel(viewModel, frameNumber);
+    }
+
+    public void setController(Controller controller) {
+        this.controller = controller;
     }
 
     public PooolPanel getPanel() {
@@ -38,6 +48,7 @@ public class ViewFrame extends JFrame {
         private final int ox;
         private final int oy;
         private final int delta;
+        private long fps = 0;
 
         public PooolPanel(int w, int h) {
             setSize(w,h + 25);
@@ -45,11 +56,20 @@ public class ViewFrame extends JFrame {
             oy = h/2;
             delta = Math.min(ox, oy);
             setBackground(Color.WHITE); // Sfondo bianco
+            this.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (controller != null) {
+                    handleKeyPress(e.getKeyCode());
+                }
+            }
+        });
         }
 
         public void updateViewModel(ViewModel vm, final long frameNumber) {
             long nf = sync.nextFrameToRender();
             this.viewModel = vm;
+            fps = frameNumber;
             repaint();
             try {
 			    sync.waitForFrameRendered(nf);
@@ -121,6 +141,7 @@ public class ViewFrame extends JFrame {
             }
 
             g2d.drawString("Balls remaining: " + viewModel.getSmallBalls().size(), 15, oy*2 - 40);
+            g2d.drawString("FPS: " + fps, ox, 30);
 
             sync.notifyFrameRendered();
         }
@@ -139,5 +160,23 @@ public class ViewFrame extends JFrame {
                 g2d.drawString(text.get(), textX, textY);
             }
         }
+
+        protected void handleKeyPress(int keyCode) {
+            switch (keyCode) {
+                case KeyEvent.VK_UP:
+                    controller.notifyCommand(new MoveCmd(0, 1));
+                    break;
+                case KeyEvent.VK_DOWN:
+                    controller.notifyCommand(new MoveCmd(0, -1));
+                    break;
+                case KeyEvent.VK_LEFT:
+                    controller.notifyCommand(new MoveCmd(-1, 0));
+                    break;
+                case KeyEvent.VK_RIGHT:
+                    controller.notifyCommand(new MoveCmd(1, 0));
+                    break;
+            }
+        }
+
     }
 }
