@@ -70,7 +70,7 @@ public class PoolGameController extends Thread implements Controller {
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
 			splitList(board.getBalls(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
-
+			board.getPlayerBall().updateState(elapsed, board);
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
