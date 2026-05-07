@@ -7,6 +7,7 @@ import it.unibo.assignment01.util.RenderSynch;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Optional;
 
 public class ViewFrame extends JFrame {
 
@@ -99,12 +100,7 @@ public class ViewFrame extends JFrame {
             List<Ball> smallBalls = viewModel.getSmallBalls();
             if (smallBalls != null) {
                 for (Ball ball : smallBalls) {
-                    Position p = ball.getPos();
-	            	int x0 = (int)(ox + p.x()*delta);
-	                int y0 = (int)(oy - p.y()*delta);
-                    int radiusX = (int)(ball.getRadius()*delta);
-	                int radiusY = (int)(ball.getRadius()*delta);
-                    g2d.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
+                    drawBall(g2d, ball, new BasicStroke(1), Optional.empty(), Optional.empty());
                 }
             }
 
@@ -115,38 +111,31 @@ public class ViewFrame extends JFrame {
             // Disegna H (Human)
             Ball humanBall = viewModel.getHumanBall();
             if (humanBall != null) {
-                drawPlayerBall(g2d, humanBall, "H", fmPlayers);
+                drawBall(g2d, humanBall, new BasicStroke(3), Optional.of("H"), Optional.of(fmPlayers));
             }
 
             // Disegna B (Bot)
             Ball botBall = viewModel.getBotBall();
             if (botBall != null) {
-                drawPlayerBall(g2d, botBall, "B", fmPlayers);
+                drawBall(g2d, botBall, new BasicStroke(3), Optional.of("B"), Optional.of(fmPlayers));
             }
 
             sync.notifyFrameRendered();
         }
 
-        // Metodo di supporto per disegnare le palline grandi con la lettera centrata
-        private void drawPlayerBall(Graphics2D g2d, Ball ball, String text, FontMetrics fm) {
-            Position pos = ball.getPos();
-            int radius = (int)(ball.getRadius()*delta);
-            int cx = (int) pos.x();
-            int cy = (int) pos.y();
-
-            // Sfondo bianco
-            g2d.setColor(Color.WHITE);
-            g2d.fillOval(cx - radius, cy - radius, radius * 2, radius * 2);
-
-            // Bordo spesso nero
-            g2d.setColor(Color.BLACK);
-            g2d.setStroke(new BasicStroke(3));
-            g2d.drawOval(cx - radius, cy - radius, radius * 2, radius * 2);
-
-            // Lettera centrata
-            int textX = cx - (fm.stringWidth(text) / 2);
-            int textY = cy + (fm.getAscent() / 2) - 2; // leggero aggiustamento ottico
-            g2d.drawString(text, textX, textY);
+        private void drawBall(Graphics2D g2d, Ball ball, Stroke s, Optional<String> text, Optional<FontMetrics> fm) {
+            Position p = ball.getPos();
+            int x0 = (int)(ox + p.x()*delta);
+            int y0 = (int)(oy - p.y()*delta);
+            int radiusX = (int)(ball.getRadius()*delta);
+            int radiusY = (int)(ball.getRadius()*delta);
+            g2d.setStroke(s);
+            g2d.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
+            if (text.isPresent() && fm.isPresent()) {
+                int textX = x0 - (fm.get().stringWidth(text.get()) / 2);
+                int textY = y0 + (fm.get().getAscent() / 2) - 2; // leggero aggiustamento ottico
+                g2d.drawString(text.get(), textX, textY);
+            }
         }
     }
 }
