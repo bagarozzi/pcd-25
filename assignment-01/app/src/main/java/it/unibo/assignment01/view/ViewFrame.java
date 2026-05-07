@@ -111,7 +111,7 @@ public class ViewFrame extends JFrame {
             long nf = sync.nextFrameToRender();
             this.viewModel = vm;
             fps = frameNumber;
-            repaint();
+            repaint(0L);
             try {
 			    sync.waitForFrameRendered(nf);
             } catch (InterruptedException ex) {
