@@ -35,7 +35,7 @@ public class PoolGameController extends Thread implements Controller {
 	private final BoundedBuffer<Cmd> cmdBuffer;
 	private final BoundedBuffer<Runnable> queueTask;
 	private final List<BallWorker> workers;
-	
+
 	// Key indices for boolean array
 	private static final int UP = 0;
 	private static final int DOWN = 1;
@@ -47,7 +47,7 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl(createBalls(1,1), new SimpleCollisionDetector());
+		this.board = new BoardImpl(createBalls(50,90), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.workersBarrier = new Barrier(NUM_WORKERS + 1);
@@ -67,16 +67,16 @@ public class PoolGameController extends Thread implements Controller {
 
 		// For enemy player movement
 		//var pb = board.getPlayerBall();
-		
+
 		while (true){
-		
+
 			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
 			lastUpdateTime = System.currentTimeMillis();
-			
+
 			// Process continuous keyboard input
 			processHeldKeys();
-			
+
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
 			splitList(board.getBalls().stream().filter(b -> b.getVel().abs() > 0.001).toList(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
@@ -90,11 +90,18 @@ public class PoolGameController extends Thread implements Controller {
 				e.printStackTrace();
 			}
 
-			// Calculate collisions...
-			board.detectCollisions().forEach(p -> board.resolveCollision(p));
-			//splitList(board.detectCollisions(), NUM_WORKERS).stream()
-			//	.forEach(collisionBatch -> addWorkerTask(new CollisionTask(collisionBatch, board, workersBarrier)));
+			// Calculate collisions...ù
+			splitList(board.getAllBall(), NUM_WORKERS).stream().forEach(list -> addWorkerTask(new CollisionTask(list, board, workersBarrier)));			
+
 			// Maybe another hitAndWait()...
+			try {
+			 	workersBarrier.hitAndWait();
+			} catch (InterruptedException e) {
+
+			 	e.printStackTrace();
+			}
+
+
 			nFrames++;
 			int framePerSec = 0;
 			long dt = (System.currentTimeMillis() - t0);
@@ -111,6 +118,7 @@ public class PoolGameController extends Thread implements Controller {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}*/
+
 		}
 
     }
@@ -178,5 +186,5 @@ public class PoolGameController extends Thread implements Controller {
         return balls;
 	}
 
-	
+
 }
