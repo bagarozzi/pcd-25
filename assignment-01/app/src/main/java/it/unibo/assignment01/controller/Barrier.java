@@ -13,6 +13,9 @@ public class Barrier {
     }
 
     public synchronized void hitAndWait() throws InterruptedException {
+        if (numArrived == 0) {
+            System.err.println(Thread.currentThread().getName()+" started");
+        }
         numArrived++;
         if (numArrived == numPartecipants) {
             everyoneArrived = true;
@@ -25,6 +28,7 @@ public class Barrier {
 
         numArrived--;
         if (numArrived == 0) {
+            System.err.println("ended");
             everyoneArrived = false; 
         }
     }
