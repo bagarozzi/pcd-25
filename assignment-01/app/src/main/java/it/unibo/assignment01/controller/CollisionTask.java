@@ -4,9 +4,7 @@ import java.util.List;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
-import it.unibo.assignment01.model.CollisionPair;
-import it.unibo.assignment01.model.Position;
-import it.unibo.assignment01.model.Speed;
+
 
 
 public class CollisionTask implements Runnable{
@@ -23,7 +21,10 @@ public class CollisionTask implements Runnable{
 
     @Override
     public void run() {
-        collisionList.stream().forEach(b-> board.getAllBall().stream().forEach(a ->  board.resolveCollision(new CollisionPair(a, b))));
+        collisionList.stream().forEach(b -> board.getAllBall().stream().forEach(a ->  {
+                if(!a.equals(b)){
+                    board.resolveCollision(a, b);
+                }}));
         try {
             barrier.hitAndWait();
         } catch (InterruptedException e) {

@@ -67,8 +67,8 @@ public class BoardImpl implements Board {
     }
 
     @Override
-    public void resolveCollision(CollisionPair collision){
-        collisionDetector.resolveCollision(collision);
+    public void resolveCollision(Ball a, Ball b) {
+        collisionDetector.resolveCollision(a, b);
     }
 
 

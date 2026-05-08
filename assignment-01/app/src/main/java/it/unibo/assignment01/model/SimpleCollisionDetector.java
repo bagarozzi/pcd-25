@@ -19,10 +19,7 @@ public class SimpleCollisionDetector implements CollisionDetector {
      * Resolving collision between 2 balls, updating their getPosition and velocity
      * @param collision the pair of balls that are colliding
      */
-    public void resolveCollision(CollisionPair collision) {
-        
-        Ball a = collision.b1();
-        Ball b = collision.b2();
+    public void resolveCollision(Ball a, Ball b) {
     	/* check if there is a collision */
     	
     	/* compute dv = b.getPos - a.getPos vector */
