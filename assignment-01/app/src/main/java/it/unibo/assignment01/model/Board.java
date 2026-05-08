@@ -21,4 +21,6 @@ public interface Board {
     public List<CollisionPair> detectCollisions();
 
     public void resolveCollision(CollisionPair collision);
+
+    public List<Ball> getAllBall();
 }

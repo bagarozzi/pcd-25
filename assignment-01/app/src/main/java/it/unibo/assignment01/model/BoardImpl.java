@@ -29,7 +29,7 @@ public class BoardImpl implements Board {
         this.collisionDetector = collisionDetector;
         this.playerBall = new BallImpl(new Position(-0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
         enemyBall = new EnemyBall(new Position(0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
-        allBalls = new ArrayList<>(balls);
+        allBalls = new CopyOnWriteArrayList<>(balls);
         allBalls.add(playerBall);
         allBalls.add(enemyBall);
     }
@@ -88,5 +88,11 @@ public class BoardImpl implements Board {
     public int getBotScore() {
         return enemyScore;
     }
+
+    @Override
+    public List<Ball> getAllBall() {
+        return allBalls;
+    }
+
 
 }
