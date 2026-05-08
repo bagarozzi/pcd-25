@@ -47,7 +47,7 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
+		this.board = new BoardImpl(createBalls(1,1), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.workersBarrier = new Barrier(NUM_WORKERS + 1);
@@ -91,11 +91,10 @@ public class PoolGameController extends Thread implements Controller {
 			}
 
 			// Calculate collisions...
-
+			board.detectCollisions().forEach(p -> board.resolveCollision(p));
 			//splitList(board.detectCollisions(), NUM_WORKERS).stream()
 			//	.forEach(collisionBatch -> addWorkerTask(new CollisionTask(collisionBatch, board, workersBarrier)));
 			// Maybe another hitAndWait()...
-			
 			nFrames++;
 			int framePerSec = 0;
 			long dt = (System.currentTimeMillis() - t0);

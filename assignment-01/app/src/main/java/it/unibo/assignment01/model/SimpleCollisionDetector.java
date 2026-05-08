@@ -49,7 +49,6 @@ public class SimpleCollisionDetector implements CollisionDetector {
          * 
          */
         if (isColliding(a, b))  {
-
 	        /* 
 	         * Collision case - what to do:
 	         * 
