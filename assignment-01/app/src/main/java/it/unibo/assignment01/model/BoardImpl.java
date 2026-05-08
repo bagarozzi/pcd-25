@@ -17,6 +17,7 @@ public class BoardImpl implements Board {
     private List<Ball> balls;
     private Ball playerBall;
     private Ball enemyBall;
+    private List<Ball> allBalls;
     private Position playerHoles = new Position(X0,Y1);
     private Position enemyHoles = new Position(X1,Y1);
     private CollisionDetector collisionDetector;
@@ -28,6 +29,9 @@ public class BoardImpl implements Board {
         this.collisionDetector = collisionDetector;
         this.playerBall = new BallImpl(new Position(-0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
         enemyBall = new EnemyBall(new Position(0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
+        allBalls = new ArrayList<>(balls);
+        allBalls.add(playerBall);
+        allBalls.add(enemyBall);
     }
 
 
@@ -64,9 +68,7 @@ public class BoardImpl implements Board {
 
     @Override
     public List<CollisionPair> detectCollisions(){
-        List<Ball> allBalls = balls;
-        allBalls.add(playerBall);
-        return collisionDetector.detectCollisions(allBalls);
+        return collisionDetector.detectCollisions(this.allBalls);
 
     }
 
