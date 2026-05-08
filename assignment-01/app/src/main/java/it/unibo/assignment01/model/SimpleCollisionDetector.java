@@ -5,18 +5,6 @@ import java.util.List;
 public class SimpleCollisionDetector implements CollisionDetector {
     private static double RESTITUTION_FACTOR = 1; 
 
-
-    @Override
-    public List<CollisionPair> detectCollisions(List<Ball> balls) {
-        return balls.stream()
-                .flatMap(b -> balls.stream()
-                        .filter(other -> other != b)
-                        .filter(other -> b.isColliding(other))
-                        .map(other -> new CollisionPair(b, other)))
-                .distinct()
-                .toList();
-    }
-
     private boolean isColliding(Ball a, Ball b) {
         double dx   = b.getPos().x() - a.getPos().x();
         double dy   = b.getPos().y() - a.getPos().y();

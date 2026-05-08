@@ -18,8 +18,6 @@ public interface Board {
 
     public void checkHole(Ball b);
     
-    public List<CollisionPair> detectCollisions();
-
     public void resolveCollision(CollisionPair collision);
 
     public List<Ball> getAllBall();

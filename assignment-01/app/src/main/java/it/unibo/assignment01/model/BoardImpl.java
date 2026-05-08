@@ -67,12 +67,6 @@ public class BoardImpl implements Board {
     }
 
     @Override
-    public List<CollisionPair> detectCollisions(){
-        return collisionDetector.detectCollisions(this.allBalls);
-
-    }
-
-    @Override
     public void resolveCollision(CollisionPair collision){
         collisionDetector.resolveCollision(collision);
     }

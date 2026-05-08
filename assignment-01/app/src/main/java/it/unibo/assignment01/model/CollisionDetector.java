@@ -4,8 +4,6 @@ import java.util.List;
 
 public interface CollisionDetector {
 
-    public List<CollisionPair> detectCollisions(List<Ball> balls);
-
     public void resolveCollision(CollisionPair collision);
 
 }
