@@ -1,13 +1,8 @@
 package it.unibo.assignment01.controller;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Random;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.BallImpl;
@@ -21,7 +16,6 @@ import it.unibo.assignment01.util.BoundedBufferImpl;
 import it.unibo.assignment01.view.View;
 import it.unibo.assignment01.view.ViewModel;
 import it.unibo.assignment01.worker.BallWorker;
-import java.awt.event.KeyEvent;
 
 public class PoolGameController extends Thread implements Controller {
 
@@ -47,7 +41,7 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl(createBalls(50,90), new SimpleCollisionDetector());
+		this.board = new BoardImpl(createBalls(50,20), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.workersBarrier = new Barrier(NUM_WORKERS + 1);
