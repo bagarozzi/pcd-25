@@ -37,7 +37,7 @@ public class BoundedBufferImpl<Item> implements BoundedBuffer<Item> {
 			}
 			buffer.addLast(item);
 
-			System.err.println("put-"+buffer.size());
+			//System.err.println("put-"+buffer.size());
 			// Segnala al Controller che c'è un elemento da consumare
 			notEmpty.signalAll();
 		} finally {
@@ -53,7 +53,7 @@ public class BoundedBufferImpl<Item> implements BoundedBuffer<Item> {
 				notEmpty.await(); // Il Controller attende se il buffer è vuoto
 			}
 			Item item = buffer.removeFirst();
-			System.err.println("get-"+buffer.size());
+			//System.err.println("get-"+buffer.size());
 			// Segnala alla GUI che si è liberato un posto
 			notFull.signalAll();
 			return item;

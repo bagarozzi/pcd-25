@@ -41,7 +41,7 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl(createBalls(1, 1), new SimpleCollisionDetector());
+		this.board = new BoardImpl(createBalls(1, 50), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.workersBarrier = new Barrier(NUM_WORKERS + 1);
@@ -73,8 +73,10 @@ public class PoolGameController extends Thread implements Controller {
 
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
+
 			splitList(board.getBalls().stream().toList(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
 			board.getPlayerBall().updateState(elapsed, board);
+
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
@@ -83,6 +85,7 @@ public class PoolGameController extends Thread implements Controller {
 
 				e.printStackTrace();
 			}
+
 
 			// Calculate collisions...ù
 			splitList(board.getAllBall(), NUM_WORKERS).stream().forEach(list -> addWorkerTask(new CollisionTask(list, board, workersBarrier)));			
@@ -103,7 +106,6 @@ public class PoolGameController extends Thread implements Controller {
 				framePerSec = (int)(nFrames*1000/dt);
 			}
 
-
             // Render the view after calculating how many frames have passed during the calculation
 			ViewModel vm = new ViewModel(board);
 			view.update(vm, framePerSec);
@@ -113,7 +115,7 @@ public class PoolGameController extends Thread implements Controller {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}*/
-
+			
 		}
 
     }
@@ -157,7 +159,8 @@ public class PoolGameController extends Thread implements Controller {
 			int end = (i + 1) * list.size() / nList;
 			res.add(List.copyOf(list.subList(start, end)));
 		}
-		System.err.println("Split list of size " + res.size() + nList);
+		//System.err.println("Split list of size " + res.size() + nList );
+		//res.stream().forEach(l -> System.err.println(l.size()));
 		return res;
 	}
 

@@ -29,7 +29,7 @@ public class MoveCmd implements Cmd {
 
     @Override
     public void execute(Ball ball) {
-        ball.setVel(ball.getVel().sum(new Speed(dx, dy)));
+        ball.kick(ball.getVel().sum(new Speed(dx, dy)));
     }
 
     public static MoveCmd UP_CMD() {

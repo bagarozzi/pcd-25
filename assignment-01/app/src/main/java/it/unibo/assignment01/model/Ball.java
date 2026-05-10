@@ -20,4 +20,6 @@ public interface Ball {
     public void setVel(Speed vel);
 
     public boolean isColliding(Ball other);
+
+    public  void kick(Speed impulse);
 }
