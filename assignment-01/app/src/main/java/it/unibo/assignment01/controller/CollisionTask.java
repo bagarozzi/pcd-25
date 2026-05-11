@@ -1,6 +1,7 @@
 package it.unibo.assignment01.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
@@ -10,16 +11,14 @@ import it.unibo.assignment01.model.Board;
 public class CollisionTask implements Runnable{
 
     private Board board;
-    private List<Ball> myBatch;
-    private List<List<Ball>> allBatches;
+    private List<Map.Entry<Long, List<Ball>>> myBatch;
     private int batchIndex;
     private Barrier barrier;
     private SpatialHashGrid grid;
 
-    public CollisionTask(int batchIndex, List<Ball> myBatch, List<List<Ball>> allBatches, Board board, Barrier barrier, SpatialHashGrid grid){
+    public CollisionTask(int batchIndex, List<Map.Entry<Long, List<Ball>>> myBatch, Board board, Barrier barrier, SpatialHashGrid grid){
         this.board = board;
         this.myBatch = myBatch;
-        this.allBatches = allBatches;
         this.batchIndex = batchIndex;
         this.barrier = barrier;
         this.grid = grid;
@@ -29,8 +28,8 @@ public class CollisionTask implements Runnable{
     @Override
     public void run() {
 
-        for (Ball ball : myBatch) {
-
+        for (Map.Entry<Long, List<Ball>> entry : myBatch) {
+            for (Ball ball : entry.getValue()) {
             int cx = grid.getCellX(ball);
             int cy = grid.getCellY(ball);
 
@@ -42,14 +41,13 @@ public class CollisionTask implements Runnable{
 
                     for (Ball other : nearby) {
 
-                        if (ball == other) {
-                            continue;
+                        if (!ball.equals(other)) {
+                            board.resolveCollision(ball, other);;
                         }
-
-                        board.resolveCollision(ball, other);
                     }
                 }
             }
+        }
         }
 
         try {

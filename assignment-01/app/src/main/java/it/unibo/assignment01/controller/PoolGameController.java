@@ -2,7 +2,7 @@ package it.unibo.assignment01.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Map;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.BallImpl;
@@ -43,12 +43,12 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS*2);
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.moveBarrier = new Barrier(NUM_WORKERS + 1);
 		this.collideBarrier = new Barrier(NUM_WORKERS + 1);
+		this.spatialHashGrid = new SpatialHashGrid(board.getPlayerBall().getRadius());
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
 			var worker = new BallWorker(queueTask, moveBarrier, collideBarrier);
@@ -95,10 +95,12 @@ public class PoolGameController extends Thread implements Controller {
 				spatialHashGrid.insert(ball);
 			}
 
+			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
+			
 			// Calculate collisions with pair-wise checking to eliminate redundancy
-			List<List<Ball>> ballBatches = splitList(board.getAllBall(), NUM_WORKERS);
+			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(i, ballBatches.get(i), ballBatches, board, collideBarrier, spatialHashGrid));
+				addWorkerTask(new CollisionTask(i, ballBatches.get(i), board, collideBarrier, spatialHashGrid));
 			}
 			
 			// Maybe another hitAndWait()...

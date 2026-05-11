@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import it.unibo.assignment01.model.Ball;
 
@@ -45,5 +46,9 @@ public class SpatialHashGrid {
 
     public int getCellY(Ball b) {
         return (int)Math.floor(b.getPos().y() / cellSize);
+    }
+
+    public Set<Map.Entry<Long, List<Ball>>> getCells() {
+        return grid.entrySet();
     }
 }
