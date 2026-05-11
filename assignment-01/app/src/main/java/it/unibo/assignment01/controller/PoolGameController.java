@@ -26,6 +26,7 @@ public class PoolGameController extends Thread implements Controller {
 	private Barrier collideBarrier;
 	private final int NUM_WORKERS;
 	private Board board;
+	private SpatialHashGrid spatialHashGrid;
 
 	private final BoundedBuffer<Cmd> cmdBuffer;
 	private final BoundedBuffer<Runnable> queueTask;
@@ -42,6 +43,7 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
+		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS*2);
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
@@ -69,6 +71,7 @@ public class PoolGameController extends Thread implements Controller {
 			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
 			lastUpdateTime = System.currentTimeMillis();
+			spatialHashGrid.clear();
 
 			// Process continuous keyboard input
 			processHeldKeys();
@@ -87,12 +90,15 @@ public class PoolGameController extends Thread implements Controller {
 
 				e.printStackTrace();
 			}
-
+			
+			for (Ball ball : board.getAllBall()) {
+				spatialHashGrid.insert(ball);
+			}
 
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Ball>> ballBatches = splitList(board.getAllBall(), NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(i, ballBatches.get(i), ballBatches, board, collideBarrier));
+				addWorkerTask(new CollisionTask(i, ballBatches.get(i), ballBatches, board, collideBarrier, spatialHashGrid));
 			}
 			
 			// Maybe another hitAndWait()...
