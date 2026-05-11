@@ -23,7 +23,13 @@ public class SpatialHashGrid {
     }
 
     private long hash(int x, int y) {
-        return (((long)x) << 32) | (y & 0xffffffffL);
+        // Morton code (Z-order curve) for better 2D spatial locality
+        long result = 0;
+        for (int i = 0; i < 32; i++) {
+            result |= ((long)((x >> i) & 1) << (2 * i));
+            result |= ((long)((y >> i) & 1) << (2 * i + 1));
+        }
+        return result;
     }
 
     public void insert(Ball b) {
