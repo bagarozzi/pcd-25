@@ -131,16 +131,16 @@ public class PoolGameController extends Thread implements Controller {
 	private void processHeldKeys() {
 		boolean[] keys = view.getPressedKeys();
 		if (keys[UP]) {
-			board.getPlayerBall().setVel(new Speed(0, 0.4));
+			board.getPlayerBall().kick(new Speed(0, 0.4));
 		}
 		if (keys[DOWN]) {
-			board.getPlayerBall().setVel(new Speed(0, -0.4));
+			board.getPlayerBall().kick(new Speed(0, -0.4));
 		}
 		if (keys[LEFT]) {
-			board.getPlayerBall().setVel(new Speed(-0.4, 0));
+			board.getPlayerBall().kick(new Speed(-0.4, 0));
 		}
 		if (keys[RIGHT]) {
-			board.getPlayerBall().setVel(new Speed(0.4, 0));
+			board.getPlayerBall().kick(new Speed(0.4, 0));
 		}
 	}
 
