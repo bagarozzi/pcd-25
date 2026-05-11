@@ -22,7 +22,8 @@ public class PoolGameController extends Thread implements Controller {
 	private final View view;
 	private final Barrier VCBarrier;
 
-	private Barrier workersBarrier;
+	private Barrier moveBarrier;
+	private Barrier collideBarrier;
 	private final int NUM_WORKERS;
 	private Board board;
 
@@ -41,13 +42,14 @@ public class PoolGameController extends Thread implements Controller {
 		this.VCBarrier = VCBarrier;
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl(createBalls(1, 50), new SimpleCollisionDetector());
+		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
-		this.workersBarrier = new Barrier(NUM_WORKERS + 1);
+		this.moveBarrier = new Barrier(NUM_WORKERS + 1);
+		this.collideBarrier = new Barrier(NUM_WORKERS + 1);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
-			var worker = new BallWorker(queueTask);
+			var worker = new BallWorker(queueTask, moveBarrier, collideBarrier);
 			this.workers.add(worker);
 			worker.start();
 		}
@@ -74,25 +76,28 @@ public class PoolGameController extends Thread implements Controller {
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
 
-			splitList(board.getBalls().stream().toList(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, workersBarrier)));
-			board.getPlayerBall().updateState(elapsed, board);
+			splitList(board.getAllBall().stream().toList(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, moveBarrier)));
+			//board.getPlayerBall().updateState(elapsed, board);
 
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
-				workersBarrier.hitAndWait();
+				moveBarrier.hitAndWait();
 			} catch (InterruptedException e) {
 
 				e.printStackTrace();
 			}
 
 
-			// Calculate collisions...ù
-			splitList(board.getAllBall(), NUM_WORKERS).stream().forEach(list -> addWorkerTask(new CollisionTask(list, board, workersBarrier)));			
-
+			// Calculate collisions with pair-wise checking to eliminate redundancy
+			List<List<Ball>> ballBatches = splitList(board.getAllBall(), NUM_WORKERS);
+			for (int i = 0; i < ballBatches.size(); i++) {
+				addWorkerTask(new CollisionTask(i, ballBatches.get(i), ballBatches, board, collideBarrier));
+			}
+			
 			// Maybe another hitAndWait()...
 			try {
-			 	workersBarrier.hitAndWait();
+			 	collideBarrier.hitAndWait();
 			} catch (InterruptedException e) {
 
 			 	e.printStackTrace();
@@ -131,16 +136,16 @@ public class PoolGameController extends Thread implements Controller {
 	private void processHeldKeys() {
 		boolean[] keys = view.getPressedKeys();
 		if (keys[UP]) {
-			board.getPlayerBall().setVel(new Speed(0, 0.4));
+			board.getPlayerBall().kick(new Speed(0, 0.4));
 		}
 		if (keys[DOWN]) {
-			board.getPlayerBall().setVel(new Speed(0, -0.4));
+			board.getPlayerBall().kick(new Speed(0, -0.4));
 		}
 		if (keys[LEFT]) {
-			board.getPlayerBall().setVel(new Speed(-0.4, 0));
+			board.getPlayerBall().kick(new Speed(-0.4, 0));
 		}
 		if (keys[RIGHT]) {
-			board.getPlayerBall().setVel(new Speed(0.4, 0));
+			board.getPlayerBall().kick(new Speed(0.4, 0));
 		}
 	}
 
@@ -175,7 +180,7 @@ public class PoolGameController extends Thread implements Controller {
             for (int j = 0; j < cols; j++) {
                 var px = startX + j * (0.01 + Ball.BALL_RADIUS);
                 var py = startY + i * (0.01 + Ball.BALL_RADIUS);
-                var b = new BallImpl(new Position(px, py), new Speed(0,0), 1.0, Ball.BALL_RADIUS);
+                var b = new BallImpl(new Position(px, py), new Speed(0,0), 0.2, Ball.BALL_RADIUS);
                 balls.add(b);
 				if (balls.size() >= rows*cols) {
 					break;

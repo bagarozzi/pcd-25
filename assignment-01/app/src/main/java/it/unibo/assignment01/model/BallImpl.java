@@ -64,7 +64,7 @@ public class BallImpl implements Ball {
 
     @Override
     public synchronized void kick(Speed impulse) {
-        this.vel.ceilSum(impulse, MAX_SPEED);
+        this.vel = this.vel.ceilSum(impulse, MAX_SPEED);
      }
 
     /**

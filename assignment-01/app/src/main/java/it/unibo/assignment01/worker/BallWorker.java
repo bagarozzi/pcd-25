@@ -15,9 +15,13 @@ import it.unibo.assignment01.util.BoundedBuffer;
 public class BallWorker extends Thread {
     
     private final BoundedBuffer<Runnable> queueTask; 
+    private final Barrier barrier;
+    private final Barrier collideBarrier;
 
-    public BallWorker(final BoundedBuffer<Runnable> queueTask) {
+    public BallWorker(final BoundedBuffer<Runnable> queueTask, final Barrier barrier, Barrier collideBarrier) {
         this.queueTask = queueTask;
+        this.barrier = barrier;
+        this.collideBarrier = collideBarrier;
     }
 
     @Override

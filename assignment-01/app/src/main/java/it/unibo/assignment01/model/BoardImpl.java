@@ -27,8 +27,8 @@ public class BoardImpl implements Board {
         this.bounds = new Boundary(X0,Y0,X1,Y1);
         this.balls = new CopyOnWriteArrayList<>(balls);
         this.collisionDetector = collisionDetector;
-        this.playerBall = new BallImpl(new Position(-0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
-        enemyBall = new EnemyBall(new Position(0.5, -0.5), new Speed(0, 0), 0.05, 0.07);
+        this.playerBall = new BallImpl(new Position(-0.5, -0.5), new Speed(0, 0), 2.0, 0.07);
+        enemyBall = new EnemyBall(new Position(0.5, -0.5), new Speed(0, 0), 2.0, 0.07);
         allBalls = new CopyOnWriteArrayList<>(balls);
         allBalls.add(playerBall);
         allBalls.add(enemyBall);
