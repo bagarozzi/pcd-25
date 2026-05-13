@@ -9,7 +9,8 @@ public class BoardImpl implements Board {
     private static final double X1 = 1.5;
     private static final double Y0 = -1.0;
     private static final double X0 = -1.5;
-    private static final double HOLE_RADIUS = 0.2;
+    
+    public static final double HOLE_RADIUS = 0.2;
 
     private int playerScore = 0;
     private int enemyScore = 0;
@@ -58,10 +59,10 @@ public class BoardImpl implements Board {
     @Override
     public void checkHole(Ball b) {
         if(!balls.contains(b)) return;
-        if (b.getPos().dist(playerHoles) < HOLE_RADIUS) {
+        if (b.getPos().squareDist(playerHoles) < Math.pow(HOLE_RADIUS, 2)) {
             playerScore++;
             balls.remove(b);
-        } else if (b.getPos().dist(enemyHoles) < HOLE_RADIUS) {
+        } else if (b.getPos().squareDist(enemyHoles) < Math.pow(HOLE_RADIUS, 2)) {
             enemyScore++;
             balls.remove(b);//TODO check if this is correct
         }
