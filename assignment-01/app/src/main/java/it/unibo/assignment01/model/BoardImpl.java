@@ -59,10 +59,10 @@ public class BoardImpl implements Board {
     @Override
     public void checkHole(Ball b) {
         if(!balls.contains(b)) return;
-        if (b.getPos().squareDist(playerHoles) < Math.pow(HOLE_RADIUS, 2)) {
+        if (b.getPos().x() < X0 + HOLE_RADIUS && b.getPos().y() > Y1 - HOLE_RADIUS) {
             playerScore++;
             balls.remove(b);
-        } else if (b.getPos().squareDist(enemyHoles) < Math.pow(HOLE_RADIUS, 2)) {
+        } else if (b.getPos().x() > X1 - HOLE_RADIUS && b.getPos().y() > Y1 - HOLE_RADIUS) {
             enemyScore++;
             balls.remove(b);//TODO check if this is correct
         }
