@@ -32,6 +32,7 @@ public class PoolGameController extends Thread implements Controller {
 	private final BoundedBuffer<Runnable> queueTask;
 	private final List<BallWorker> workers;
 	private final SpatialHashGrid bigBallSpatialHashGrid;
+	private final ViewModel vm;
 
 	// Key indices for boolean array
 	private static final int UP = 0;
@@ -57,6 +58,7 @@ public class PoolGameController extends Thread implements Controller {
 			this.workers.add(worker);
 			worker.start();
 		}
+		vm = new ViewModel(board);
 	}
 
 	@Override
@@ -82,7 +84,7 @@ public class PoolGameController extends Thread implements Controller {
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
 
-			splitList(board.getAllBall().stream().toList(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, moveBarrier)));
+			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, moveBarrier)));
 			board.getPlayerBall().updateState(elapsed, board);
 			board.getEnemyBall().updateState(elapsed, board);
 
@@ -127,7 +129,7 @@ public class PoolGameController extends Thread implements Controller {
 			}
 
             // Render the view after calculating how many frames have passed during the calculation
-			ViewModel vm = new ViewModel(board);
+			vm.update(board);
 			view.update(vm, framePerSec);
 			/*try {
 				VCBarrier.hitAndWait();

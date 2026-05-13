@@ -25,6 +25,14 @@ public class ViewModel {
         this.botBall = board.getEnemyBall();
     }
 
+    public void update(final Board board) {
+        this.smallBalls = board.getBalls();
+        this.humanScore = board.getHumanScore();
+        this.botScore = board.getBotScore();
+        this.humanBall = board.getPlayerBall();
+        this.botBall = board.getEnemyBall();
+    }
+
     // --- GETTER ---
 
     public List<Ball> getSmallBalls() {
