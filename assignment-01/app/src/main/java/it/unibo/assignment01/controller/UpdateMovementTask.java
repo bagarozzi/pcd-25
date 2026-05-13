@@ -22,8 +22,8 @@ public class UpdateMovementTask implements Runnable{
     @Override
     public void run() {
         for (Ball ball : ballBatch) {
-            ball.updateState(timeElapsed, board);
             board.checkHole(ball);
+            ball.updateState(timeElapsed, board);
         }
 
         try {
