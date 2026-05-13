@@ -3,6 +3,7 @@ package it.unibo.assignment01.view;
 import it.unibo.assignment01.controller.Controller;
 import it.unibo.assignment01.controller.MoveCmd;
 import it.unibo.assignment01.model.Ball;
+import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.util.RenderSynch;
 
@@ -134,7 +135,7 @@ public class ViewFrame extends JFrame {
             g2d.drawLine(0, oy, ox * 2, oy); // Linea orizzontale
 
             // 2. Disegna le due buche nere (angoli superiori)
-            int holeRadius = 60;
+            int holeRadius = (int)(BoardImpl.HOLE_RADIUS * delta);
             g2d.setColor(Color.BLACK);
             g2d.fillOval(-holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2); // Buca sx
             g2d.fillOval(ox*2 - holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2); // Buca dx
