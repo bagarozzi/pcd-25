@@ -31,8 +31,6 @@ public class BoardImpl implements Board {
         this.playerBall = new BallImpl(new Position(-0.5, -0.5), new Speed(0, 0), 2.0, 0.07);
         enemyBall = new EnemyBall(new Position(0.5, -0.5), new Speed(0, 0), 2.0, 0.07);
         allBalls = new CopyOnWriteArrayList<>(balls);
-        allBalls.add(playerBall);
-        allBalls.add(enemyBall);
     }
 
 
