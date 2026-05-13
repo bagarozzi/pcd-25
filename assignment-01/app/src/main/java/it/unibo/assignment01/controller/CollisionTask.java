@@ -30,30 +30,35 @@ public class CollisionTask implements Runnable{
 
         for (Map.Entry<Long, List<Ball>> entry : myBatch) {
             for (Ball ball : entry.getValue()) {
-            int cx = grid.getCellX(ball);
-            int cy = grid.getCellY(ball);
-
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-
-                    List<Ball> nearby =
-                            grid.getCell(cx + dx, cy + dy);
-
-                    for (Ball other : nearby) {
-
-                        if (!ball.equals(other)) {
-                            board.resolveCollision(ball, other);;
-                        }
-                    }
-                }
+                resolveNearbyCollisions(ball, grid, board);
             }
-        }
         }
 
         try {
             barrier.hitAndWait();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+
+    public static void resolveNearbyCollisions(Ball ball, SpatialHashGrid grid, Board board) {
+        int cx = grid.getCellX(ball);
+        int cy = grid.getCellY(ball);
+
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+
+                List<Ball> nearby =
+                        grid.getCell(cx + dx, cy + dy);
+
+                for (Ball other : nearby) {
+
+                    if (!ball.equals(other)) {
+                        board.resolveCollision(ball, other);;
+                    }
+                }
+            }
         }
     }
 
