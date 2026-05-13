@@ -57,6 +57,7 @@ public class BoardImpl implements Board {
     
     @Override
     public void checkHole(Ball b) {
+        if(!balls.contains(b)) return;
         if (b.getPos().dist(playerHoles) < HOLE_RADIUS) {
             playerScore++;
             balls.remove(b);
