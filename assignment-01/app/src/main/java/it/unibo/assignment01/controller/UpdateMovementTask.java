@@ -23,6 +23,7 @@ public class UpdateMovementTask implements Runnable{
     public void run() {
         for (Ball ball : ballBatch) {
             ball.updateState(timeElapsed, board);
+            board.checkHole(ball);
         }
 
         try {
