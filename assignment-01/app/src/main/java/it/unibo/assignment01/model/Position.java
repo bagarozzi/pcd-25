@@ -22,8 +22,8 @@ public record Position(double x, double y)  {
     	return y;
     }
 
-    public double dist(Position other) {
-        return Math.hypot(other.x-x, other.y-y);
+    public double squareDist(Position other) {
+        return Math.pow(other.x - x, 2) + Math.pow(other.y - y, 2);
     }
 }
 
