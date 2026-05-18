@@ -49,7 +49,8 @@ public class PoolGameController extends Thread implements Controller {
 		this.collideBarrier = new Barrier(NUM_WORKERS + 1);
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS);
 		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS);
-		this.exec = Executors.newFixedThreadPool(NUM_WORKERS + 1);
+
+		this.exec = Executors.newFixedThreadPool(NUM_WORKERS);
 		vm = new ViewModel(board);
 	}
 
@@ -75,8 +76,12 @@ public class PoolGameController extends Thread implements Controller {
 
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
-
-			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> exec.execute(new UpdateMovementTask(ballBatch, elapsed, board, moveBarrier)));
+			//updateBallBatches();
+			for(int i = 0; i < NUM_WORKERS; i++) {
+				int start = i * board.getAllBall().size() / NUM_WORKERS;
+				int end = (i + 1) * board.getAllBall().size() / NUM_WORKERS;
+				exec.execute(new UpdateMovementTask(board.getAllBall(), start, end, elapsed, board, moveBarrier));
+			}
 			board.getPlayerBall().updateState(elapsed, board);
 			board.getEnemyBall().updateState(elapsed, board);
 
@@ -156,10 +161,8 @@ public class PoolGameController extends Thread implements Controller {
 		for (int i = 0; i < nList; i++) {
 			int start = i * list.size() / nList;
 			int end = (i + 1) * list.size() / nList;
-			res.add(List.copyOf(list.subList(start, end)));
+			res.add(list.subList(start, end));
 		}
-		//System.err.println("Split list of size " + res.size() + nList );
-		//res.stream().forEach(l -> System.err.println(l.size()));
 		return res;
 	}
 
