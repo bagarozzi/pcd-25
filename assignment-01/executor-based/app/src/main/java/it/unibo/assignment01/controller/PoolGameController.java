@@ -153,14 +153,6 @@ public class PoolGameController extends Thread implements Controller {
 		}
 	}
 
-	private void addWorkerTask(Runnable task) {
-		try {
-			queueTask.put(task);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private <T> List<List<T>> splitList(List<T> list, int nList) {
 		List<List<T>> res = new ArrayList<>();
 		for (int i = 0; i < nList; i++) {
