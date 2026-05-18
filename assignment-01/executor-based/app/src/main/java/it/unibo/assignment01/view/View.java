@@ -6,7 +6,6 @@ import javax.swing.SwingUtilities;
 public class View {
 
     private final ViewFrame frame;
-    private Controller controller;
 
     public View(int width, int height) {
         this.frame = new ViewFrame(width, height);
@@ -28,7 +27,6 @@ public class View {
     }
 
     public void setController(Controller controller) {
-        this.controller = controller;
         this.frame.setController(controller);
     }
 
