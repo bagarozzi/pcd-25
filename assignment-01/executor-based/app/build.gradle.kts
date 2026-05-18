@@ -8,6 +8,8 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     application
+    // Shadow plugin for creating fat JAR
+    id("com.gradleup.shadow") version "9.0.0"
 }
 
 repositories {
@@ -16,11 +18,6 @@ repositories {
 }
 
 dependencies {
-    // Use JUnit Jupiter for testing.
-    testImplementation(libs.junit.jupiter)
-
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
     // This dependency is used by the application.
     implementation(libs.guava)
 }
@@ -29,6 +26,21 @@ dependencies {
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes("Main-Class" to "it.unibo.assignment01.Poool")
+    }
+}
+
+tasks.shadowJar {
+    archiveBaseName.set("Poool")
+    archiveClassifier.set("")
+    archiveVersion.set("")
+    manifest {
+        attributes("Main-Class" to "it.unibo.assignment01.Poool")
     }
 }
 

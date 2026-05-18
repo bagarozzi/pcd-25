@@ -1,0 +1,8 @@
+target = it.unibo.assignment01.Poool
+
+classpath=/pcd-jpf/build/classes/java/main
+
+listener=gov.nasa.jpf.listener.PreciseRaceDetector
+
+report.console.property_violation=error,trace
+search.depth_limit=10000
