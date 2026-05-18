@@ -11,6 +11,7 @@ import it.unibo.assignment01.model.Ball;
 public class SpatialHashGrid {
 
     private final double cellSize;
+    private static final List<Ball> EMPTY_LIST = List.of();
 
     private final Map<Long, List<Ball>> grid = new HashMap<>();
 
@@ -39,11 +40,11 @@ public class SpatialHashGrid {
 
         long key = hash(cellX, cellY);
 
-        grid.computeIfAbsent(key, k -> new ArrayList<>()).add(b);
+        grid.computeIfAbsent(key, k -> new ArrayList<>(4)).add(b);
     }
 
     public List<Ball> getCell(int x, int y) {
-        return grid.getOrDefault(hash(x, y), List.of());
+        return grid.getOrDefault(hash(x, y), EMPTY_LIST);
     }
 
     public int getCellX(Ball b) {
