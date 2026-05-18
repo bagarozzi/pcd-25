@@ -1,6 +1,5 @@
 package it.unibo.assignment01.model;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 

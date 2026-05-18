@@ -1,13 +1,8 @@
 package it.unibo.assignment01.view;
 
 import it.unibo.assignment01.controller.Controller;
-import it.unibo.assignment01.controller.MoveCmd;
-import it.unibo.assignment01.controller.PoolGameController;
 
 import javax.swing.SwingUtilities;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-
 public class View {
 
     private final ViewFrame frame;
