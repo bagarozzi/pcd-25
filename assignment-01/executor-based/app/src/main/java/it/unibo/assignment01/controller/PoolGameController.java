@@ -3,6 +3,8 @@ package it.unibo.assignment01.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.BallImpl;
@@ -15,7 +17,6 @@ import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
 import it.unibo.assignment01.view.View;
 import it.unibo.assignment01.view.ViewModel;
-import it.unibo.assignment01.worker.BallWorker;
 
 public class PoolGameController extends Thread implements Controller {
 
@@ -30,7 +31,7 @@ public class PoolGameController extends Thread implements Controller {
 
 	private final BoundedBuffer<Cmd> cmdBuffer;
 	private final BoundedBuffer<Runnable> queueTask;
-	private final List<BallWorker> workers;
+	private final Executor exec;
 	private final SpatialHashGrid bigBallSpatialHashGrid;
 	private final ViewModel vm;
 
@@ -52,12 +53,7 @@ public class PoolGameController extends Thread implements Controller {
 		this.collideBarrier = new Barrier(NUM_WORKERS + 1);
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS);
 		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS);
-		this.workers = new ArrayList<>();
-		for (int i = 0; i < NUM_WORKERS; i++) {
-			var worker = new BallWorker(queueTask, moveBarrier, collideBarrier);
-			this.workers.add(worker);
-			worker.start();
-		}
+		this.exec = Executors.newFixedThreadPool(NUM_WORKERS + 1);
 		vm = new ViewModel(board);
 	}
 
@@ -84,7 +80,7 @@ public class PoolGameController extends Thread implements Controller {
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
 
-			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, moveBarrier)));
+			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> exec.execute(new UpdateMovementTask(ballBatch, elapsed, board, moveBarrier)));
 			board.getPlayerBall().updateState(elapsed, board);
 			board.getEnemyBall().updateState(elapsed, board);
 
@@ -107,7 +103,7 @@ public class PoolGameController extends Thread implements Controller {
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(i, ballBatches.get(i), board, collideBarrier, spatialHashGrid));
+				exec.execute(new CollisionTask(i, ballBatches.get(i), board, collideBarrier, spatialHashGrid));
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);
@@ -131,13 +127,6 @@ public class PoolGameController extends Thread implements Controller {
             // Render the view after calculating how many frames have passed during the calculation
 			vm.update(board);
 			view.update(vm, framePerSec);
-			/*try {
-				VCBarrier.hitAndWait();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}*/
-			
 		}
 
     }
