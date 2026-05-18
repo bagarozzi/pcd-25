@@ -19,8 +19,6 @@ public class BoardImpl implements Board {
     private Ball playerBall;
     private Ball enemyBall;
     private List<Ball> allBalls;
-    private Position playerHoles = new Position(X0,Y1);
-    private Position enemyHoles = new Position(X1,Y1);
     private CollisionDetector collisionDetector;
     
 
@@ -62,7 +60,7 @@ public class BoardImpl implements Board {
             balls.remove(b);
         } else if (b.getPos().x() > X1 - HOLE_RADIUS && b.getPos().y() > Y1 - HOLE_RADIUS) {
             enemyScore++;
-            balls.remove(b);//TODO check if this is correct
+            balls.remove(b);
         }
     }
 
