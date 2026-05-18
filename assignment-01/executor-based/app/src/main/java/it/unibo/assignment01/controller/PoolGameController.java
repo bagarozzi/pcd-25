@@ -21,7 +21,6 @@ import it.unibo.assignment01.view.ViewModel;
 public class PoolGameController extends Thread implements Controller {
 
 	private final View view;
-	private final Barrier VCBarrier;
 
 	private Barrier moveBarrier;
 	private Barrier collideBarrier;
@@ -41,9 +40,8 @@ public class PoolGameController extends Thread implements Controller {
 	private static final int LEFT = 2;
 	private static final int RIGHT = 3;
 
-	public PoolGameController(final View view, final Barrier VCBarrier) {
+	public PoolGameController(final View view) {
 		this.view = view;
-		this.VCBarrier = VCBarrier;
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
