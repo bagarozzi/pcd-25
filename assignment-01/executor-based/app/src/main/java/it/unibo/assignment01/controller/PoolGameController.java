@@ -29,7 +29,6 @@ public class PoolGameController extends Thread implements Controller {
 	private SpatialHashGrid spatialHashGrid;
 
 	private final BoundedBuffer<Cmd> cmdBuffer;
-	private final BoundedBuffer<Runnable> queueTask;
 	private final Executor exec;
 	private final SpatialHashGrid bigBallSpatialHashGrid;
 	private final ViewModel vm;
@@ -45,7 +44,6 @@ public class PoolGameController extends Thread implements Controller {
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
-		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.moveBarrier = new Barrier(NUM_WORKERS + 1);
 		this.collideBarrier = new Barrier(NUM_WORKERS + 1);
@@ -101,7 +99,7 @@ public class PoolGameController extends Thread implements Controller {
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				exec.execute(new CollisionTask(i, ballBatches.get(i), board, collideBarrier, spatialHashGrid));
+				exec.execute(new CollisionTask(ballBatches.get(i), board, collideBarrier, spatialHashGrid));
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);

@@ -12,14 +12,12 @@ public class CollisionTask implements Runnable{
 
     private Board board;
     private List<Map.Entry<Long, List<Ball>>> myBatch;
-    private int batchIndex;
     private Barrier barrier;
     private SpatialHashGrid grid;
 
-    public CollisionTask(int batchIndex, List<Map.Entry<Long, List<Ball>>> myBatch, Board board, Barrier barrier, SpatialHashGrid grid){
+    public CollisionTask(List<Map.Entry<Long, List<Ball>>> myBatch, Board board, Barrier barrier, SpatialHashGrid grid){
         this.board = board;
         this.myBatch = myBatch;
-        this.batchIndex = batchIndex;
         this.barrier = barrier;
         this.grid = grid;
     }
