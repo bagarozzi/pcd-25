@@ -26,20 +26,26 @@ public class SpatialHashGrid {
         // Morton code (Z-order curve) for better 2D spatial locality
         long result = 0;
         for (int i = 0; i < 32; i++) {
-            result |= ((long)((x >> i) & 1) << (2 * i));
-            result |= ((long)((y >> i) & 1) << (2 * i + 1));
+            result |= ((long) ((x >> i) & 1) << (2 * i));
+            result |= ((long) ((y >> i) & 1) << (2 * i + 1));
         }
         return result;
     }
 
     public void insert(Ball b) {
 
-        int cellX = (int)Math.floor(b.getPos().x() / cellSize);
-        int cellY = (int)Math.floor(b.getPos().y() / cellSize);
+        int cellX = (int) Math.floor(b.getPos().x() / cellSize);
+        int cellY = (int) Math.floor(b.getPos().y() / cellSize);
 
         long key = hash(cellX, cellY);
+        List<Ball> cell = grid.get(key);
 
-        grid.computeIfAbsent(key, k -> new ArrayList<>()).add(b);
+        if (cell == null) {
+            cell = new ArrayList<>();
+            grid.put(key, cell);
+        }
+
+        cell.add(b);
     }
 
     public List<Ball> getCell(int x, int y) {
@@ -47,11 +53,11 @@ public class SpatialHashGrid {
     }
 
     public int getCellX(Ball b) {
-        return (int)Math.floor(b.getPos().x() / cellSize);
+        return (int) Math.floor(b.getPos().x() / cellSize);
     }
 
     public int getCellY(Ball b) {
-        return (int)Math.floor(b.getPos().y() / cellSize);
+        return (int) Math.floor(b.getPos().y() / cellSize);
     }
 
     public Set<Map.Entry<Long, List<Ball>>> getCells() {
