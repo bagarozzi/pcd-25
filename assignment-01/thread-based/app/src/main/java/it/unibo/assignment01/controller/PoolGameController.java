@@ -50,7 +50,7 @@ public class PoolGameController extends Thread implements Controller {
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.moveBarrier = new Barrier(NUM_WORKERS + 1);
 		this.collideBarrier = new Barrier(NUM_WORKERS + 1);
-		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS*2);
+		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * 1.6);
 		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
