@@ -1,6 +1,21 @@
 package it.unibo.assignment01.model;
 
-public record Speed(double x, double y)  {
+public class Speed {
+    private double x;
+    private double y;
+
+    public Speed(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public double x() {
+        return x;
+    }
+
+    public double y() {
+        return y;
+    }
 
     public Speed sum(Speed v){
         return new Speed(x+v.x,y+v.y);
