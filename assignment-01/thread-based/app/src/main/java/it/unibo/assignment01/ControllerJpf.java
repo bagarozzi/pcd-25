@@ -25,7 +25,7 @@ public class ControllerJpf extends Thread implements Controller {
 
 	private Barrier moveBarrier;
 	private Barrier collideBarrier;
-	private final int NUM_WORKERS;
+	private final int NUM_WORKERS = 2;
 	private Board board;
 	private SpatialHashGrid spatialHashGrid;
 
@@ -35,9 +35,8 @@ public class ControllerJpf extends Thread implements Controller {
 	private final SpatialHashGrid bigBallSpatialHashGrid;
 
 	public ControllerJpf() {
-		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
-		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
+		this.board = new BoardImpl(createBalls(10, 10), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.moveBarrier = new Barrier(NUM_WORKERS + 1);
@@ -59,7 +58,7 @@ public class ControllerJpf extends Thread implements Controller {
 		// For enemy player movement
 		//var pb = board.getPlayerBall();
 
-		while (true){
+		for(int j=0; j<5; j++){
 
 			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
@@ -102,6 +101,9 @@ public class ControllerJpf extends Thread implements Controller {
 			 	e.printStackTrace();
 			}
 		}
+        for(BallWorker w : workers) {
+            addWorkerTask(() -> Thread.currentThread().interrupt());
+        }
 
     }
 
