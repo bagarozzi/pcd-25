@@ -1,29 +1,36 @@
 package it.unibo.assignment01.model;
 
-public record Position(double x, double y)  {
+public class Position {
+    double x;
+    double y;
+
+    public Position(double x, double y){
+        this.x = x;
+        this.y = y;
+    }
 
     public Position sum(Speed v){
-        return new Position(x+v.x(),y+v.y());
+        return new Position(this.x+v.x(), this.y+v.y());
     }
 
     public Speed sub(Position v){
-        return new Speed(x-v.x(),y-v.y());
+        return new Speed(this.x-v.x(), this.y-v.y());
     }
     
     public String toString(){
-        return "P2d("+x+","+y+")";
+        return "P2d(" + this.x + "," + this.y +")";
     }
 
     public double x() {
-    	return x;
+    	return this.x;
     }
 
     public double y() {
-    	return y;
+    	return this.y;
     }
 
     public double squareDist(Position other) {
-        return Math.pow(other.x - x, 2) + Math.pow(other.y - y, 2);
+        return Math.pow(other.x - this.x, 2) + Math.pow(other.y - this.y, 2);
     }
 }
 
