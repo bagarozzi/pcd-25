@@ -1,17 +1,13 @@
 package it.unibo.assignment01.view;
 
 import it.unibo.assignment01.controller.Controller;
-import it.unibo.assignment01.controller.MoveCmd;
-import it.unibo.assignment01.controller.PoolGameController;
 
 import javax.swing.SwingUtilities;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+
 
 public class View {
 
     private final ViewFrame frame;
-    private Controller controller;
 
     public View(int width, int height) {
         this.frame = new ViewFrame(width, height);
@@ -33,7 +29,6 @@ public class View {
     }
 
     public void setController(Controller controller) {
-        this.controller = controller;
         this.frame.setController(controller);
     }
 

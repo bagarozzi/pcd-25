@@ -2,7 +2,6 @@ package it.unibo.assignment01.view;
 
 import it.unibo.assignment01.controller.Controller;
 
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 public class View {
 

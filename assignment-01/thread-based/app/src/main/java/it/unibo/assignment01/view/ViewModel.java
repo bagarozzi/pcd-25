@@ -2,8 +2,6 @@ package it.unibo.assignment01.view;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
-import it.unibo.assignment01.model.Position;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ViewModel {

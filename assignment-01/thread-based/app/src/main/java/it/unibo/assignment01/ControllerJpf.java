@@ -36,7 +36,7 @@ public class ControllerJpf extends Thread implements Controller {
 
 	public ControllerJpf() {
 
-		this.board = new BoardImpl(createBalls(10, 10), new SimpleCollisionDetector());
+		this.board = new BoardImpl(createBalls(1, 2), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.moveBarrier = new Barrier(NUM_WORKERS + 1);
@@ -58,7 +58,7 @@ public class ControllerJpf extends Thread implements Controller {
 		// For enemy player movement
 		//var pb = board.getPlayerBall();
 
-		for(int j=0; j<5; j++){
+		for(int j=0; j<1; j++){
 
 			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
@@ -67,8 +67,6 @@ public class ControllerJpf extends Thread implements Controller {
 			bigBallSpatialHashGrid.clear();
 
 			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, moveBarrier)));
-			board.getPlayerBall().updateState(elapsed, board);
-			board.getEnemyBall().updateState(elapsed, board);
 
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
@@ -89,7 +87,7 @@ public class ControllerJpf extends Thread implements Controller {
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(i, ballBatches.get(i), board, collideBarrier, spatialHashGrid));
+				addWorkerTask(new CollisionTask(ballBatches.get(i), board, collideBarrier, spatialHashGrid));
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);

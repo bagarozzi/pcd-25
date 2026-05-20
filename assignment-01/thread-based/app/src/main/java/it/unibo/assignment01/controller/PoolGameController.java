@@ -21,7 +21,6 @@ public class PoolGameController extends Thread implements Controller {
 
 	private static final double MULTIPY_FACTOR_FOR_RADIOUS = 1.6;
 	private final View view;
-	private final Barrier VCBarrier;
 
 	private Barrier moveBarrier;
 	private Barrier collideBarrier;
@@ -43,7 +42,6 @@ public class PoolGameController extends Thread implements Controller {
 
 	public PoolGameController(final View view, final Barrier VCBarrier) {
 		this.view = view;
-		this.VCBarrier = VCBarrier;
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
@@ -106,7 +104,7 @@ public class PoolGameController extends Thread implements Controller {
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(i, ballBatches.get(i), board, collideBarrier, spatialHashGrid));
+				addWorkerTask(new CollisionTask(ballBatches.get(i), board, collideBarrier, spatialHashGrid));
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			bigBallSpatialHashGrid.insert(board.getPlayerBall());
@@ -134,7 +132,7 @@ public class PoolGameController extends Thread implements Controller {
 			/*try {
 				VCBarrier.hitAndWait();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
+				 
 				e.printStackTrace();
 			}*/
 		}

@@ -1,6 +1,5 @@
 package it.unibo.assignment01.model;
 
-import java.util.List;
 
 public class SimpleCollisionDetector implements CollisionDetector {
     private static double RESTITUTION_FACTOR = 1; 

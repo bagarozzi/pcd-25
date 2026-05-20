@@ -1,10 +1,6 @@
 package it.unibo.assignment01.worker;
 
-import java.util.List;
-import java.util.function.Consumer;
-
 import it.unibo.assignment01.controller.Barrier;
-import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.util.BoundedBuffer;
 
 /**
@@ -15,13 +11,9 @@ import it.unibo.assignment01.util.BoundedBuffer;
 public class BallWorker extends Thread {
     
     private final BoundedBuffer<Runnable> queueTask; 
-    private final Barrier barrier;
-    private final Barrier collideBarrier;
 
     public BallWorker(final BoundedBuffer<Runnable> queueTask, final Barrier barrier, Barrier collideBarrier) {
         this.queueTask = queueTask;
-        this.barrier = barrier;
-        this.collideBarrier = collideBarrier;
     }
 
     @Override
