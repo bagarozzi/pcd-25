@@ -1,18 +1,29 @@
 package it.unibo.assignment01.view;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.util.List;
+import java.util.Optional;
+
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
 import it.unibo.assignment01.controller.Controller;
 import it.unibo.assignment01.controller.MoveCmd;
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.util.RenderSynch;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.List;
-import java.util.Optional;
 
 public class ViewFrame extends JFrame {
 
@@ -55,6 +66,11 @@ public class ViewFrame extends JFrame {
         private final int delta;
         private long fps = 0;
         
+        // Double-buffering
+        private BufferedImage backBuffer;
+        private BufferedImage frontBuffer;
+        private final Object bufferLock = new Object();
+        
         // Key state tracking - more efficient than Set
         private volatile boolean[] keys = new boolean[4];
         private static final int UP = 0;
@@ -67,7 +83,12 @@ public class ViewFrame extends JFrame {
             ox = w/2;
             oy = h/2;
             delta = Math.min(ox, oy);
-            setBackground(Color.WHITE); // Sfondo bianco
+            setBackground(Color.WHITE);
+            
+            // Initialize buffers
+            backBuffer = new BufferedImage(w, h + 25, BufferedImage.TYPE_INT_RGB);
+            frontBuffer = new BufferedImage(w, h + 25, BufferedImage.TYPE_INT_RGB);
+            
             this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -126,69 +147,99 @@ public class ViewFrame extends JFrame {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            Graphics2D g2d = (Graphics2D) g;
+            
+            // Render to back buffer
+            renderToBuffer();
+            
+            // Swap buffers
+            swapBuffers();
+            
+            // Draw front buffer to screen
+            synchronized(bufferLock) {
+                g.drawImage(frontBuffer, 0, 0, this);
+            }
+        }
+        
+        private void renderToBuffer() {
+            Graphics2D g2d = backBuffer.createGraphics();
+            
+            try {
+                // Set rendering hints for quality
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                
+                // Clear buffer with white background
+                g2d.setColor(Color.WHITE);
+                g2d.fillRect(0, 0, backBuffer.getWidth(), backBuffer.getHeight());
+                
+                // 1. Draw cross grid (light gray thin lines)
+                g2d.setColor(Color.LIGHT_GRAY);
+                g2d.setStroke(new BasicStroke(1));
+                g2d.drawLine(ox, 0, ox, oy * 2); // Vertical line
+                g2d.drawLine(0, oy, ox * 2, oy); // Horizontal line
 
-            // Antialiasing per curve morbide
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            // 1. Disegna la griglia a croce (linee grigie sottili)
-            g2d.setColor(Color.LIGHT_GRAY);
-            g2d.setStroke(new BasicStroke(1));
-            g2d.drawLine(ox, 0, ox, oy * 2); // Linea verticale
-            g2d.drawLine(0, oy, ox * 2, oy); // Linea orizzontale
+                // 2. Draw two black holes (top corners)
+                int holeRadius = (int)(BoardImpl.HOLE_RADIUS * delta);
+                g2d.setColor(Color.BLACK);
+                g2d.fillOval(-holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2);
+                g2d.fillOval(ox*2 - holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2);
 
-            // 2. Disegna le due buche nere (angoli superiori)
-            int holeRadius = (int)(BoardImpl.HOLE_RADIUS * delta);
-            g2d.setColor(Color.BLACK);
-            g2d.fillOval(-holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2); // Buca sx
-            g2d.fillOval(ox*2 - holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2); // Buca dx
+                if (viewModel == null) return;
 
-            if (viewModel == null) return;
+                // 3. Draw Scores (large, blue, in lower quadrants)
+                g2d.setColor(Color.BLUE);
+                g2d.setFont(new Font("SansSerif", Font.PLAIN, 120));
+                FontMetrics fmScores = g2d.getFontMetrics();
 
-            // 3. Disegna i Punteggi (Grandi, blu, nei quadranti inferiori)
-            g2d.setColor(Color.BLUE);
-            g2d.setFont(new Font("SansSerif", Font.PLAIN, 120));
-            FontMetrics fmScores = g2d.getFontMetrics();
+                String humanScoreStr = String.valueOf(viewModel.getHumanScore());
+                String botScoreStr = String.valueOf(viewModel.getBotScore());
 
-            String humanScoreStr = String.valueOf(viewModel.getHumanScore());
-            String botScoreStr = String.valueOf(viewModel.getBotScore());
+                int hScoreX = (ox / 2) - (fmScores.stringWidth(humanScoreStr) / 2);
+                int bScoreX = (ox * 3 / 2) - (fmScores.stringWidth(botScoreStr) / 2);
+                int scoreY = oy * 3 / 2;
 
-            // Posiziona i punteggi a 1/4 e 3/4 della larghezza, a circa 3/4 dell'altezza
-            int hScoreX = (ox / 2) - (fmScores.stringWidth(humanScoreStr) / 2);
-            int bScoreX = (ox * 3 / 2) - (fmScores.stringWidth(botScoreStr) / 2);
-            int scoreY = oy * 3 / 2;
+                g2d.drawString(humanScoreStr, hScoreX, scoreY);
+                g2d.drawString(botScoreStr, bScoreX, scoreY);
 
-            g2d.drawString(humanScoreStr, hScoreX, scoreY);
-            g2d.drawString(botScoreStr, bScoreX, scoreY);
-
-            // 4. Disegna le migliaia di Palline Piccole (bianche con bordo nero)
-            List<Ball> smallBalls = viewModel.getSmallBalls();
-            if (smallBalls != null) {
-                for (Ball ball : smallBalls) {
-                    drawBall(g2d, ball, new BasicStroke(1), Optional.empty(), Optional.empty());
+                // 4. Draw small balls (white with black border)
+                List<Ball> smallBalls = viewModel.getSmallBalls();
+                if (smallBalls != null) {
+                    for (Ball ball : smallBalls) {
+                        drawBall(g2d, ball, new BasicStroke(1), Optional.empty(), Optional.empty());
+                    }
                 }
+
+                // 5. Draw player balls (H and B)
+                g2d.setFont(new Font("SansSerif", Font.BOLD, 14));
+                FontMetrics fmPlayers = g2d.getFontMetrics();
+
+                // Draw H (Human)
+                Ball humanBall = viewModel.getHumanBall();
+                if (humanBall != null) {
+                    drawBall(g2d, humanBall, new BasicStroke(3), Optional.of("H"), Optional.of(fmPlayers));
+                }
+
+                // Draw B (Bot)
+                Ball botBall = viewModel.getBotBall();
+                if (botBall != null) {
+                    drawBall(g2d, botBall, new BasicStroke(3), Optional.of("B"), Optional.of(fmPlayers));
+                }
+
+                g2d.drawString("Balls remaining: " + viewModel.getSmallBalls().size(), 15, oy*2 - 40);
+                g2d.drawString("FPS: " + fps, ox, 30);
+
+                sync.notifyFrameRendered();
+            } finally {
+                g2d.dispose();
             }
-
-            // 5. Disegna le Palline dei Giocatori (H e B)
-            g2d.setFont(new Font("SansSerif", Font.BOLD, 14));
-            FontMetrics fmPlayers = g2d.getFontMetrics();
-
-            // Disegna H (Human)
-            Ball humanBall = viewModel.getHumanBall();
-            if (humanBall != null) {
-                drawBall(g2d, humanBall, new BasicStroke(3), Optional.of("H"), Optional.of(fmPlayers));
+        }
+        
+        private void swapBuffers() {
+            synchronized(bufferLock) {
+                BufferedImage temp = frontBuffer;
+                frontBuffer = backBuffer;
+                backBuffer = temp;
             }
-
-            // Disegna B (Bot)
-            Ball botBall = viewModel.getBotBall();
-            if (botBall != null) {
-                drawBall(g2d, botBall, new BasicStroke(3), Optional.of("B"), Optional.of(fmPlayers));
-            }
-
-            g2d.drawString("Balls remaining: " + viewModel.getSmallBalls().size(), 15, oy*2 - 40);
-            g2d.drawString("FPS: " + fps, ox, 30);
-
-            sync.notifyFrameRendered();
         }
 
         private void drawBall(Graphics2D g2d, Ball ball, Stroke s, Optional<String> text, Optional<FontMetrics> fm) {
