@@ -106,7 +106,11 @@ public class BoardImpl implements Board {
 
     @Override
     public boolean emptyBoard() {
-        return balls.isEmpty();
+        if(balls.isEmpty()){
+            winner = playerScore > enemyScore ? "You are the winner!" : "Enemy is the winner!";
+            return true;
+        }
+        return false;
     }
 
     private void endGame() {
