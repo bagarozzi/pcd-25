@@ -2,6 +2,7 @@ package it.unibo.assignment01.view;
 
 import it.unibo.assignment01.controller.Controller;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 public class View {
 
@@ -34,4 +35,7 @@ public class View {
         return frame.getPanel().getPressedKeys();
     }
 
+    public void showEndGame(String winner) {
+        frame.showEndGame(winner);
+    }
 }

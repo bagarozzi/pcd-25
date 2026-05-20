@@ -63,7 +63,7 @@ public class PoolGameController extends Thread implements Controller {
 		// For enemy player movement
 		//var pb = board.getPlayerBall();
 
-		while (true){
+		while (!board.endedGame()){
 
 			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
@@ -129,6 +129,7 @@ public class PoolGameController extends Thread implements Controller {
 			vm.update(board);
 			view.update(vm, framePerSec);
 		}
+		view.showEndGame(board.getWinner());
 
     }
 

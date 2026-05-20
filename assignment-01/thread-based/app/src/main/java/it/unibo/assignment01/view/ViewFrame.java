@@ -45,6 +45,10 @@ public class ViewFrame extends JFrame {
         return panel;
     }
 
+    public void showEndGame(String winner) {
+        JOptionPane.showMessageDialog(this, "Game Over! " + winner);
+    }
+
     public class PooolPanel extends JPanel {
         private ViewModel viewModel;
         private final int ox;
@@ -220,9 +224,5 @@ public class ViewFrame extends JFrame {
             }
         }
 
-    }
-
-    public void showEndGame(String winner) {
-        JOptionPane.showMessageDialog(this, "Game Over! " + winner);
     }
 }

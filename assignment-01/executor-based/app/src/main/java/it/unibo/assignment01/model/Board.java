@@ -21,4 +21,10 @@ public interface Board {
     public void resolveCollision(Ball a, Ball b);
 
     public List<Ball> getAllBall();
+
+    public boolean emptyBoard();
+
+    public boolean endedGame();
+
+    public String getWinner();
 }
