@@ -1,0 +1,114 @@
+\documentclass{scrartcl}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{cleveref} % this must be the last package to be loaded
+
+\title{\LARGE
+  Assignment 1: Poool
+}
+\subtitle{Concurrent and Distributed Programming\\a.y. 2025-2026}
+
+% Consider watching:
+% https://www.youtube.com/watch?v=ihxSUsJB_14
+% https://www.youtube.com/watch?v=XTFWaV55uDo
+
+\author{
+    Bagattoni Federico \and Sbaraccani Pietro \and Venturini Luca
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Analysis}
+\subsection{General requirements}
+It is requested to develop a game of pool where players control a ball and fight to
+score points by pushing other, smaller, balls inside of the corner holes. 
+
+One ball must be controlled by the player and the other controlled by the computer. At the
+end of the game, the player with the most points wins.
+
+It is required to develop two solutions: one using default Java multithread programming
+and one using the Java Executor Framework. It is also necessary to use high-level constructs
+such as \textbf{monitors} to manage concurrency.
+
+\subsection{Analysis of the sequential solution}
+The sequential solution, available as \texttt{sketch01}, when run with large
+quantities of balls, is not efficient because at every update,
+the single thread running the loop has to cycle multiple times throught every
+game object to calculate collisions and update movements.
+The the loop has to wait for the view to render the frame with the new update,
+resulting in a performance of about less than $\sim$20 frames per second (FPS).
+
+A solution adopting concurrent programming could take advantage of all
+the available cores of the machine thus improving calculations speed.
+Also, the collisions calculations and the view's rendering could be 
+approached in a more efficient way.
+\subsection{Analysis of the problem}
+\label{analysis:prob}
+The critical tasks identified are:
+\begin{itemize}
+    \item \textbf{movement calculations}: every ball must be moved in a new position according
+        to its current speed
+    \item \textbf{collision calculations}: every ball colliding with other balls must change
+        direction and speed accordingly
+    \item \textbf{frame rendering}: the updated game state is passed to the view that renders it.
+        It's important to wait for the complete rendering of the frame before the next update.
+\end{itemize}
+
+\section{Design}
+\subsection{Architecture}
+The architecture adopted is the \textbf{Model-View-Controller}. The controller is composed
+of all the threads needed for the computation, in a \textbf{master-worker} architecture
+where the control loop, a thread itself, acts as master towards the other threads
+synchronisiting their actions and giving them tasks to execute.
+\subsection{Components}
+The \textbf{active components} needed are threads that will execute work on behalf 
+of the controller. These components include also the thread rendering the view, in
+the Java implementation known as the Event Dispatcher Thread.
+
+The \textbf{passive components} needed are:
+\begin{itemize}
+    \item data structures that have to be shared between the threads,
+        implemented as monitors
+    \item barriers, to synchronize the threads' (master and workers) activities during 
+        the calculation phases 
+\end{itemize}
+
+\subsection{Modeling}
+The tasks mentionted in the section \ref{analysis:prob} are modeled as runnable functions
+so that the master can send them to the worker who will execute them.
+
+The barriers, one for each computational task, are modeled with objects exposing a
+\texttt{hit()} method so that the active components can hit it once their work is done.
+A barrier between the View and the Controller is also necessary but implemented so that
+the call to update the view blocks the controller until the frame is painted.
+
+Each ball is modeled as a monitor to prevent races during the collisions calculation.
+
+The class that contains all the balls, the Board, is modeled itself as monitor to ensure
+that there's not critical races when the workers are operating on it.
+
+Other domain entities that do not participate on concurrent activities
+such as speed, position and boundary are implemented according to their
+specifications.
+
+\section{Implementation}
+For both versions it has been decided to create as many threads as the available 
+cores to exploit all the system's resources. In fact creating a larger number 
+of threads would mean more context switching and it would prove damaging to
+performance.
+
+
+
+\section{Verification}
+
+\end{document}
