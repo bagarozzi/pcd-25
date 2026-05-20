@@ -29,8 +29,8 @@ public class Position {
     	return this.y;
     }
 
-    public double squareDist(Position other) {
-        return Math.pow(other.x - this.x, 2) + Math.pow(other.y - this.y, 2);
+    public double dist(Position other) {
+        return Math.sqrt(Math.pow(other.x - x, 2) + Math.pow(other.y - y, 2));
     }
 }
 

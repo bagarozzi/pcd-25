@@ -9,7 +9,7 @@ public class BoardImpl implements Board {
     private static final double X1 = 1.5;
     private static final double Y0 = -1.0;
     private static final double X0 = -1.5;
-    
+
     public static final double HOLE_RADIUS = 0.2;
 
     private int playerScore = 0;
@@ -19,20 +19,22 @@ public class BoardImpl implements Board {
     private Ball playerBall;
     private Ball enemyBall;
     private List<Ball> allBalls;
-    private Position playerHoles = new Position(X0,Y1);
-    private Position enemyHoles = new Position(X1,Y1);
+    private Position playerHoles = new Position(X0, Y1);
+    private Position enemyHoles = new Position(X1, Y1);
     private CollisionDetector collisionDetector;
-    
+    private boolean gameEnded = false;
+    private String winner;
 
     public BoardImpl(List<Ball> balls, CollisionDetector collisionDetector) {
-        this.bounds = new Boundary(X0,Y0,X1,Y1);
+        this.bounds = new Boundary(X0, Y0, X1, Y1);
         this.balls = new CopyOnWriteArrayList<>(balls);
         this.collisionDetector = collisionDetector;
         this.playerBall = new BallImpl(new Position(-0.5, -0.5), new Speed(0, 0), 2.0, 0.07);
         enemyBall = new EnemyBall(new Position(0.5, -0.5), new Speed(0, 0), 2.0, 0.07);
         allBalls = new CopyOnWriteArrayList<>(balls);
+        allBalls.add(playerBall);
+        allBalls.add(enemyBall);
     }
-
 
     @Override
     public List<Ball> getBalls() {
@@ -53,17 +55,33 @@ public class BoardImpl implements Board {
     public Boundary getBounds() {
         return bounds;
     }
-    
+
     @Override
     public void checkHole(Ball b) {
-        if(!balls.contains(b)) return;
-        if (b.getPos().x() < X0 + HOLE_RADIUS && b.getPos().y() > Y1 - HOLE_RADIUS) {
-            playerScore++;
-            balls.remove(b);
-        } else if (b.getPos().x() > X1 - HOLE_RADIUS && b.getPos().y() > Y1 - HOLE_RADIUS) {
-            enemyScore++;
-            balls.remove(b);//TODO check if this is correct
+        if(balls.contains(b)){
+            if (inTheHole(b, playerHoles)) {
+                playerScore++;
+                b.setPos(new Position(-100, -100));
+                balls.remove(b);
+            } else if (inTheHole(b, enemyHoles)) {
+                enemyScore++;
+                balls.remove(b);
+            }
+        }else if(b.equals(playerBall)){
+            if (inTheHole(b, enemyHoles) || inTheHole(b, playerHoles)) {
+                endGame();
+                this.winner = "Enemy is the winner!";
+            }
+        }else if(b.equals(enemyBall)){
+            if (inTheHole(b, enemyHoles) || inTheHole(b, playerHoles)) {
+                endGame();
+                this.winner = "You are the winner!";
+            }
         }
+    }
+
+    private boolean inTheHole(Ball b, Position hole) {
+        return b.getPos().dist(hole) < HOLE_RADIUS;
     }
 
     @Override
@@ -71,12 +89,10 @@ public class BoardImpl implements Board {
         collisionDetector.resolveCollision(a, b);
     }
 
-
     @Override
     public int getHumanScore() {
         return playerScore;
     }
-
 
     @Override
     public int getBotScore() {
@@ -88,5 +104,22 @@ public class BoardImpl implements Board {
         return allBalls;
     }
 
+    @Override
+    public boolean emptyBoard() {
+        return balls.isEmpty();
+    }
 
+    private void endGame() {
+        this.gameEnded = true;
+    }
+
+    @Override
+    public boolean endedGame() {
+        return emptyBoard() || gameEnded;
+    }
+
+    @Override
+    public String getWinner() {
+        return winner;
+    }
 }

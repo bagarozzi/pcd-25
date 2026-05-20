@@ -41,4 +41,8 @@ public class View {
         return frame.getPanel().getPressedKeys();
     }
 
+    public void showEndGame(String winner) {
+        frame.showEndGame(winner);
+    }
+
 }

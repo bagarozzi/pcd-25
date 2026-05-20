@@ -19,6 +19,7 @@ import it.unibo.assignment01.worker.BallWorker;
 
 public class PoolGameController extends Thread implements Controller {
 
+	private static final double MULTIPY_FACTOR_FOR_RADIOUS = 1.6;
 	private final View view;
 	private final Barrier VCBarrier;
 
@@ -50,8 +51,8 @@ public class PoolGameController extends Thread implements Controller {
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.moveBarrier = new Barrier(NUM_WORKERS + 1);
 		this.collideBarrier = new Barrier(NUM_WORKERS + 1);
-		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * 1.6);
-		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS);
+		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * MULTIPY_FACTOR_FOR_RADIOUS);
+		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS * 1.6);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
 			var worker = new BallWorker(queueTask, moveBarrier, collideBarrier);
@@ -70,7 +71,7 @@ public class PoolGameController extends Thread implements Controller {
 		// For enemy player movement
 		//var pb = board.getPlayerBall();
 
-		while (true){
+		while(!board.endedGame()){
 
 			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
@@ -85,8 +86,6 @@ public class PoolGameController extends Thread implements Controller {
 
 
 			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, moveBarrier)));
-			board.getPlayerBall().updateState(elapsed, board);
-			board.getEnemyBall().updateState(elapsed, board);
 
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
@@ -97,7 +96,7 @@ public class PoolGameController extends Thread implements Controller {
 				e.printStackTrace();
 			}
 			
-			for (Ball ball : board.getAllBall()) {
+			for (Ball ball : board.getBalls()) {
 				spatialHashGrid.insert(ball);
 				bigBallSpatialHashGrid.insert(ball);
 			}
@@ -110,6 +109,7 @@ public class PoolGameController extends Thread implements Controller {
 				addWorkerTask(new CollisionTask(i, ballBatches.get(i), board, collideBarrier, spatialHashGrid));
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
+			bigBallSpatialHashGrid.insert(board.getPlayerBall());
 			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);
 			// Maybe another hitAndWait()...
 			try {
@@ -137,9 +137,11 @@ public class PoolGameController extends Thread implements Controller {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}*/
-			
 		}
-
+		view.showEndGame(board.getWinner());
+		for(BallWorker w : workers) {
+            addWorkerTask(() -> Thread.currentThread().interrupt());
+        }
     }
 
 	public void notifyCommand(Cmd cmd) {

@@ -221,4 +221,8 @@ public class ViewFrame extends JFrame {
         }
 
     }
+
+    public void showEndGame(String winner) {
+        JOptionPane.showMessageDialog(this, "Game Over! " + winner);
+    }
 }
