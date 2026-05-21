@@ -22,7 +22,7 @@
 \draw[arc](work3) to  (task done);
 \draw[arc](worker idle2) to  (task assigned);
 \draw[arc](worker idle3) to  (task assigned);
-\draw[arc](task created) to  (4.84,4.46) to (task assigned);
+\draw[arc](task created) to  (4.84,4.46) to node[above, pos=0.5]{3} (task assigned);
 \draw[arc](task done) to  (4.82,1.71) to (output produced);
 \draw[arc](task done) to  (10,1.74) to (10,5.4) to (worker idle3);
 \draw[arc](task done) to  (10,1.74) to (10,5.91) to (6.87,5.91) to (worker idle2);
