@@ -7,6 +7,28 @@
 \usepackage{float}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{petri, arrows.meta}
+\tikzset {
+	arc/.style={
+		arrows={-Stealth[scale=1.25]},
+		thick,
+		rounded corners=.5cm
+	},
+	place/.style={
+		circle,
+		very thick,
+		draw=black,fill=black!5,
+		minimum size=10mm
+	},
+	transition/.style={
+		rectangle,
+		thick,
+		draw=black, fill=black!75,
+		minimum width=4mm,
+		minimum height=10mm
+	}
+}
 \usepackage{cleveref} % this must be the last package to be loaded
 
 \title{\LARGE
@@ -74,11 +96,21 @@ The architecture adopted is the \textbf{Model-View-Controller}. The controller i
 of all the threads needed for the computation, in a \textbf{master-worker} architecture
 where the control loop, a thread itself, acts as master towards the other threads
 synchronisiting their actions and giving them tasks to execute.
+
+PETRI NET ARCHITECTURE!!!
+
+
 \subsection{Components}
 \label{sec:comp}
 The \textbf{active components} needed are threads that will execute work on behalf 
 of the controller. These components include also the thread rendering the view, in
 the Java implementation known as the Event Dispatcher Thread.
+
+\begin{figure}[H]
+    \input{./figures/petri/workers-petri.tikz}
+    \label{fig:workers-petri}
+    \caption{Petri diagram of the workers receiving and computing tasks}
+\end{figure}
 
 The \textbf{passive components} needed are:
 \begin{itemize}
@@ -134,5 +166,8 @@ the adjacient cells of each ball.
 \section{Verification}
 
 \section{Conclusion}
+\textbf{TODO:} mention other better data structure to hold the balls such as a QuadTree,
+mention a better approach in which the view requests updates to the controller at every frame.
+
 
 \end{document}
