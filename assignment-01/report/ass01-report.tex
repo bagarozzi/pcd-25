@@ -120,6 +120,10 @@ The \textbf{passive components} needed are:
         the calculation phases 
 \end{itemize}
 
+Figure \ref{fig:workers-petri} explains how three workers (they could be more) receive
+tasks from a shared buffer and complete them; the transition '\textit{task done}' serves
+as barrier so that the work is completed at once.
+
 \subsection{Modeling}
 The components mentioned in section \ref{sec:comp} and section \ref{analysis:prob} are modeled as follows:
 \begin{itemize}
@@ -146,6 +150,10 @@ For both versions it has been decided to create as many threads as the available
 cores to exploit all the system's resources, to keep the CPU busy.
 In fact creating a larger number of threads would mean more context switching
 and it would prove damaging to performance.
+
+The tasks are implemented as \texttt{Java.Runnable} classes and passed to
+the workers throught a bounded buffer, that itself implements monitor
+behaviour for concurrent access.
 
 A \textbf{double buffer} is implemented in the \texttt{ViewFrame} class.
 This mechanism uses two images: while one image is displayed, 
