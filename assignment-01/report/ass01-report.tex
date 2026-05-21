@@ -151,7 +151,7 @@ cores to exploit all the system's resources and keep the CPU busy.
 In fact creating a larger number of threads would mean more context switching
 and it would prove damaging to performance.
 
-The tasks are implemented as \texttt{Java.Runnable} classes and passed to
+The \textbf{tasks} are implemented as \texttt{Java.Runnable} classes and passed to
 the workers throught a bounded buffer, that itself implements monitor
 behaviour for concurrent access.
 
@@ -162,7 +162,7 @@ swapped with the old frame.
 Although this does not improve directly performance, as the rendering time remains the same,
 it reduces visual artifacts such as tearing because the buffer swap is instantaneous.
 
-The barrier between the View and the Controller, reference in Figure~\ref{fig:vc-petri}
+The barrier between the View and the Controller, referenced in Figure~\ref{fig:vc-petri}
 is not implemented as a standard barrier, it instead makes calls synchronous by first
 calling \texttt{wait()} and then \texttt{notify()} when the render is done. % chktex 36 
 
