@@ -41,6 +41,7 @@ and one using the Java Executor Framework. It is also necessary to use high-leve
 such as \textbf{monitors} to manage concurrency.
 
 \subsection{Analysis of the sequential solution}
+\label{sec:analysis-solution}
 The sequential solution, available as \texttt{sketch01}, when run with large
 quantities of balls, is not efficient because at every update,
 the single thread running the loop has to cycle multiple times throught every
@@ -114,16 +115,19 @@ cores to exploit all the system's resources, to keep the CPU busy.
 In fact creating a larger number of threads would mean more context switching
 and it would prove damaging to performance.
 
-A double buffer is implemented in the \texttt{ViewFrame} class.
+A \textbf{double buffer} is implemented in the \texttt{ViewFrame} class.
 This mechanism uses two images: while one image is displayed, 
 the other updates with the new frame and once the process is done it gets
 swapped with the old frame. 
 Although this does not improve directly performance, as the rendering time remains the same,
 it reduces visual artifacts such as tearing because the buffer swap is instantaneous.
 
-
-
-
+As mentioned in section \ref{sec:analysis-solution}, collision detection can be 
+approached differently. It's introduced a \textbf{Spatial Hash Grid}: this structure creates
+a virtual grid, the size of the balls' radius, in this way every ball can be mapped
+to a specific cell and its hash code will reflect its position in the grid.
+This makes easier the the collision detection as the worker has to look only at 
+the adjacient cells of each ball.  
 
 
 
