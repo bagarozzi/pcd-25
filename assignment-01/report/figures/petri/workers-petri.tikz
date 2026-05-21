@@ -1,6 +1,6 @@
 ﻿\begin{tikzpicture}[scale=2]
 \node[place, label=below left:task created] at(4.84,5.38) (task created) {};
-\node[place, tokens=1, label=above:worker-1-idle] at(5.81,5.4) (worker idle1) {};
+\node[place, tokens=1, label=below:worker-1-idle] at(5.81,5.4) (worker idle1) {};
 \node[place, label=below left:work1] at(5.9,2.97) (work1) {};
 \node[place, label=below:output produced] at(4.84,1.03) (output produced) {};
 \node[place, label=below right:work2] at(6.83,2.97) (work2) {};
