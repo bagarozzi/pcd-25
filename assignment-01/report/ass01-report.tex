@@ -168,10 +168,10 @@ calling \texttt{wait()} and then \texttt{notify()} when the render is done. % ch
 
 As mentioned in Section~\ref{sec:analysis-solution}, collision detection can be 
 approached differently. It's introduced a \textbf{Spatial Hash Grid}: this structure creates
-a virtual grid, the size of the balls' radius, in this way every ball can be mapped
+a virtual grid, the size of the balls' diameter, in this way every ball can be mapped
 to a specific cell and its hash code will reflect its position in the grid.
 This makes easier the the collision detection as the worker has to look only at 
-the adjacient cells of each ball.  
+the adjacient cells for each ball.  
 
 
 
