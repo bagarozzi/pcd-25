@@ -94,9 +94,6 @@ of all the threads needed for the computation, in a \textbf{master-worker} archi
 where the control loop, a thread itself, acts as master towards the other threads
 synchronisiting their actions and giving them tasks to execute.
 
-PETRI NET ARCHITECTURE!!!
-
-
 \subsection{Components}\label{sec:comp}
 The \textbf{active components} needed are threads that will execute work on behalf 
 of the controller. These components include also the thread rendering the view, in
@@ -129,8 +126,8 @@ The components mentioned in Section~\ref{sec:comp} and Section~\ref{analysis:pro
     \item The barriers, one for each computational task, are modeled with objects exposing a
     \texttt{hit()} method so that the active components can hit it once their work is done. % chktex 36
     
-    \item A barrier between the View and the Controller is also necessary but implemented so that
-    the call to update the view blocks the controller until the frame is painted.
+    \item A barrier between the View and the Controller, as modeled in Figure~\ref{fig:vc-petri},
+    is also necessary so that an update doesn't start before the rendering of the current frame.
 
     \item Each ball is modeled as a monitor to prevent races during the collisions calculation.
 
@@ -140,6 +137,13 @@ The components mentioned in Section~\ref{sec:comp} and Section~\ref{analysis:pro
 Other domain entities that do not participate on concurrent activities
 such as speed, position and boundary are implemented according to their
 specifications.
+
+\begin{figure}[H]
+    \input{./figures/petri/view-controller.tikz}
+    \centering
+    \caption{Petri diagram of the barrier (\textit{render done}) between view and controller}\label{fig:vc-petri}
+\end{figure}
+
 
 \section{Implementation}
 For both versions it has been decided to create as many threads as the available 
@@ -157,6 +161,10 @@ the other updates with the new frame and once the process is done it gets
 swapped with the old frame. 
 Although this does not improve directly performance, as the rendering time remains the same,
 it reduces visual artifacts such as tearing because the buffer swap is instantaneous.
+
+The barrier between the View and the Controller, reference in Figure~\ref{fig:vc-petri}
+is not implemented as a standard barrier, it instead makes calls synchronous by first
+calling \texttt{wait()} and then \texttt{notify()} when the render is done. % chktex 36 
 
 As mentioned in Section~\ref{sec:analysis-solution}, collision detection can be 
 approached differently. It's introduced a \textbf{Spatial Hash Grid}: this structure creates
