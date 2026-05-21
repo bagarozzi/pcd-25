@@ -4,3 +4,5 @@
 *.log
 *.pdf
 *.synctex.gz
+# Ignore files saved from the petri net generator website
+*.npn 
