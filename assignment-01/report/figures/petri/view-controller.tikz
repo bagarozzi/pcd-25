@@ -9,7 +9,7 @@
 \draw[arc](c0) to  (compute);
 \draw[arc](compute) to  (c1);
 \draw[arc](compute) to  (3.13,5.3) to (3.13,0) to (v0);
-\draw[arc](render done) to  (10,2.62) to (9.99,8.12) to (0,8.12) to (c0);
+\draw[arc](render done) to  (10,2.62) to (9.99,6.62) to (0,6.62) to (c0);
 \draw[arc](v0) to  (render);
 \draw[arc](render) to  (v1);
 \draw[arc](v1) to  (8.1,0.04) to (8.1,2.43) to (render done);
