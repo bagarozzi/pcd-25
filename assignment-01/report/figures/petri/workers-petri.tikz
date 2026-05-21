@@ -1,4 +1,4 @@
-﻿\begin{tikzpicture}[scale=2]
+﻿\begin{tikzpicture}[scale=1.5]
 \node[place, label=below left:task created] at(4.84,5.38) (task created) {};
 \node[place, tokens=1, label=below:worker-1-idle] at(5.81,5.4) (worker idle1) {};
 \node[place, label=below left:work1] at(5.9,2.97) (work1) {};
@@ -22,9 +22,9 @@
 \draw[arc](work3) to  (task done);
 \draw[arc](worker idle2) to  (task assigned);
 \draw[arc](worker idle3) to  (task assigned);
-\draw[arc](task created) to  (4.84,4.46) to node[above, pos=0.5]{3} (task assigned);
+\draw[arc](task created) to  (4.84,4.46) to node[below, pos=0.5]{3} (task assigned);
 \draw[arc](task done) to  (4.82,1.71) to (output produced);
 \draw[arc](task done) to  (10,1.74) to (10,5.4) to (worker idle3);
-\draw[arc](task done) to  (10,1.74) to (10,5.91) to (6.87,5.91) to (worker idle2);
-\draw[arc](task done) to  (10,1.74) to (10,5.91) to (5.81,5.91) to (worker idle1);
+\draw[arc](task done) to  (10,1.74) to (10,6.30) to (6.87,6.30) to (worker idle2);
+\draw[arc](task done) to  (10,1.74) to (10,6.30) to (5.81,6.30) to (worker idle1);
 \end{tikzpicture}
