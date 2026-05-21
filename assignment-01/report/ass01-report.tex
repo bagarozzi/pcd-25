@@ -9,7 +9,7 @@
 \usepackage{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{petri, arrows.meta}
-\tikzset {
+\tikzset{
 	arc/.style={
 		arrows={-Stealth[scale=1.25]},
 		thick,
@@ -34,7 +34,7 @@
 \title{\LARGE
   Assignment 1: Poool
 }
-\subtitle{Concurrent and Distributed Programming\\a.y. 2025-2026}
+\subtitle{Concurrent and Distributed Programming\\a.y. 2025--2026}
 
 % Consider watching:
 % https://www.youtube.com/watch?v=ihxSUsJB_14
@@ -126,9 +126,9 @@ tasks from a shared buffer and complete them; the transition '\textit{task done}
 as barrier so that the work is completed at once.
 
 \subsection{Modeling}
-The components mentioned in section \ref{sec:comp} and section \ref{analysis:prob} are modeled as follows:
+The components mentioned in Section~\ref{sec:comp} and Section~\ref{analysis:prob} are modeled as follows:
 \begin{itemize}
-    \item The tasks identified in the section \ref{analysis:prob} are modeled as runnable functions
+    \item The tasks identified in the Section~\ref{analysis:prob} are modeled as runnable functions
         so that the master can send them to the worker who will execute them.
 
     \item The barriers, one for each computational task, are modeled with objects exposing a
@@ -163,7 +163,7 @@ swapped with the old frame.
 Although this does not improve directly performance, as the rendering time remains the same,
 it reduces visual artifacts such as tearing because the buffer swap is instantaneous.
 
-As mentioned in section \ref{sec:analysis-solution}, collision detection can be 
+As mentioned in Section~\ref{sec:analysis-solution}, collision detection can be 
 approached differently. It's introduced a \textbf{Spatial Hash Grid}: this structure creates
 a virtual grid, the size of the balls' radius, in this way every ball can be mapped
 to a specific cell and its hash code will reflect its position in the grid.
