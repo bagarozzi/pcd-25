@@ -67,12 +67,14 @@ The critical tasks identified are:
 \end{itemize}
 
 \section{Design}
+\label{sec:design}
 \subsection{Architecture}
 The architecture adopted is the \textbf{Model-View-Controller}. The controller is composed
 of all the threads needed for the computation, in a \textbf{master-worker} architecture
 where the control loop, a thread itself, acts as master towards the other threads
 synchronisiting their actions and giving them tasks to execute.
 \subsection{Components}
+\label{sec:comp}
 The \textbf{active components} needed are threads that will execute work on behalf 
 of the controller. These components include also the thread rendering the view, in
 the Java implementation known as the Event Dispatcher Thread.
@@ -86,19 +88,22 @@ The \textbf{passive components} needed are:
 \end{itemize}
 
 \subsection{Modeling}
-The tasks mentionted in the section \ref{analysis:prob} are modeled as runnable functions
-so that the master can send them to the worker who will execute them.
+The components mentioned in section \ref{sec:comp} and section \ref{analysis:prob} are modeled as follows:
+\begin{itemize}
+    \item The tasks identified in the section \ref{analysis:prob} are modeled as runnable functions
+        so that the master can send them to the worker who will execute them.
 
-The barriers, one for each computational task, are modeled with objects exposing a
-\texttt{hit()} method so that the active components can hit it once their work is done.
-A barrier between the View and the Controller is also necessary but implemented so that
-the call to update the view blocks the controller until the frame is painted.
+    \item The barriers, one for each computational task, are modeled with objects exposing a
+    \texttt{hit()} method so that the active components can hit it once their work is done.
+    
+    \item A barrier between the View and the Controller is also necessary but implemented so that
+    the call to update the view blocks the controller until the frame is painted.
 
-Each ball is modeled as a monitor to prevent races during the collisions calculation.
+    \item Each ball is modeled as a monitor to prevent races during the collisions calculation.
 
-The class that contains all the balls, the Board, is modeled itself as monitor to ensure
-that there's not critical races when the workers are operating on it.
-
+    \item The class that contains all the balls, the Board, is modeled itself as monitor to ensure
+    that there's not critical races when the workers are operating on it.
+\end{itemize}
 Other domain entities that do not participate on concurrent activities
 such as speed, position and boundary are implemented according to their
 specifications.
