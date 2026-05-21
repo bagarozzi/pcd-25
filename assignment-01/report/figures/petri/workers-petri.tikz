@@ -2,15 +2,15 @@
 \node[place, label=below left:task created] at(4.84,5.38) (task created) {};
 \node[place, tokens=1, label=below:worker-1-idle] at(5.81,5.4) (worker idle1) {};
 \node[place, label=below left:work1] at(5.9,2.97) (work1) {};
-\node[place, label=below:output produced] at(4.84,1.03) (output produced) {};
+\node[place, label=left:output produced] at(4.84,0.83) (output produced) {};
 \node[place, label=below right:work2] at(6.83,2.97) (work2) {};
 \node[place, label=right:work3] at(7.76,2.97) (work3) {};
 \node[place, tokens=1, label=above right:worker-2-idle] at(6.87,5.4) (worker idle2) {};
 \node[place, tokens=1, label=below right:worker-3-idle] at(7.81,5.4) (worker idle3) {};
-\node[transition, label=above:cycle start] at(4.84,6.64) (cycle start) {};
+\node[transition, rotate=90,label=above:cycle start] at(4.84,6.64) (cycle start) {};
 \node[transition, label=right:task assigned] at(6.83,4.46) (task assigned) {};
 \node[transition, label=below:task done] at(6.83,1.72) (task done) {};
-\node[transition, label=below:output digested] at(4.84,0) (output digested) {};
+\node[transition, rotate=90,label=below:output digested] at(4.84,0) (output digested) {};
 \draw[arc](cycle start) to  (task created);
 \draw[arc](worker idle1) to  (6.37,4.9) to (task assigned);
 \draw[arc](task assigned) to  (work1);
