@@ -1,0 +1,17 @@
+﻿\begin{tikzpicture}
+\node[place, tokens=1, label=below:C0] at(0,5.3) (c0) {};
+\node[place, label=below:C1] at(5.73,5.3) (c1) {};
+\node[place, label=below:V0] at(4.17,0) (v0) {};
+\node[place, label=below:V1] at(7.12,0) (v1) {};
+\node[transition, label=below:render done] at(9.21,2.61) (render done) {};
+\node[transition, label=below:compute] at(1.91,5.3) (compute) {};
+\node[transition, label=below:render] at(5.73,0) (render) {};
+\draw[arc](c0) to  (compute);
+\draw[arc](compute) to  (c1);
+\draw[arc](compute) to  (3.13,5.3) to (3.13,0) to (v0);
+\draw[arc](render done) to  (10,2.62) to (9.99,8.12) to (0,8.12) to (c0);
+\draw[arc](v0) to  (render);
+\draw[arc](render) to  (v1);
+\draw[arc](v1) to  (8.1,0.04) to (8.1,2.43) to (render done);
+\draw[arc](c1) to  (8.16,5.3) to (8.16,2.91) to (render done);
+\end{tikzpicture}
