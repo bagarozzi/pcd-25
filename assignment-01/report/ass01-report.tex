@@ -90,9 +90,9 @@ The critical tasks identified are:
 \section{Design}\label{sec:design}
 \subsection{Architecture}
 The architecture adopted is the \textbf{Model-View-Controller}. The controller is composed
-of all the threads needed for the computation, in a \textbf{master-worker} architecture
+of all the threads needed for the computation in a \textbf{master-worker} architecture
 where the control loop, a thread itself, acts as master towards the other threads
-synchronisiting their actions and giving them tasks to execute.
+by synchronisiting their actions and giving them tasks to execute.
 
 \subsection{Components}\label{sec:comp}
 The \textbf{active components} needed are threads that will execute work on behalf 
