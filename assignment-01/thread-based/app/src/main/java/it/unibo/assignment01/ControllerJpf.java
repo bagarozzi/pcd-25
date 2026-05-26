@@ -3,6 +3,7 @@ package it.unibo.assignment01;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import it.unibo.assignment01.controller.Barrier;
 import it.unibo.assignment01.controller.Cmd;
@@ -33,6 +34,7 @@ public class ControllerJpf extends Thread implements Controller {
 	private final BoundedBuffer<Runnable> queueTask;
 	private final List<BallWorker> workers;
 	private final SpatialHashGrid bigBallSpatialHashGrid;
+	private CountDownLatch latch;
 
 	public ControllerJpf() {
 
@@ -45,7 +47,7 @@ public class ControllerJpf extends Thread implements Controller {
 		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
-			var worker = new BallWorker(queueTask, moveBarrier, collideBarrier);
+			var worker = new BallWorker(queueTask, latch, collideBarrier);
 			this.workers.add(worker);
 			worker.start();
 		}
@@ -53,25 +55,19 @@ public class ControllerJpf extends Thread implements Controller {
 
 	@Override
     public void run() {
-		long lastUpdateTime = System.currentTimeMillis();
 
-		// For enemy player movement
-		//var pb = board.getPlayerBall();
 
 		for(int j=0; j<1; j++){
-
-			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
-			long elapsed = System.currentTimeMillis() - lastUpdateTime;
-			lastUpdateTime = System.currentTimeMillis();
+			latch = new CountDownLatch(NUM_WORKERS);
 			spatialHashGrid.clear();
 			bigBallSpatialHashGrid.clear();
 
-			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, moveBarrier)));
+			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, 16, board, latch)));
 
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
-				moveBarrier.hitAndWait();
+				latch.await();
 			} catch (InterruptedException e) {
 
 				e.printStackTrace();
@@ -87,13 +83,13 @@ public class ControllerJpf extends Thread implements Controller {
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(ballBatches.get(i), board, collideBarrier, spatialHashGrid));
+				addWorkerTask(new CollisionTask(ballBatches.get(i), board, latch, spatialHashGrid));
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);
 			// Maybe another hitAndWait()...
 			try {
-			 	collideBarrier.hitAndWait();
+			 	latch.await();
 			} catch (InterruptedException e) {
 
 			 	e.printStackTrace();

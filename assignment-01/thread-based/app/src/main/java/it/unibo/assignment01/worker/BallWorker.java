@@ -1,5 +1,7 @@
 package it.unibo.assignment01.worker;
 
+import java.util.concurrent.CountDownLatch;
+
 import it.unibo.assignment01.controller.Barrier;
 import it.unibo.assignment01.util.BoundedBuffer;
 
@@ -12,7 +14,7 @@ public class BallWorker extends Thread {
     
     private final BoundedBuffer<Runnable> queueTask; 
 
-    public BallWorker(final BoundedBuffer<Runnable> queueTask, final Barrier barrier, Barrier collideBarrier) {
+    public BallWorker(final BoundedBuffer<Runnable> queueTask, final CountDownLatch latch, Barrier collideBarrier) {
         this.queueTask = queueTask;
     }
 
