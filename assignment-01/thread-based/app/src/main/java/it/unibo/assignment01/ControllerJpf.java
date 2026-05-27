@@ -24,8 +24,6 @@ import it.unibo.assignment01.worker.BallWorker;
 
 public class ControllerJpf extends Thread implements Controller {
 
-	private Barrier moveBarrier;
-	private Barrier collideBarrier;
 	private final int NUM_WORKERS = 2;
 	private Board board;
 	private SpatialHashGrid spatialHashGrid;
@@ -33,21 +31,17 @@ public class ControllerJpf extends Thread implements Controller {
 	private final BoundedBuffer<Cmd> cmdBuffer;
 	private final BoundedBuffer<Runnable> queueTask;
 	private final List<BallWorker> workers;
-	private final SpatialHashGrid bigBallSpatialHashGrid;
 	private CountDownLatch latch;
 
 	public ControllerJpf() {
 
-		this.board = new BoardImpl(createBalls(1, 2), new SimpleCollisionDetector());
+		this.board = new BoardImpl(createBalls(), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
-		this.moveBarrier = new Barrier(NUM_WORKERS + 1);
-		this.collideBarrier = new Barrier(NUM_WORKERS + 1);
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * 1.6);
-		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
-			var worker = new BallWorker(queueTask, latch, collideBarrier);
+			var worker = new BallWorker(queueTask);
 			this.workers.add(worker);
 			worker.start();
 		}
@@ -60,7 +54,6 @@ public class ControllerJpf extends Thread implements Controller {
 		for(int j=0; j<1; j++){
 			latch = new CountDownLatch(NUM_WORKERS);
 			spatialHashGrid.clear();
-			bigBallSpatialHashGrid.clear();
 
 			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, 16, board, latch)));
 
@@ -75,7 +68,6 @@ public class ControllerJpf extends Thread implements Controller {
 			
 			for (Ball ball : board.getAllBall()) {
 				spatialHashGrid.insert(ball);
-				bigBallSpatialHashGrid.insert(ball);
 			}
 
 			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
@@ -85,8 +77,6 @@ public class ControllerJpf extends Thread implements Controller {
 			for (int i = 0; i < ballBatches.size(); i++) {
 				addWorkerTask(new CollisionTask(ballBatches.get(i), board, latch, spatialHashGrid));
 			}
-			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
-			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);
 			// Maybe another hitAndWait()...
 			try {
 			 	latch.await();
@@ -129,24 +119,10 @@ public class ControllerJpf extends Thread implements Controller {
 		return res;
 	}
 
-	private List<Ball> createBalls(final int rows, final int cols) {
-
+	private List<Ball> createBalls() {
         var balls = new ArrayList<Ball>();
-
-		double startX = -((cols / 2.0) * (0.01 + Ball.BALL_RADIUS));
-		double startY = Math.max(-0.25, -(rows / 3.0) * (0.01 + Ball.BALL_RADIUS));
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                var px = startX + j * (0.01 + Ball.BALL_RADIUS);
-                var py = startY + i * (0.01 + Ball.BALL_RADIUS);
-                var b = new BallImpl(new Position(px, py), new Speed(0,0), 0.2, Ball.BALL_RADIUS);
-                balls.add(b);
-				if (balls.size() >= rows*cols) {
-					break;
-				}
-            }
-        }
+		balls.add(new BallImpl(new Position(0, 0), new Speed(0, 0), 0.2,  Ball.BALL_RADIUS));
+        balls.add(new BallImpl(new Position(Ball.BALL_RADIUS, 0), new Speed(-1.0, 0), 0.2,  Ball.BALL_RADIUS));
         return balls;
 	}
 
