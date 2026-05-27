@@ -9,7 +9,7 @@
 \usepackage{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{petri, arrows.meta}
-\tikzset {
+\tikzset{
 	arc/.style={
 		arrows={-Stealth[scale=1.25]},
 		thick,
@@ -34,7 +34,7 @@
 \title{\LARGE
   Assignment 1: Poool
 }
-\subtitle{Concurrent and Distributed Programming\\a.y. 2025-2026}
+\subtitle{Concurrent and Distributed Programming\\a.y. 2025--2026}
 
 % Consider watching:
 % https://www.youtube.com/watch?v=ihxSUsJB_14
@@ -62,8 +62,7 @@ It is required to develop two solutions: one using default Java multithread prog
 and one using the Java Executor Framework. It is also necessary to use high-level constructs
 such as \textbf{monitors} to manage concurrency.
 
-\subsection{Analysis of the sequential solution}
-\label{sec:analysis-solution}
+\subsection{Analysis of the sequential solution}\label{sec:analysis-solution}
 The sequential solution, available as \texttt{sketch01}, when run with large
 quantities of balls, is not efficient because at every update,
 the single thread running the loop has to cycle multiple times throught every
@@ -75,10 +74,9 @@ A solution adopting concurrent programming could take advantage of all
 the available cores of the machine thus improving calculations speed.
 Also, the collisions calculations and the view's rendering could be 
 approached in a more efficient way.
-\subsection{Analysis of the problem}
+\subsection{Analysis of the problem}\label{analysis:prob}
 % as explained in the course, first we identify the tasks, then we map them to 
 % active components
-\label{analysis:prob}
 The critical tasks identified are:
 \begin{itemize}
     \item \textbf{movement calculations}: every ball must be moved in a new position according
@@ -89,27 +87,22 @@ The critical tasks identified are:
         It's important to wait for the complete rendering of the frame before the next update.
 \end{itemize}
 
-\section{Design}
-\label{sec:design}
+\section{Design}\label{sec:design}
 \subsection{Architecture}
 The architecture adopted is the \textbf{Model-View-Controller}. The controller is composed
-of all the threads needed for the computation, in a \textbf{master-worker} architecture
+of all the threads needed for the computation in a \textbf{master-worker} architecture
 where the control loop, a thread itself, acts as master towards the other threads
-synchronisiting their actions and giving them tasks to execute.
+by synchronisiting their actions and giving them tasks to execute.
 
-PETRI NET ARCHITECTURE!!!
-
-
-\subsection{Components}
-\label{sec:comp}
+\subsection{Components}\label{sec:comp}
 The \textbf{active components} needed are threads that will execute work on behalf 
 of the controller. These components include also the thread rendering the view, in
 the Java implementation known as the Event Dispatcher Thread.
 
 \begin{figure}[H]
     \input{./figures/petri/workers-petri.tikz}
-    \label{fig:workers-petri}
-    \caption{Petri diagram of the workers receiving and computing tasks}
+    \centering
+    \caption{Petri diagram of the workers receiving and computing tasks}\label{fig:workers-petri}
 \end{figure}
 
 The \textbf{passive components} needed are:
@@ -120,17 +113,21 @@ The \textbf{passive components} needed are:
         the calculation phases 
 \end{itemize}
 
+Figure~\ref{fig:workers-petri} explains how three workers (they could be more) receive
+tasks from a shared buffer and complete them; the transition '\textit{task done}' serves
+as barrier so that the work is completed at once.
+
 \subsection{Modeling}
-The components mentioned in section \ref{sec:comp} and section \ref{analysis:prob} are modeled as follows:
+The components mentioned in Section~\ref{sec:comp} and Section~\ref{analysis:prob} are modeled as follows:
 \begin{itemize}
-    \item The tasks identified in the section \ref{analysis:prob} are modeled as runnable functions
+    \item The tasks identified in the Section~\ref{analysis:prob} are modeled as runnable functions
         so that the master can send them to the worker who will execute them.
 
     \item The barriers, one for each computational task, are modeled with objects exposing a
-    \texttt{hit()} method so that the active components can hit it once their work is done.
+    \texttt{hit()} method so that the active components can hit it once their work is done. % chktex 36
     
-    \item A barrier between the View and the Controller is also necessary but implemented so that
-    the call to update the view blocks the controller until the frame is painted.
+    \item A barrier between the View and the Controller, as modeled in Figure~\ref{fig:vc-petri},
+    is also necessary so that an update doesn't start before the rendering of the current frame.
 
     \item Each ball is modeled as a monitor to prevent races during the collisions calculation.
 
@@ -141,11 +138,22 @@ Other domain entities that do not participate on concurrent activities
 such as speed, position and boundary are implemented according to their
 specifications.
 
+\begin{figure}[H]
+    \input{./figures/petri/view-controller.tikz}
+    \centering
+    \caption{Petri diagram of the barrier (\textit{render done}) between view and controller}\label{fig:vc-petri}
+\end{figure}
+
+
 \section{Implementation}
 For both versions it has been decided to create as many threads as the available 
-cores to exploit all the system's resources, to keep the CPU busy.
+cores to exploit all the system's resources and keep the CPU busy.
 In fact creating a larger number of threads would mean more context switching
 and it would prove damaging to performance.
+
+The \textbf{tasks} are implemented as \texttt{Java.Runnable} classes and passed to
+the workers throught a bounded buffer, that itself implements monitor
+behaviour for concurrent access.
 
 A \textbf{double buffer} is implemented in the \texttt{ViewFrame} class.
 This mechanism uses two images: while one image is displayed, 
@@ -154,18 +162,33 @@ swapped with the old frame.
 Although this does not improve directly performance, as the rendering time remains the same,
 it reduces visual artifacts such as tearing because the buffer swap is instantaneous.
 
-As mentioned in section \ref{sec:analysis-solution}, collision detection can be 
+The barrier between the View and the Controller, referenced in Figure~\ref{fig:vc-petri}
+is not implemented as a standard barrier, it instead makes calls synchronous by first
+calling \texttt{wait()} and then \texttt{notify()} when the render is done. % chktex 36 
+
+As mentioned in Section~\ref{sec:analysis-solution}, collision detection can be 
 approached differently. It's introduced a \textbf{Spatial Hash Grid}: this structure creates
-a virtual grid, the size of the balls' radius, in this way every ball can be mapped
+a virtual grid, the size of the balls' diameter, in this way every ball can be mapped
 to a specific cell and its hash code will reflect its position in the grid.
 This makes easier the the collision detection as the worker has to look only at 
-the adjacient cells of each ball.  
-
-
+the adjacient cells for each ball.  
 
 \section{Verification}
+\subsection{Unit testing}
+Show the few unit tests performed.
+
+\subsection{Model checking}
+Show verification throught Java PathFinder.
+
+\subsection{Performance tests}
+Maybe add some explicit figures about how available cores are exploited using Java Mission Control
+or similar.
 
 \section{Conclusion}
+\subsection{Perfomance improvement}
+Elicitate on performance gain against the sequential version.
+
+\subsection{Further improvements}
 \textbf{TODO:} mention other better data structure to hold the balls such as a QuadTree,
 mention a better approach in which the view requests updates to the controller at every frame.
 
