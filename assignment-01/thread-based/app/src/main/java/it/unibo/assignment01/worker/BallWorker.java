@@ -14,7 +14,7 @@ public class BallWorker extends Thread {
     
     private final BoundedBuffer<Runnable> queueTask; 
 
-    public BallWorker(final BoundedBuffer<Runnable> queueTask, final CountDownLatch latch, Barrier collideBarrier) {
+    public BallWorker(final BoundedBuffer<Runnable> queueTask) {
         this.queueTask = queueTask;
     }
 
