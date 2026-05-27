@@ -23,8 +23,6 @@ public class PoolGameController extends Thread implements Controller {
 	private static final double MULTIPY_FACTOR_FOR_RADIOUS = 1.6;
 	private final View view;
 
-	private Barrier moveBarrier;
-	private Barrier collideBarrier;
 	private final int NUM_WORKERS;
 	private Board board;
 	private SpatialHashGrid spatialHashGrid;
@@ -34,8 +32,6 @@ public class PoolGameController extends Thread implements Controller {
 	private final List<BallWorker> workers;
 	private final SpatialHashGrid bigBallSpatialHashGrid;
 	private final ViewModel vm;
-	private CountDownLatch latch;
-
 
 	// Key indices for boolean array
 	private static final int UP = 0;
@@ -50,13 +46,11 @@ public class PoolGameController extends Thread implements Controller {
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
 		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
-		this.moveBarrier = new Barrier(NUM_WORKERS + 1);
-		this.collideBarrier = new Barrier(NUM_WORKERS + 1);
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * MULTIPY_FACTOR_FOR_RADIOUS);
 		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS * 1.6);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
-			var worker = new BallWorker(queueTask, latch, collideBarrier);
+			var worker = new BallWorker(queueTask);
 			this.workers.add(worker);
 			worker.start();
 		}
