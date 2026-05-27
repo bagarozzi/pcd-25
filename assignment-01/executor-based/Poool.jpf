@@ -1,4 +1,4 @@
-target=it.unibo.assignment01.PooolJpf
+target = it.unibo.assignment01.PooolJpf
 classpath=/home/pcd-jpf/app/build/classes/java/main
 
 listener=gov.nasa.jpf.listener.DeadlockAnalyzer

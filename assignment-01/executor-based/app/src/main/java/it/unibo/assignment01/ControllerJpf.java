@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import it.unibo.assignment01.controller.Cmd;
 import it.unibo.assignment01.controller.CollisionTask;
@@ -17,9 +19,7 @@ import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.model.Speed;
-import it.unibo.assignment01.util.BoundedBuffer;
-import it.unibo.assignment01.util.BoundedBufferImpl;
-import it.unibo.assignment01.worker.BallWorker;
+
 
 public class ControllerJpf extends Thread implements Controller {
 
@@ -27,41 +27,48 @@ public class ControllerJpf extends Thread implements Controller {
 	private Board board;
 	private SpatialHashGrid spatialHashGrid;
 
-	private final BoundedBuffer<Runnable> queueTask;
-	private final List<BallWorker> workers;
-	private CountDownLatch latch;
+	private final Executor exec;
 
 	public ControllerJpf() {
 
 		this.board = new BoardImpl(createBalls(), new SimpleCollisionDetector());
-		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
-		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * 1.6);
-		this.workers = new ArrayList<>();
-		for (int i = 0; i < NUM_WORKERS; i++) {
-			var worker = new BallWorker(queueTask);
-			this.workers.add(worker);
-			worker.start();
-		}
+		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS*2);
+
+		this.exec = Executors.newFixedThreadPool(NUM_WORKERS);
 	}
 
 	@Override
     public void run() {
+		long lastUpdateTime = System.currentTimeMillis();
 
+		// For enemy player movement
+		//var pb = board.getPlayerBall();
 
-		for(int j=0; j<2; j++){
-			latch = new CountDownLatch(NUM_WORKERS);
+		for(int j = 0; j < 2; j++) {
+
+			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
+			long elapsed = System.currentTimeMillis() - lastUpdateTime;
+			lastUpdateTime = System.currentTimeMillis();
 			spatialHashGrid.clear();
+            CountDownLatch moveLatch = new CountDownLatch(NUM_WORKERS);
+            CountDownLatch collideLatch = new CountDownLatch(NUM_WORKERS);
 
-			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, 16, board, latch)));
+			// Process continuous keyboard input
+			//updateBallBatches();
+			for(int i = 0; i < NUM_WORKERS; i++) {
+				int start = i * board.getAllBall().size() / NUM_WORKERS;
+				int end = (i + 1) * board.getAllBall().size() / NUM_WORKERS;
+				exec.execute(new UpdateMovementTask(board.getAllBall(), start, end, elapsed, board, moveLatch));
+			}
 
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
-				latch.await();
+				moveLatch.await();
 			} catch (InterruptedException e) {
-
 				e.printStackTrace();
 			}
+
 			
 			for (Ball ball : board.getAllBall()) {
 				spatialHashGrid.insert(ball);
@@ -72,39 +79,31 @@ public class ControllerJpf extends Thread implements Controller {
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(ballBatches.get(i), board, latch, spatialHashGrid));
+				exec.execute(new CollisionTask(ballBatches.get(i), board, collideLatch, spatialHashGrid));
 			}
+
 			// Maybe another hitAndWait()...
 			try {
-			 	latch.await();
+			 	collideLatch.await();
 			} catch (InterruptedException e) {
 
 			 	e.printStackTrace();
 			}
+			
+
 		}
-        for(BallWorker w : workers) {
-            addWorkerTask(() -> Thread.currentThread().interrupt());
-        }
+
 
     }
 
-	private void addWorkerTask(Runnable task) {
-		try {
-			queueTask.put(task);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
 
 	private <T> List<List<T>> splitList(List<T> list, int nList) {
 		List<List<T>> res = new ArrayList<>();
 		for (int i = 0; i < nList; i++) {
 			int start = i * list.size() / nList;
 			int end = (i + 1) * list.size() / nList;
-			res.add(List.copyOf(list.subList(start, end)));
+			res.add(list.subList(start, end));
 		}
-		//System.err.println("Split list of size " + res.size() + nList );
-		//res.stream().forEach(l -> System.err.println(l.size()));
 		return res;
 	}
 
@@ -115,9 +114,11 @@ public class ControllerJpf extends Thread implements Controller {
         return balls;
 	}
 
-	@Override
-	public void notifyCommand(Cmd cmd) {
-	}
+    @Override
+    public void notifyCommand(Cmd cmd) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'notifyCommand'");
+    }
 
 
 }

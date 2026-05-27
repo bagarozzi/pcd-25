@@ -2,6 +2,7 @@ package it.unibo.assignment01.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
@@ -12,13 +13,13 @@ public class CollisionTask implements Runnable{
 
     private Board board;
     private List<Map.Entry<Long, List<Ball>>> myBatch;
-    private Barrier barrier;
+    private CountDownLatch latch;
     private SpatialHashGrid grid;
 
-    public CollisionTask(List<Map.Entry<Long, List<Ball>>> myBatch, Board board, Barrier barrier, SpatialHashGrid grid){
+    public CollisionTask(List<Map.Entry<Long, List<Ball>>> myBatch, Board board, CountDownLatch latch, SpatialHashGrid grid){
         this.board = board;
         this.myBatch = myBatch;
-        this.barrier = barrier;
+        this.latch = latch;
         this.grid = grid;
     }
 
@@ -32,11 +33,7 @@ public class CollisionTask implements Runnable{
             }
         }
 
-        try {
-            barrier.hitAndWait();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        latch.countDown();
     }
 
 

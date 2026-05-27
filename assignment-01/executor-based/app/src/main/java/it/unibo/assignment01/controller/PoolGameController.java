@@ -3,6 +3,7 @@ package it.unibo.assignment01.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -22,8 +23,6 @@ public class PoolGameController extends Thread implements Controller {
 
 	private final View view;
 
-	private Barrier moveBarrier;
-	private Barrier collideBarrier;
 	private final int NUM_WORKERS;
 	private Board board;
 	private SpatialHashGrid spatialHashGrid;
@@ -45,8 +44,6 @@ public class PoolGameController extends Thread implements Controller {
 
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
 		cmdBuffer = new BoundedBufferImpl<>(10);
-		this.moveBarrier = new Barrier(NUM_WORKERS + 1);
-		this.collideBarrier = new Barrier(NUM_WORKERS + 1);
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS*2);
 		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS);
 
@@ -59,6 +56,8 @@ public class PoolGameController extends Thread implements Controller {
 		int nFrames = 0;
 		long t0 = System.currentTimeMillis();
 		long lastUpdateTime = System.currentTimeMillis();
+        
+
 
 		// For enemy player movement
 		//var pb = board.getPlayerBall();
@@ -69,6 +68,8 @@ public class PoolGameController extends Thread implements Controller {
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
 			lastUpdateTime = System.currentTimeMillis();
 			spatialHashGrid.clear();
+			CountDownLatch moveLatch = new CountDownLatch(NUM_WORKERS);
+			CountDownLatch collideLatch = new CountDownLatch(NUM_WORKERS);
 			bigBallSpatialHashGrid.clear();
 
 			// Process continuous keyboard input
@@ -80,7 +81,7 @@ public class PoolGameController extends Thread implements Controller {
 			for(int i = 0; i < NUM_WORKERS; i++) {
 				int start = i * board.getAllBall().size() / NUM_WORKERS;
 				int end = (i + 1) * board.getAllBall().size() / NUM_WORKERS;
-				exec.execute(new UpdateMovementTask(board.getAllBall(), start, end, elapsed, board, moveBarrier));
+				exec.execute(new UpdateMovementTask(board.getAllBall(), start, end, elapsed, board, moveLatch));
 			}
 			board.getPlayerBall().updateState(elapsed, board);
 			board.getEnemyBall().updateState(elapsed, board);
@@ -88,7 +89,7 @@ public class PoolGameController extends Thread implements Controller {
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
-				moveBarrier.hitAndWait();
+				moveLatch.await();
 			} catch (InterruptedException e) {
 
 				e.printStackTrace();
@@ -104,13 +105,13 @@ public class PoolGameController extends Thread implements Controller {
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				exec.execute(new CollisionTask(ballBatches.get(i), board, collideBarrier, spatialHashGrid));
+				exec.execute(new CollisionTask(ballBatches.get(i), board, collideLatch, spatialHashGrid));
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);
 			// Maybe another hitAndWait()...
 			try {
-			 	collideBarrier.hitAndWait();
+			 	collideLatch.await();
 			} catch (InterruptedException e) {
 
 			 	e.printStackTrace();
