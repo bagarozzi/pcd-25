@@ -1,0 +1,21 @@
+{
+  "name": "fsstatlib",
+  "version": "1.0.0",
+  "description": "Asynchronous filesystem statistics library - Event Loop implementation",
+  "type": "module",
+  "main": "lib/FSStatLib.js",
+  "bin": {
+    "fsstat": "main/App.js"
+  },
+  "scripts": {
+    "start": "node main/App.js"
+  },
+  "keywords": [
+    "filesystem",
+    "statistics",
+    "async",
+    "event-loop"
+  ],
+  "author": "",
+  "license": "MIT"
+}
