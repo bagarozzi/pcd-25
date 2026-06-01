@@ -13,15 +13,27 @@ export async function getFSReport(directory, maxFileSize, numBands) {
 async function scanDirectory(dir, report) {
     let path = resolve(dir);
     const entries = await readdir(path);
-    for (const entry of entries) {
-        const entryPath = resolve(path, entry);
-        const fileStat = await lstat(entryPath);
-        if (fileStat.isFile()) {
-            report.update(fileStat.size);
+    
+    // Get file stats for all entries in parallel
+    const statPromises = entries.map(entry => 
+        lstat(resolve(path, entry)).then(stat => ({ entry, stat, path }))
+    );
+    const stats = await Promise.all(statPromises);
+    
+    // Separate files and directories, then handle recursively in parallel
+    const subdirPromises = [];
+    
+    for (const { entry, stat } of stats) {
+        if (stat.isFile()) {
+            report.update(stat.size);
         } 
-        else if (fileStat.isDirectory()) {
-            await scanDirectory(entryPath, report);
+        else if (stat.isDirectory()) {
+            const entryPath = resolve(path, entry);
+            subdirPromises.push(scanDirectory(entryPath, report));
         }
     }
+    
+    // Wait for all subdirectories to be scanned in parallel
+    await Promise.all(subdirPromises);
 }
 
