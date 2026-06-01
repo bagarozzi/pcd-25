@@ -44,11 +44,12 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-function displayReport(report, directory, maxFileSize, numBands) {
+function displayReport(report, directory, maxFileSize, numBands, elapsedMs) {
   console.log('fsstat - File System Statistics Report');
   console.log(`Directory: ${directory}`);
   console.log(`Total Files: ${report.getTotalFiles()}`);
   console.log(`Max File Size Threshold: ${formatBytes(maxFileSize)}`);
+  console.log(`Time Taken: ${(elapsedMs)}ms`);
   console.log('\nFile Size Distribution:');
 
   const distribution = report.getDistribution();
@@ -66,13 +67,17 @@ async function main() {
     const { directory, maxFileSize, numBands } = parseArguments();
 
     console.log(`\nScanning ${directory}...`);
+    const startTime = Date.now();
     const report = await getFSReport(directory, maxFileSize, numBands);
+    const endTime = Date.now();
+    const elapsedMs = endTime - startTime;
 
-    displayReport(report, directory, maxFileSize, numBands);
+    displayReport(report, directory, maxFileSize, numBands, elapsedMs);
   } catch (error) {
     console.error('Error:', error.message);
     process.exit(1);
   }
 }
+
 
 main();
