@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { getFSReport } from '../lib/FSStatLib.js';
+import { getFSReport } from '../lib/FSStat.js';
 import path from 'path';
 
 function parseArguments() {
@@ -37,6 +37,7 @@ function parseArguments() {
 
 function formatBytes(bytes) {
   if (bytes === 0) return '0 B';
+  if (bytes === Infinity) return '∞ B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -44,27 +45,20 @@ function formatBytes(bytes) {
 }
 
 function displayReport(report, directory, maxFileSize, numBands) {
-  console.log('\n' + '='.repeat(60));
-  console.log('FSStatLib Report');
-  console.log('='.repeat(60));
+  console.log('fsstat - File System Statistics Report');
   console.log(`Directory: ${directory}`);
-  console.log(`Total Files: ${report.totalFiles}`);
+  console.log(`Total Files: ${report.getTotalFiles()}`);
   console.log(`Max File Size Threshold: ${formatBytes(maxFileSize)}`);
   console.log('\nFile Size Distribution:');
-  console.log('-'.repeat(60));
 
-  const bandSize = maxFileSize / numBands;
-  for (let i = 0; i < numBands; i++) {
-    const rangeStart = formatBytes(i * bandSize);
-    const rangeEnd = formatBytes((i + 1) * bandSize);
-    const count = report.sizeDistribution[i];
-    console.log(`Band ${i + 1}: [${rangeStart}, ${rangeEnd}) - ${count} files`);
+  const distribution = report.getDistribution();
+  console.log("Size Range".padEnd(25) + "Count");
+  for (let [range, count] of distribution) {
+    const [start, end] = range;
+    const rangeStr = `[${formatBytes(start)} - ${formatBytes(end)}]`;
+    console.log(rangeStr.padEnd(25) + count);
   }
-
-  const overflowCount = report.sizeDistribution[numBands];
-  console.log(`Above Max: [${formatBytes(maxFileSize)}, ∞) - ${overflowCount} files`);
-
-  console.log('='.repeat(60) + '\n');
+  console.log('\n');
 }
 
 async function main() {
