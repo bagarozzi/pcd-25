@@ -49,7 +49,6 @@ function displayReport(report, directory, maxFileSize, numBands, elapsedMs) {
   console.log(`Directory: ${directory}`);
   console.log(`Total Files: ${report.getTotalFiles()}`);
   console.log(`Max File Size Threshold: ${formatBytes(maxFileSize)}`);
-  console.log(`Time Taken: ${(elapsedMs)}ms`);
   console.log('\nFile Size Distribution:');
 
   const distribution = report.getDistribution();
@@ -60,6 +59,7 @@ function displayReport(report, directory, maxFileSize, numBands, elapsedMs) {
     console.log(rangeStr.padEnd(25) + count);
   }
   console.log('\n');
+  console.log(`Total time: ${(elapsedMs)}ms`);
 }
 
 async function main() {
