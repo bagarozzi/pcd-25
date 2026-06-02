@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { getFSReport } from '../lib/FSStat.js';
+import { getFSReport, getInteractiveFSReport } from '../lib/FSStat.js';
 import path from 'path';
 
 function parseArguments() {
@@ -58,7 +58,7 @@ function formatBytes(bytes) {
 
 function displayReport(report, directory, maxFileSize, numBands, elapsedMs) {
   console.log(`Directory: ${directory}`);
-  console.log(`Total Files: ${report.getTotalFiles()}`);
+  console.log(`Found ${report.getTotalFiles()} in ${report.getScannedDirectories()} directories.`);
   console.log(`Max File Size Threshold: ${formatBytes(maxFileSize)}`);
   console.log('\nFile Size Distribution:');
 
@@ -80,7 +80,15 @@ async function main() {
     if (interactive) {
       console.log('Interactive mode enabled.');
       console.log(`Scanning ${directory}...`);
-
+      const dynReport = getInteractiveFSReport(directory, maxFileSize, numBands);
+      while (true) {
+        const startTime = Date.now();
+        let report = await dynReport.getNextUpdate();
+        const endTime = Date.now();
+        console.clear();
+        displayReport(report, directory, maxFileSize, numBands, endTime - startTime);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
     else {
       const startTime = Date.now();
