@@ -8,15 +8,17 @@ function parseArguments() {
 
   if (args.length < 3) {
     console.error("fsstat -- file system statistics\n")
-    console.error('Usage: fsstat <directory> <maxFileSize> <numBands>');
+    console.error('Usage: fsstat <directory> <maxFileSize> <numBands> [--interactive]');
     console.error('  directory    - Path to scan (absolute or relative)');
     console.error('  maxFileSize  - Maximum file size for band distribution (in bytes)');
     console.error('  numBands     - Number of size bands to create');
+    console.error('  --interactive - Optional flag to enable interactive mode');
     console.error('\nExample: node App.js /home 1000000 10');
+    console.error('Example: node App.js /home 1000000 10 --interactive');
     process.exit(2);
   }
 
-  const [dirArg, maxFSArg, numBandsArg] = args;
+  const [dirArg, maxFSArg, numBandsArg, ...restArgs] = args;
 
   const directory = path.resolve(dirArg);
 
@@ -32,7 +34,17 @@ function parseArguments() {
     process.exit(2);
   }
 
-  return { directory, maxFileSize, numBands };
+  let interactive = false;
+  if(restArgs.length > 0 && restArgs[0] !== '--interactive') {
+    console.error('Error: Unknown argument, found "' + restArgs[0].replaceAll('-', '') + '"');
+    console.error('Legal optional arguments are: --interactive');
+    process.exit(2);
+  }
+  else if (restArgs.length == 1 && restArgs.includes('--interactive')) {
+    interactive = true;
+  }
+
+  return { directory, maxFileSize, numBands, interactive };
 }
 
 function formatBytes(bytes) {
@@ -45,7 +57,6 @@ function formatBytes(bytes) {
 }
 
 function displayReport(report, directory, maxFileSize, numBands, elapsedMs) {
-  console.log('fsstat - File System Statistics Report');
   console.log(`Directory: ${directory}`);
   console.log(`Total Files: ${report.getTotalFiles()}`);
   console.log(`Max File Size Threshold: ${formatBytes(maxFileSize)}`);
@@ -64,15 +75,20 @@ function displayReport(report, directory, maxFileSize, numBands, elapsedMs) {
 
 async function main() {
   try {
-    const { directory, maxFileSize, numBands } = parseArguments();
+    const { directory, maxFileSize, numBands, interactive } = parseArguments();
+    console.log('fsstat - File System Statistics Report');
+    if (interactive) {
+      console.log('Interactive mode enabled.');
+      console.log(`Scanning ${directory}...`);
 
-    console.log(`\nScanning ${directory}...`);
-    const startTime = Date.now();
-    const report = await getFSReport(directory, maxFileSize, numBands);
-    const endTime = Date.now();
-    const elapsedMs = endTime - startTime;
-
-    displayReport(report, directory, maxFileSize, numBands, elapsedMs);
+    }
+    else {
+      const startTime = Date.now();
+      const report = await getFSReport(directory, maxFileSize, numBands);
+      const endTime = Date.now();
+      const elapsedMs = endTime - startTime;
+      displayReport(report, directory, maxFileSize, numBands, elapsedMs);
+    }
   } catch (error) {
     console.error('Error:', error.message);
     process.exit(1);
