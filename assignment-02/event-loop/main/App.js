@@ -76,6 +76,7 @@ function displayReport(report, directory, maxFileSize, numBands, elapsedMs) {
 async function main() {
   try {
     const { directory, maxFileSize, numBands, interactive } = parseArguments();
+    let totalTime = 0;
     console.log('fsstat - File System Statistics Report');
     if (interactive) {
       console.log('Interactive mode enabled.');
@@ -83,11 +84,17 @@ async function main() {
       const dynReport = getInteractiveFSReport(directory, maxFileSize, numBands);
       while (true) {
         const startTime = Date.now();
-        let report = await dynReport.getNextUpdate();
+        let report;
+        try {
+          report = await dynReport.getNextUpdate();
+        } catch (error) {
+          break;
+        }
         const endTime = Date.now();
         console.clear();
-        displayReport(report, directory, maxFileSize, numBands, endTime - startTime);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        totalTime += (endTime - startTime);
+        displayReport(report, directory, maxFileSize, numBands, totalTime);
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
     else {
