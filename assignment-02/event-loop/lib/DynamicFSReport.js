@@ -12,6 +12,9 @@ export class DynamicFSReport {
     }
 
     async getNextUpdate() {
+        if(this.directories.length == 0) {
+            return Promise.reject(Error("No more directories to scan"));
+        }
         const path = resolve(this.directories.shift());
         const entries = await readdir(path);
         
