@@ -22,6 +22,13 @@ public class ScanContext {
     private final CountDownLatch latch = new CountDownLatch(1);
     private Boolean stopRequested = false;
     
+    /**
+     * Creates a new Scan Context with a starting directory, togheter with a histogram
+     * with the specified bands and size.
+     * @param initialDirectory the directory from which to start the scan.
+     * @param numBands the number of bands that has to have the histogram.
+     * @param maxFileSize the maximum file size the histogram has to track.
+     */
     public ScanContext(Path initialDirectory, int numBands, long maxFileSize) {
         this.initialDirectory = initialDirectory;
         this.histogram = new Histogram(numBands, maxFileSize);
