@@ -9,6 +9,10 @@ import java.util.concurrent.TimeUnit;
 
 import vthreads.lib.Histogram;
 
+/** 
+ * Contains all the information regarding a scan. From here the user accesses statistics
+ * and controls the scan. 
+ */
 public class ScanContext {
 
     public final Histogram histogram;
