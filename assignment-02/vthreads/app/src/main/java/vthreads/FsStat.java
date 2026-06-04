@@ -50,13 +50,11 @@ public class FsStat {
 
     private void printUsage() {
         System.err.println("fsstat -- file system statistics");
-        System.err.println("Usage: fsstat <directory> <maxFileSize> <numBands> [--interactive]");
+        System.err.println("Arguments: <directory> <maxFileSize> <numBands> [--interactive]");
         System.err.println("  directory    - Path to scan (absolute or relative)");
         System.err.println("  maxFileSize  - Maximum file size for band distribution (in bytes)");
         System.err.println("  numBands     - Number of size bands to create");
-        System.err.println("  --interactive - Optional flag to enable interactive mode");
-        System.err.println("\nExample: node App.js /home 1000000 10");
-        System.err.println("Example: node App.js /home 1000000 10 --interactive");
+        System.err.println("\n /home 1000000 10");
     }
 
     private String formatBytes(long bytes) {
