@@ -28,14 +28,23 @@ public class ScanContext {
         this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
+    /** 
+     * Start the scan on the directory specified upon creation of this object.
+     */
     public void startScan() {
         executor.submit(new DirectoryTask(executor, initialDirectory, latch, currentTasksNumber, histogram));
     }
 
+    /** 
+     * Returns the histogram created by the scan up to the time of calling this method.
+    */
     public Histogram getHistogram() {
         return histogram;
     }
 
+    /**
+     * Synchronously waits for the finishing of the scan.
+     */
     public void waitForScan() {
         if(!stopRequested) {
             try {
@@ -47,6 +56,9 @@ public class ScanContext {
         }
     }
 
+    /** 
+     * Stops the scan, it may require some time.
+     */
     public Histogram stopScan() {
         stopRequested = true;
         executor.shutdown();
