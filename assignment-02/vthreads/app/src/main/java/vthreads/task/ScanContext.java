@@ -76,4 +76,8 @@ public class ScanContext {
         }
         return histogram;
     }
+
+    public boolean isScanOver() {
+        return latch.getCount() == 0;
+    }
 }
