@@ -32,7 +32,7 @@ public class ScanContext {
     public ScanContext(Path initialDirectory, int numBands, long maxFileSize) {
         this.initialDirectory = initialDirectory;
         this.histogram = new Histogram(numBands, maxFileSize);
-        this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        this.executor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
     /** 
@@ -68,7 +68,7 @@ public class ScanContext {
      */
     public Histogram stopScan() {
         stopRequested = true;
-        executor.shutdown();
+        executor.shutdownNow();
         try {
             executor.awaitTermination(1000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
