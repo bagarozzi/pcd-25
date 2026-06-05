@@ -34,7 +34,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = "vthreads.App"
+    mainClass = "vthreads.View"
 }
 
 tasks.named<Test>("test") {
