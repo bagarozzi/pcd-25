@@ -115,6 +115,11 @@ public class View extends JFrame {
             exec.scheduleAtFixedRate(() -> {
                 if(!scanGoing.get() || scanContext.isScanOver()) {
                     exec.shutdown();
+                    startButton.setEnabled(true);
+                    directoryField.setEnabled(true);
+                    maxSizeField.setEnabled(true);
+                    numBandsField.setEnabled(true);
+                    stopButton.setEnabled(false);
                 }
                 SwingUtilities.invokeLater(this::displayResults);
             }, 0, 100, TimeUnit.MILLISECONDS);
@@ -130,7 +135,10 @@ public class View extends JFrame {
             scanContext.stopScan();
             scanGoing.compareAndExchange(true, false);
             outputArea.append("Stop requested...\n");
-            stopButton.setEnabled(false);
+            startButton.setEnabled(true);
+            directoryField.setEnabled(true);
+            maxSizeField.setEnabled(true);
+            numBandsField.setEnabled(true);
         }
     }
     
@@ -143,16 +151,19 @@ public class View extends JFrame {
         outputArea.append("\nFile size distribution:\n");
         
         for (Entry<Pair<Long>, Integer> entry : hist.getDistribution()) {
-            outputArea.append("  Band [" + entry.getKey().floor() + " - " + 
-                            entry.getKey().ceiling() + "]: " + 
+            outputArea.append("  Band [" + formatBytes(entry.getKey().floor()) + " - " + 
+                            formatBytes(entry.getKey().ceiling()) + "]: " + 
                             entry.getValue() + " files\n");
         }
-        
-        startButton.setEnabled(true);
-        directoryField.setEnabled(true);
-        maxSizeField.setEnabled(true);
-        numBandsField.setEnabled(true);
-        stopButton.setEnabled(false);
+    }
+
+    private String formatBytes(long bytes) {
+        if (bytes == 0) return "0 B";
+        if (bytes == Long.MAX_VALUE) return "inf B";
+        final long k = 1024;
+        final String[] sizes = {"B", "KB", "MB", "GB", "TB"};
+        int i = (int) Math.floor(Math.log(bytes) / Math.log(k));
+        return String.format("%.2f %s", (double) bytes / Math.pow(k, i), sizes[i]);
     }
     
     public static void main(String[] args) {
