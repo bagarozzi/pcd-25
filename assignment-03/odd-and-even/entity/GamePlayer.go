@@ -11,6 +11,7 @@ import (
 type Player interface {
 	send(message.Message)
 	getChannel() chan message.Message
+	getId() int
 	run()
 	terminate()
 }
@@ -50,6 +51,10 @@ func (p *PlayerImpl) send(m message.Message) {
 
 func (p *PlayerImpl) getChannel() chan message.Message {
 	return p.ch
+}
+
+func (p *PlayerImpl) getId() int {
+	return p.id
 }
 
 func (p *PlayerImpl) terminate() {
