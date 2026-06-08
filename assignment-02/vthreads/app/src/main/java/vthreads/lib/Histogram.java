@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import vthreads.util.Pair;
 
@@ -14,16 +16,13 @@ public class Histogram {
 
     private final int numBands;
     private final long maxFileSize;
-    private int dirCount = 0;
-    private final List<Integer> bands;
+    private AtomicInteger dirCount = new AtomicInteger(0);
+    private final AtomicIntegerArray bands;
 
     public Histogram(int numBands, long maxFileSize) {
         this.numBands = numBands;
         this.maxFileSize = maxFileSize;
-        this.bands = new ArrayList<>();
-        for(int i = 0; i <= numBands; i++) {
-            bands.add(0);
-        }
+        this.bands = new AtomicIntegerArray(numBands + 1);
     }
 
     /**
@@ -32,19 +31,19 @@ public class Histogram {
      */
     public synchronized void addFile(final long fileSize) {
         if (fileSize > maxFileSize) {
-            bands.set(numBands, bands.get(numBands) + 1);
+            bands.addAndGet(numBands, 1);
         }
         else {
             int bandIndex = (int) ((fileSize * numBands) / maxFileSize);
-            bands.set(bandIndex, bands.get(bandIndex) + 1);
+            bands.addAndGet(bandIndex, 1);
         }
     }
 
     /** 
      * Updates the directory count.
      */
-    public synchronized void updateDirectory() {
-        dirCount++;
+    public void updateDirectory() {
+        dirCount.addAndGet(1);
     }
 
     public List<Entry<Pair<Long>, Integer>> getDistribution() {
@@ -52,8 +51,8 @@ public class Histogram {
         long step = (long) (maxFileSize / numBands);
         long floor = 0;
         long ceiling = step;
-        for(int count : bands) {
-            distribution.add(Map.entry(new Pair<>(floor, ceiling), count));
+        for(int i = 0; i <= numBands; i++) {
+            distribution.add(Map.entry(new Pair<>(floor, ceiling), bands.get(i)));
             floor = ceiling;
             ceiling += step;
             if(ceiling > maxFileSize) {
@@ -64,10 +63,14 @@ public class Histogram {
     }
 
     public int getDirectoryCount() {
-        return dirCount;
+        return dirCount.get();
     }
 
     public int getTotalFiles() {
-        return bands.stream().mapToInt(Integer::intValue).sum();
+        int sum = 0;
+        for(int i = 0; i <= numBands; i++) {
+            sum += bands.get(i);
+        }
+        return sum;
     }
 }
