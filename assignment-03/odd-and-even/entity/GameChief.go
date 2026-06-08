@@ -2,18 +2,18 @@ package entity
 
 import (
 	"math"
+	"odds-and-even/message"
 )
 
 type Chief interface {
 	run()
-	send()
+	send(message.Message)
 }
 
 type GameChief struct {
 	rounds  int
 	players []Player
-	//ch      chan message.Message
-
+	ch      chan message.Message
 }
 
 func CreateGameChief(rounds int) Chief {
@@ -41,6 +41,6 @@ func (g *GameChief) run() {
 	}
 }
 
-func (g *GameChief) send() {
-
+func (g *GameChief) send(m message.Message) {
+	g.ch <- m
 }
