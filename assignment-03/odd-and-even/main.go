@@ -31,7 +31,7 @@ func initLogging() {
 		log.Fatal("Failed to open log file: ", err)
 	}
 	log.SetOutput(file)
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.SetFlags(log.Ldate | log.Ltime)
 }
 
 func parseArguments() bool {
