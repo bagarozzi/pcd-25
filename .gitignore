@@ -7,3 +7,6 @@ bin/
 
 # Ignore VS Code settings and workspace files
 .vscode/
+
+# Ignore log file from assignment-03/odd-and-even
+assignment-03/odd-and-even/match_*
