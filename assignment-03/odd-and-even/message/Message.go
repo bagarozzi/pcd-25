@@ -4,11 +4,11 @@ package message
 type MessageType string
 
 const (
-	NumberType    string = "number"
-	OddOrEvenType string = "choice"
+	NumberType    MessageType = "number"
+	OddOrEvenType MessageType = "choice"
 )
 
 type Message struct {
-	mType   MessageType
-	payload int
+	MType   MessageType
+	Payload int
 }
