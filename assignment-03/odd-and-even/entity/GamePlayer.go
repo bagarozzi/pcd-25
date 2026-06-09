@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"odds-and-even/message"
+	"time"
 )
 
 // A Player is a member of the tournament.
@@ -23,26 +24,29 @@ type PlayerImpl struct {
 	cancel context.CancelFunc
 }
 
-func CreatePlayer(id int) Player {
-	ctx, cancel := context.WithCancel(context.Background())
+func CreatePlayer(id int, ctx context.Context) Player {
 	return &PlayerImpl{
-		ch:     make(chan message.Message),
-		id:     id,
-		ctx:    ctx,
-		cancel: cancel,
+		ch:  make(chan message.Message),
+		id:  id,
+		ctx: ctx,
 	}
 }
 
 func (p *PlayerImpl) run() {
-	for {
-		select {
-		case <-p.ctx.Done():
-			log.Printf("Player-%d terminating", p.getId())
-			return
-		case msg := <-p.ch:
-			handleMessage(p, msg)
+	log.Printf("[PLAYER-%d]: spawned", p.getId())
+	go func() {
+		for {
+			select {
+			case <-p.ctx.Done():
+				log.Printf("[PLAYER-%d]: terminating", p.getId())
+				return
+			// case msg, ok := <-p.ch
+			// player logic here
+			default:
+				time.Sleep(50 * time.Millisecond)
+			}
 		}
-	}
+	}()
 }
 
 func (p *PlayerImpl) send(m message.Message) {
