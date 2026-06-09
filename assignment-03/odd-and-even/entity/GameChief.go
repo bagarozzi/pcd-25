@@ -5,52 +5,101 @@ import (
 	"log"
 	"math"
 	"odds-and-even/message"
-	"time"
 )
 
 type Chief interface {
-	Run() chan int64
+	Run() chan interface{}
 	send(message.Message)
 }
 
 type GameChief struct {
-	rounds  int64
-	players []Player
-	ch      chan message.Message
+	rounds      int64
+	players     []Player
+	ch          chan message.Message
+	ctx         context.Context
+	currentRefs []Refree
 }
+
+type ChiefState int
+
+const (
+	StateMatchmaking ChiefState = iota
+	StateCreateReferee
+	StateWaitReferee
+	StateEndRound
+	StateDone
+)
 
 func CreateGameChief(rounds int64, ctx context.Context) Chief {
 	var g GameChief
 	g.rounds = rounds
+	g.ctx = ctx
 	var players []Player
 	playerNum := int(math.Floor(math.Pow(2, float64(rounds))))
 	for i := range playerNum {
-		players = append(players, CreatePlayer(i))
+		players = append(players, CreatePlayer(i, ctx))
 	}
 	g.players = players
 	return &g
 }
 
-func (g *GameChief) Run() chan int64 {
+// Starts the tournament and returns a channel, the channel closes when the tournament ends.
+func (g *GameChief) Run() chan interface{} {
 	log.Printf("[CHIEF]: starting tournament with %d rounds and %d players", g.rounds, len(g.players))
-	ch := make(chan int64)
+	ch := make(chan interface{})
+	for _, player := range g.players {
+		player.run()
+	}
+
 	go func() {
-		for {
-			if g.rounds == 0 {
-				ch <- 2
+		currentState := StateMatchmaking
+		for currentState != StateDone {
+			select {
+			case <-g.ctx.Done():
+				log.Printf("[CHIEF]: signal received, shutting down...")
 				return
+			default:
+				switch currentState {
+				case StateMatchmaking:
+					g.currentRefs = createCouples(g)
+					for _, ref := range g.currentRefs {
+						ref.run()
+					}
+					currentState = StateWaitReferee
+				case StateWaitReferee:
+					select {
+					case msg := <-g.ch:
+						if msg.MType == message.EndMatchType {
+							panic("unmanaged state \"StateWaitRefree\" ")
+							// remove refree, remove loser player
+						}
+					}
+					if len(g.currentRefs) == 0 {
+						currentState = StateEndRound
+					}
+				case StateEndRound:
+					g.rounds--
+					if g.rounds == 0 {
+						currentState = StateDone
+					} else {
+						currentState = StateMatchmaking
+					}
+				}
 			}
-			// matchmaking
-			// crea refree
-			// aspetta refree
-			time.Sleep(2000 * time.Millisecond)
-			// termina chi ha perso
-			g.rounds--
 		}
+		ch <- struct{}{}
 	}()
 	return ch
 }
 
 func (g *GameChief) send(m message.Message) {
 	g.ch <- m
+}
+
+func createCouples(g *GameChief) []Refree {
+	var matches []Refree
+	for i := range len(g.players) - 2 {
+		id := i + int(g.rounds)*100 // if we are in 2 round, the 3rd refree will have id 203
+		matches = append(matches, CreateGameRefree())
+	}
 }
