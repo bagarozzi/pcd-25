@@ -6,6 +6,7 @@ type MessageType string
 const (
 	NumberType    MessageType = "number"
 	OddOrEvenType MessageType = "choice"
+	TerminateType MessageType = "terminate"
 )
 
 type Message struct {
