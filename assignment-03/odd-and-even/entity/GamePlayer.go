@@ -37,7 +37,7 @@ func (p *PlayerImpl) run() {
 	for {
 		select {
 		case <-p.ctx.Done():
-			log.Printf("Player terminating")
+			log.Printf("Player-%d terminating", p.getId())
 			return
 		case msg := <-p.ch:
 			handleMessage(p, msg)
