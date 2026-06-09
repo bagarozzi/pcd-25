@@ -20,6 +20,7 @@ var (
 )
 
 const title string = "odds and even: goroutine odd-and-even tournament"
+const cooldown time.Duration = time.Millisecond * 2000
 
 func main() {
 	signalChan := make(chan os.Signal, 1)
@@ -36,7 +37,7 @@ func main() {
 		select {
 		case <-signalChan:
 			fmt.Printf("[MAIN]: signal received, shutting down...")
-			time.Sleep(500)
+			time.Sleep(cooldown)
 			gracefulShutdown()
 			return
 		case <-ch:
