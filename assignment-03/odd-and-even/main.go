@@ -36,9 +36,10 @@ func main() {
 	for {
 		select {
 		case <-signalChan:
-			fmt.Printf("[MAIN]: signal received, shutting down...")
-			time.Sleep(cooldown)
+			log.Printf("[MAIN]: signal received, shutting down...")
 			gracefulShutdown()
+			time.Sleep(cooldown)
+			log.Printf("[MAIN]: all shut down, goodbye")
 			return
 		case <-ch:
 			log.Printf("[MAIN]: tournament ended, shutting down...")
