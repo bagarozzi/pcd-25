@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
+	"odds-and-even/entity"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -18,11 +22,29 @@ var (
 const title string = "odds and even: goroutine odd-and-even tournament"
 
 func main() {
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	gracefulShutdownContext, gracefulShutdown := context.WithCancel(context.Background())
 	if !parseArguments() {
 		return
 	}
 	initLogging()
-	log.Printf(" - [MAIN]: Tournament started with %d rounds\nPlaying...", roundNum)
+	log.Printf("[MAIN]: starting tournament with %d rounds...", roundNum)
+	chief := entity.CreateGameChief(roundNum, gracefulShutdownContext)
+	ch := chief.Run()
+	for {
+		select {
+		case <-signalChan:
+			fmt.Printf("[MAIN]: signal received, shutting down...")
+			time.Sleep(500)
+			gracefulShutdown()
+			return
+		case <-ch:
+			log.Printf("[MAIN]: tournament ended, shutting down...")
+			return
+		}
+	}
+
 }
 
 func initLogging() {
