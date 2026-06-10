@@ -3,8 +3,10 @@ package entity
 import (
 	"context"
 	"log"
+	"maps"
 	"math"
 	"odds-and-even/message"
+	"slices"
 )
 
 type Chief interface {
@@ -34,6 +36,7 @@ func CreateGameChief(rounds int64, ctx context.Context) Chief {
 	var g GameChief
 	g.rounds = rounds
 	g.ctx = ctx
+	g.ch = make(chan message.Message)
 	var players map[int]Player = make(map[int]Player)
 	playerNum := int(math.Floor(math.Pow(2, float64(rounds))))
 	for i := range playerNum {
@@ -88,7 +91,8 @@ func (g *GameChief) Run() chan interface{} {
 				}
 			}
 		}
-		log.Printf("[CHIEF]: the winner of the tournament is %d!", g.players[0])
+		lastPlayer := slices.Collect(maps.Values(g.players))[0]
+		log.Printf("[CHIEF]: the winner of the tournament is %d!", lastPlayer.getId())
 		ch <- struct{}{}
 	}()
 	return ch
@@ -100,9 +104,12 @@ func (g *GameChief) send(m message.Message) {
 
 func createCouples(g *GameChief) map[int]Refree {
 	var matches map[int]Refree = make(map[int]Refree)
-	for i := range len(g.players) - 2 {
-		id := i + int(g.rounds)*100 // if we are in 2 round, the 3rd refree will have id 203
-		matches[id] = CreateGameRefree(id, []Player{g.players[i], g.players[i+1]}, g.ch)
+	refId := 0
+	values := slices.Collect(maps.Values(g.players))
+	for i := 0; i < len(values)-1; i += 2 {
+		id := refId + int(g.rounds)*100 // if we are in 2 round, the 3rd refree will have id 203
+		matches[id] = CreateGameRefree(id, []Player{values[i], values[i+1]}, g.ch)
+		refId++
 	}
 	return matches
 }
