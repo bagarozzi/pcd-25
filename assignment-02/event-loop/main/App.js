@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { getFSReport, getInteractiveFSReport } from '../lib/FSStat.js';
+import { getFSReport } from '../lib/FSStat.js';
 import path from 'path';
 
 function parseArguments() {
@@ -12,9 +12,7 @@ function parseArguments() {
     console.error('  directory    - Path to scan (absolute or relative)');
     console.error('  maxFileSize  - Maximum file size for band distribution (in bytes)');
     console.error('  numBands     - Number of size bands to create');
-    console.error('  --interactive - Optional flag to enable interactive mode');
     console.error('\nExample: node App.js /home 1000000 10');
-    console.error('Example: node App.js /home 1000000 10 --interactive');
     process.exit(2);
   }
 
@@ -58,7 +56,7 @@ function formatBytes(bytes) {
 
 function displayReport(report, directory, maxFileSize, numBands, elapsedMs) {
   console.log(`Directory: ${directory}`);
-  console.log(`Found ${report.getTotalFiles()} in ${report.getScannedDirectories()} directories.`);
+  console.log(`Found ${report.getTotalFiles()} in ${report.getScannedDirectories()} directories, skipped ${report.getSkippedDirectories()} due to errors.`);
   console.log(`Max File Size Threshold: ${formatBytes(maxFileSize)}`);
   console.log('\nFile Size Distribution:');
 
@@ -78,32 +76,11 @@ async function main() {
     const { directory, maxFileSize, numBands, interactive } = parseArguments();
     let totalTime = 0;
     console.log('fsstat - File System Statistics Report');
-    if (interactive) {
-      console.log('Interactive mode enabled.');
-      console.log(`Scanning ${directory}...`);
-      const dynReport = getInteractiveFSReport(directory, maxFileSize, numBands);
-      while (true) {
-        const startTime = Date.now();
-        let report;
-        try {
-          report = await dynReport.getNextUpdate();
-        } catch (error) {
-          break;
-        }
-        const endTime = Date.now();
-        console.clear();
-        totalTime += (endTime - startTime);
-        displayReport(report, directory, maxFileSize, numBands, totalTime);
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    }
-    else {
       const startTime = Date.now();
       const report = await getFSReport(directory, maxFileSize, numBands);
       const endTime = Date.now();
       const elapsedMs = endTime - startTime;
       displayReport(report, directory, maxFileSize, numBands, elapsedMs);
-    }
   } catch (error) {
     console.error('Error:', error.message);
     process.exit(1);

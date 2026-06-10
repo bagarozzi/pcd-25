@@ -6,6 +6,7 @@ export class Histogram {
     #maxFileSize;
     #bands;
     #directoriesScanned = 0;
+    #directoriesSkipped = 0;
 
     constructor(numBands, maxFileSize) {
         this.#numBands = numBands;
@@ -25,6 +26,15 @@ export class Histogram {
 
     updateDirectories() {
         this.#directoriesScanned++;
+    }
+
+    
+    updateDirectoriesSkipped() {
+        this.#directoriesSkipped++;
+    }
+
+    getSkippedDirectories() {
+        return this.#directoriesSkipped;
     }
 
     getScannedDirectories() {
