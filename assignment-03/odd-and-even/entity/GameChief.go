@@ -67,12 +67,13 @@ func (g *GameChief) Run() chan interface{} {
 					}
 					currentState = StateWaitReferee
 				case StateWaitReferee:
-					select {
-					case msg := <-g.ch:
-						if msg.MType == message.EndMatchType {
-							panic("unmanaged state \"StateWaitRefree\" ")
-							// remove refree, remove loser player
-						}
+					msg := <-g.ch
+					if msg.MType == message.EndMatchType {
+						payload := msg.Payload.(message.EndMatchReply)
+						log.Printf("[CHIEF]: the Winner of the match n. %d is %d", payload.RefreeId, payload.WinnerId)
+						g.players[payload.LoserId].getChannel() <- message.Message{MType: message.TerminateType, Payload: struct{}{}}
+						delete(g.currentRefs, payload.RefreeId)
+						delete(g.players, payload.LoserId)
 					}
 					if len(g.currentRefs) == 0 {
 						currentState = StateEndRound
@@ -87,6 +88,7 @@ func (g *GameChief) Run() chan interface{} {
 				}
 			}
 		}
+		log.Printf("[CHIEF]: the winner of the tournament is %d!", g.players[0])
 		ch <- struct{}{}
 	}()
 	return ch
