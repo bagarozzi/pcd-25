@@ -100,6 +100,7 @@ func createCouples(g *GameChief) []Refree {
 	var matches []Refree
 	for i := range len(g.players) - 2 {
 		id := i + int(g.rounds)*100 // if we are in 2 round, the 3rd refree will have id 203
-		matches = append(matches, CreateGameRefree())
+		matches = append(matches, CreateGameRefree(id, []Player{g.players[i], g.players[i+1]}, g.ch))
 	}
+	return matches
 }
