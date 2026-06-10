@@ -3,8 +3,8 @@ package entity
 import (
 	"context"
 	"log"
+	"math/rand/v2"
 	"odds-and-even/message"
-	"time"
 )
 
 // A Player is a member of the tournament.
@@ -40,27 +40,27 @@ func (p *PlayerImpl) run() {
 			case <-p.ctx.Done():
 				log.Printf("[PLAYER-%d]: terminating", p.getId())
 				return
-            case msg, ok := <-p.ch
-                switch msg.MType{
-                    case message.OddOrEvenType
-                        ooe := rand.IntN(2)
-                        num := rand.IntN(5)
-                        send(message.Message{MType: message.OddOrEvenReplyType, Payload: message.OddOrEvenReply{Choice: ooe,
-                        Number: num,
-                        Id: p.getId()
-                        }})
-                    continue
-                    case message.NumberRequestType
-                        num := rand.IntN(5)
-                        send(message.Message{MType: message.OddOrEvenReplyType, Payload: message.NumberReply{
-                        Number: num,
-                        Id: p.getId()
-                        }})
-                    continue
-                    case message.TerminateType
-                        log.Printf("[PLAYER-%d]: lost, terminating", p.getId())
-                        return
-                }
+			case msg := <-p.ch:
+				switch msg.MType {
+				case message.OddOrEvenRequestType:
+					ooe := rand.IntN(2)
+					num := rand.IntN(5)
+					p.send(message.Message{MType: message.OddOrEvenReplyType, Payload: message.OddOrEvenReply{Choice: ooe,
+						Number: num,
+						Id:     p.getId(),
+					}})
+					continue
+				case message.NumberRequestType:
+					num := rand.IntN(5)
+					p.send(message.Message{MType: message.OddOrEvenReplyType, Payload: message.NumberReply{
+						Number: num,
+						Id:     p.getId(),
+					}})
+					continue
+				case message.TerminateType:
+					log.Printf("[PLAYER-%d]: lost, terminating", p.getId())
+					return
+				}
 
 			}
 		}
