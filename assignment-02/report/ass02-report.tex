@@ -39,8 +39,13 @@ For the optional part, since the GUI needs constant updates, the computation mus
 \section{Design}
 In this section is discussed the design of the three requested versions of the system. Each version is designed according to its paradigm: asynchronous programming based on event-loop, reactive programming and virtual threading.
 \subsection{Asynchronous Programming (Event-Loop)}
-For the Event-Loop model, we need to avoid blocking the single execution thread. A standard recursive approach would flood the task queue and freeze the environment, so we modeled the directory traversal as an \textbf{explicit state machine}.
-We maintain this state using a queue of pending directories. The application polls the engine for updates, and each update processes a batch of concurrent I/O requests. It then updates the statistics and hands control back to the event-loop so the UI can render and process cancellation signals.
+Being an event-loop single-threaded, a mechanism to process multiple batches has to be implemented to avoid blocking the execution thread in
+the massive amount of I/O operations that will be done. 
+
+The main idea is to maintain a queue of directories to scan and hand it to the event queue to scan. Each directory scan will produce other 
+directories that will be added to the queue, and so on.
+
+Combining this queue with asynchronous calls, the event-loop can proceed, executing other tasks, while waiting for an async call to resolve, then return to it when done. 
 
 \subsection{Reactive Programming (RxJava)}
 % TODO: Describe the stream-based modeling, Observers/Observables, backpressure handling, etc.
