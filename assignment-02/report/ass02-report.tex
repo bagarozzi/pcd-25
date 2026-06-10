@@ -1,0 +1,84 @@
+\documentclass{scrartcl}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{cleveref}
+
+\title{\LARGE Assignment 2: FSStat}
+\subtitle{Concurrent and Distributed Programming\\a.y. 2025--2026}
+
+\author{
+  Bagattoni Federico \and Sbaraccani Pietro \and Venturini Luca
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Analysis}
+
+\subsection{General Requirements}
+This assignment focuses on building an asynchronous library and application to compute file system statistics. It needs to traverse a directory tree and generate a report showing the total file count along with a size distribution histogram based on predefined intervals.
+We also need to include an optional GUI so the user can start, stop, and monitor the scan in real time.
+
+\subsection{Analysis of the Problem}
+Because file system inspection is \textbf{I/O-bound}, disk access operations like \texttt{readdir} and \texttt{lstat} act as the main performance bottleneck.
+Running these operations sequentially would stall the CPU during I/O waits, severely degrading performance. Our main challenge is maximizing throughput by parallelizing I/O requests without blocking the execution threads.
+
+We have to build the system using three different programming paradigms: Event-Loop, Reactive Programming (Rx), and Virtual Threads. Each approach requires a specific way of handling concurrency. Since the GUI needs constant updates, the computation must be interruptible and capable of returning intermediate results across all three implementations.
+
+\section{Design}
+
+\subsection{Architecture Overview}
+To keep the application interactive, we separated the UI and Controller logic from the file system traversal engine. The engine acts as an asynchronous producer of data, and the Controller consumes these updates to render the GUI.
+
+\subsection{Paradigm Modeling}
+
+\subsubsection{Asynchronous Programming (Event-Loop)}
+For the Event-Loop model, we need to avoid blocking the single execution thread. A standard recursive approach would flood the task queue and freeze the environment, so we modeled the directory traversal as an \textbf{explicit state machine}.
+We maintain this state using a queue of pending directories. The application polls the engine for updates, and each update processes a batch of concurrent I/O requests. It then updates the statistics and hands control back to the event-loop so the UI can render and process cancellation signals.
+
+\subsubsection{Reactive Programming (RxJava)}
+% TODO: Describe the stream-based modeling, Observers/Observables, backpressure handling, etc.
+
+\subsubsection{Virtual Threads}
+The Virtual Threads model lets us skip complex asynchronous callbacks and reactive pipelines, allowing us to write traditional, synchronous-looking code. Virtual threads act as lightweight logical units of concurrency, giving us the benefits of standard threads without the high resource footprint.
+
+This relies on a "thread-per-task" approach where we can spawn a new virtual thread for every concurrent I/O operation. When one of these threads hits a blocking I/O operation (like reading a directory), it unmounts from its OS carrier thread, leaving the carrier free to run other virtual threads. This prevents the thread-pool starvation normally seen with platform threads under heavy I/O and scales exceptionally well. We do have to be careful about thread pinning, though. This happens if a virtual thread blocks inside a \texttt{synchronized} block or a native method, so our design avoids those where possible.
+
+\section{Implementation}
+
+\subsection{Event-Loop (Node.js)}
+We wrote the event-loop version in Node.js to take advantage of its native non-blocking I/O.
+The \texttt{DynamicFSReport} class handles the core logic using the \texttt{node:fs/promises} API.
+
+To maximize I/O concurrency in a single directory, we map each file to a Promise running \texttt{lstat} and group them with \texttt{Promise.all()}. This sends all stat requests to the OS in parallel.
+
+To keep things interactive without blocking the main thread, the process exposes an asynchronous \texttt{getNextUpdate()} method. The main script uses an \texttt{async/await} loop to fetch updates and print the intermediate \texttt{Histogram}. We also added a small artificial delay inside the loop (\texttt{await new Promise(resolve => setTimeout(resolve, 100))}). This gives the event-loop enough breathing room to process other microtasks and UI events, keeping the application responsive and easy to interrupt.
+
+\subsection{Reactive Programming (RxJava)}
+% TODO: Detail the RxJava implementation (e.g., flatMap, Schedulers.io(), Flowable).
+
+\subsection{Virtual Threads}
+We implemented the Virtual Threads version in Java. The \texttt{ScanContext} class coordinates the scanning and sets up an unbounded executor dedicated to virtual threads using \texttt{Executors.newVirtualThreadPerTaskExecutor()}.
+
+The \texttt{DirectoryTask} class implements \texttt{Runnable} and handles the recursive traversal. When scanning a directory, it lists the contents and processes files to update the shared \texttt{Histogram}. Instead of making a blocking recursive call for subdirectories, the task submits a new \texttt{DirectoryTask} to the executor. This naturally fans out the traversal across thousands of concurrent virtual threads.
+
+To figure out when the whole tree has been processed without blocking anything, we use an \texttt{AtomicInteger} as a concurrent counter. Each task increments this counter when created and decrements it in a \texttt{finally} block at the end of its \texttt{run()} method. When the count hits zero, the last terminating thread triggers a \texttt{CountDownLatch} to signal the scan is done. Using concurrent utilities like \texttt{AtomicInteger} and \texttt{CountDownLatch} instead of \texttt{synchronized} blocks helps the virtual threads unmount correctly and prevents thread pinning.
+
+The Java Swing GUI (in the \texttt{View} class) integrates smoothly with this setup. Starting the scan doesn't block the Swing Event Dispatch Thread (EDT). Instead, a \texttt{ScheduledExecutorService} polls the \texttt{Histogram} every 100 milliseconds to update the UI with intermediate results. If the user stops the process, the GUI calls \texttt{executor.shutdownNow()}, which immediately interrupts the virtual threads and halts the I/O traversal cleanly.
+
+\section{Verification}
+% TODO: Explain how the 3 approaches were tested for consistency (producing the same output) and performance comparisons.
+
+\section{Conclusion}
+% TODO: Final remarks on the ease of programming, code maintainability, and performance trade-offs of the 3 paradigms.
+
+\end{document}
