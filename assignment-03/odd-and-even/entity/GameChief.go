@@ -73,7 +73,7 @@ func (g *GameChief) Run() chan interface{} {
 					msg := <-g.ch
 					if msg.MType == message.EndMatchType {
 						payload := msg.Payload.(message.EndMatchReply)
-						log.Printf("[CHIEF]: the Winner of the match n. %d is %d", payload.RefreeId, payload.WinnerId)
+						log.Printf("[CHIEF]: the Winner of the match n. %d is Player-%d", payload.RefreeId, payload.WinnerId)
 						g.players[payload.LoserId].getChannel() <- message.Message{MType: message.TerminateType, Payload: struct{}{}}
 						delete(g.currentRefs, payload.RefreeId)
 						delete(g.players, payload.LoserId)
@@ -92,7 +92,7 @@ func (g *GameChief) Run() chan interface{} {
 			}
 		}
 		lastPlayer := slices.Collect(maps.Values(g.players))[0]
-		log.Printf("[CHIEF]: the winner of the tournament is %d!", lastPlayer.getId())
+		log.Printf("[CHIEF]: the winner of the tournament is Player-%d!", lastPlayer.getId())
 		ch <- struct{}{}
 	}()
 	return ch
