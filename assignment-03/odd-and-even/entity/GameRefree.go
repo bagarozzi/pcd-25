@@ -32,9 +32,9 @@ func CreateGameRefree(id int, players []Player, chiefCh chan message.Message) Re
 func (g *GameRefree) run() {
 	go func() {
 		choise := rand.IntN(2)
-		g.players[choise].getChannel() <- message.Message{MType: message.OddOrEvenRequestType, Payload: struct{}{}}
-		other := 1 + choise%2
-		g.players[1+choise%2].getChannel() <- message.Message{MType: message.NumberRequestType, Payload: struct{}{}}
+		g.players[choise].send(message.Message{MType: message.OddOrEvenRequestType, Payload: struct{}{}})
+		other := (1 + choise) % 2
+		g.players[other].send(message.Message{MType: message.NumberRequestType, Payload: struct{}{}})
 
 		gotNum1 := false
 		gotNum2 := false
