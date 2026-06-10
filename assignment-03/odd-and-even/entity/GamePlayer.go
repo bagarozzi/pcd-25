@@ -40,10 +40,28 @@ func (p *PlayerImpl) run() {
 			case <-p.ctx.Done():
 				log.Printf("[PLAYER-%d]: terminating", p.getId())
 				return
-			// case msg, ok := <-p.ch
-			// player logic here
-			default:
-				time.Sleep(50 * time.Millisecond)
+            case msg, ok := <-p.ch
+                switch msg.MType{
+                    case message.OddOrEvenType
+                        ooe := rand.IntN(2)
+                        num := rand.IntN(5)
+                        send(message.Message{MType: message.OddOrEvenReplyType, Payload: message.OddOrEvenReply{Choice: ooe,
+                        Number: num,
+                        Id: p.getId()
+                        }})
+                    continue
+                    case message.NumberRequestType
+                        num := rand.IntN(5)
+                        send(message.Message{MType: message.OddOrEvenReplyType, Payload: message.NumberReply{
+                        Number: num,
+                        Id: p.getId()
+                        }})
+                    continue
+                    case message.TerminateType
+                        log.Printf("[PLAYER-%d]: lost, terminating", p.getId())
+                        return
+                }
+
 			}
 		}
 	}()
