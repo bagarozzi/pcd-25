@@ -4,11 +4,12 @@ package message
 type MessageType string
 
 const (
-	NumberReplyType   MessageType = "number"
-	OddOrEvenType     MessageType = "choice"
-	NumberRequestType MessageType = "number_request"
-	TerminateType     MessageType = "terminate"
-	EndMatchType      MessageType = "end_match"
+	NumberRequestType    MessageType = "number_request"
+	NumberReplyType      MessageType = "number"
+	OddOrEvenRequestType MessageType = "choice"
+	OddOrEvenReplyType   MessageType = "choice_reply"
+	TerminateType        MessageType = "terminate"
+	EndMatchType         MessageType = "end_match"
 )
 
 type Message struct {
