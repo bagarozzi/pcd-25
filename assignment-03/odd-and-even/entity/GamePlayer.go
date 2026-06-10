@@ -52,7 +52,7 @@ func (p *PlayerImpl) run() {
 					continue
 				case message.NumberRequestType:
 					num := rand.IntN(5)
-					p.send(message.Message{MType: message.OddOrEvenReplyType, Payload: message.NumberReply{
+					p.send(message.Message{MType: message.NumberReplyType, Payload: message.NumberReply{
 						Number: num,
 						Id:     p.getId(),
 					}})
