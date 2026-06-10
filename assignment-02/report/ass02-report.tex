@@ -38,7 +38,7 @@ For the optional part, since the GUI needs constant updates, the computation mus
 
 \section{Design}
 In this section is discussed the design of the three requested versions of the system. Each version is designed according to its paradigm: asynchronous programming based on event-loop, reactive programming and virtual threading.
-\subsection{Asynchronous Programming (Event-Loop)}
+\subsection{Asynchronous Programming (Event-Loop)}\label{sec:des-async}
 Being an event-loop single-threaded, a mechanism to process multiple batches has to be implemented to avoid blocking the execution thread in
 the massive amount of I/O operations that will be done. 
 
@@ -60,12 +60,40 @@ We do have to be careful about \textit{thread pinning}, though. This happens if 
 \section{Implementation}
 
 \subsection{Event-Loop (Node.js)}
-We wrote the event-loop version in Node.js to take advantage of its native non-blocking I/O.
-The \texttt{DynamicFSReport} class handles the core logic using the \texttt{node:fs/promises} API.
+We wrote the event-loop version mentioned in Section~\ref{sec:des-async} in Node.js to take advantage of its native non-blocking I/O. The \texttt{async-await} pattern offered by JavaScript makes writing asynchronous code much easier.
 
-To maximize I/O concurrency in a single directory, we map each file to a Promise running \texttt{lstat} and group them with \texttt{Promise.all()}. This sends all stat requests to the OS in parallel.
+The \texttt{FSStat} class is the library's entry point and handles the core logic using the \texttt{node:fs/promises} API. Through the \texttt{getFSReport} async function the user can trigger the directory scan and obtain an \texttt{Histogram} containing all the statistics, divided 
+as requested through the arguments passed.
 
-To keep things interactive without blocking the main thread, the process exposes an asynchronous \texttt{getNextUpdate()} method. The main script uses an \texttt{async/await} loop to fetch updates and print the intermediate \texttt{Histogram}. We also added a small artificial delay inside the loop (\texttt{await new Promise(resolve => setTimeout(resolve, 100))}). This gives the event-loop enough breathing room to process other microtasks and UI events, keeping the application responsive and easy to interrupt.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/fsstat.png}
+  \caption{The \texttt{getFSReport} function}
+\end{figure}
+
+The \texttt{scanDirectory} function is also asynchronous and does the scanning. It first reads the directory passed as arguments and gets the statistics of the files. As show in Figure~\ref{fig:lsstat}, this step consist in creating a series of async lambdas calling \texttt{lsstat}, this triggers the system calls for fetching the files' statistics, which are blocking calls that are \texttt{await}-ed.
+
+\texttt{await}-ing for the calls to \texttt{lsstat} lets the event-loop pause the execution and proceed with other tasks that may be ready after being themselves blocked for an I/O call; once the OS fetches the files' statistics, the promises are resolved and the event-loop can resume execution from where it left. 
+
+This is particularly useful in this context as, we suppose, many other recursive calls to the function are opened and performing blocking calls and many more are done and waiting to resume.
+
+Finally, \texttt{Promise.all\,()} call serves as aggregator, waiting for the completion of the async lambdas mentioned.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/lsstat.png}\label{fig:lsstat}
+  \caption{Awaiting for the files' statistics}
+\end{figure}
+
+In the final part the function goes over every file, updating the report according to the file's nature. At this point \texttt{scanDirectory} should be recursively called on directories found, as shown in Figure~\ref{fig:recursion}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.80\textwidth]{figures/recursion.png}\label{fig:recursion}
+  \caption{Asynchronous calls to recursive function}
+\end{figure}
+
+We can see that the recursive calls are accumulated in the \texttt{statPromises} list then \texttt{await}-ed using \texttt{Promise.all\,()} so that the function resolves only once all the recursive calls have resolved, thus the root call to \texttt{scanDirectory} in \texttt{getFSReport} will keep waiting. We could say it acts as a \textit{barrier}.
 
 \subsection{Reactive Programming (RxJava)}
 % TODO: Detail the RxJava implementation (e.g., flatMap, Schedulers.io(), Flowable).
