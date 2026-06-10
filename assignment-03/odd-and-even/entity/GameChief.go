@@ -14,10 +14,10 @@ type Chief interface {
 
 type GameChief struct {
 	rounds      int64
-	players     []Player
+	players     map[int]Player
 	ch          chan message.Message
 	ctx         context.Context
-	currentRefs []Refree
+	currentRefs map[int]Refree
 }
 
 type ChiefState int
@@ -34,10 +34,10 @@ func CreateGameChief(rounds int64, ctx context.Context) Chief {
 	var g GameChief
 	g.rounds = rounds
 	g.ctx = ctx
-	var players []Player
+	var players map[int]Player = make(map[int]Player)
 	playerNum := int(math.Floor(math.Pow(2, float64(rounds))))
 	for i := range playerNum {
-		players = append(players, CreatePlayer(i, ctx))
+		players[i] = CreatePlayer(i, ctx)
 	}
 	g.players = players
 	return &g
@@ -96,11 +96,11 @@ func (g *GameChief) send(m message.Message) {
 	g.ch <- m
 }
 
-func createCouples(g *GameChief) []Refree {
-	var matches []Refree
+func createCouples(g *GameChief) map[int]Refree {
+	var matches map[int]Refree = make(map[int]Refree)
 	for i := range len(g.players) - 2 {
 		id := i + int(g.rounds)*100 // if we are in 2 round, the 3rd refree will have id 203
-		matches = append(matches, CreateGameRefree(id, []Player{g.players[i], g.players[i+1]}, g.ch))
+		matches[id] = CreateGameRefree(id, []Player{g.players[i], g.players[i+1]}, g.ch)
 	}
 	return matches
 }
