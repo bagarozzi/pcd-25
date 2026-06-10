@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"log"
 	"math/rand/v2"
 	"odds-and-even/message"
 )
@@ -31,6 +32,7 @@ func CreateGameRefree(id int, players []Player, chiefCh chan message.Message) Re
 // and claims a winners. Trasmists the winner to the Chief.
 func (g *GameRefree) run() {
 	go func() {
+		log.Printf("[REFREE-%d]: start match PLAYER-%d vs. PLAYER-%d", g.id, g.players[0].getId(), g.players[1].getId())
 		choise := rand.IntN(2)
 		g.players[choise].send(message.Message{MType: message.OddOrEvenRequestType, Payload: struct{}{}})
 		other := (1 + choise) % 2
@@ -43,7 +45,10 @@ func (g *GameRefree) run() {
 			case msg := <-g.players[choise].getChannel():
 				if msg.Payload == 0 {
 					g.evenId = g.players[choise].getId()
-					g.oddId = g.players[1+choise%2].getId()
+					g.oddId = g.players[other].getId()
+				} else {
+					g.evenId = g.players[other].getId()
+					g.oddId = g.players[choise].getId()
 				}
 				g.num1 = msg.Payload.(message.OddOrEvenReply).Number
 				gotNum1 = true
