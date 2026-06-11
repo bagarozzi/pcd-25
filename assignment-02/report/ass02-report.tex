@@ -103,16 +103,46 @@ We can see that the recursive calls are accumulated in the \texttt{statPromises}
 % TODO: Detail the RxJava implementation (e.g., flatMap, Schedulers.io(), Flowable).
 
 \subsection{Virtual Threads}
-We implemented the Virtual Threads version in Java. The \texttt{ScanContext} class coordinates the scanning and sets up an unbounded executor dedicated to virtual threads using \texttt{Executors.newVirtualThreadPerTaskExecutor()}.
+To satisfy the design at section Section~\ref{sec:des-vthreads}, a base for a solution that uses Java Virtual Threads is certainly the \texttt{Executor} framework. It implements thread safe call for submitting new tasks to a queue and manages the threads.
 
-The \texttt{DirectoryTask} class implements \texttt{Runnable} and handles the recursive traversal. When scanning a directory, it lists the contents and processes files to update the shared \texttt{Histogram}. Instead of making a blocking recursive call for subdirectories, the task submits a new \texttt{DirectoryTask} to the executor. This naturally fans out the traversal across thousands of concurrent virtual threads.
+In particular, \texttt{Executors.newVirtualThreadPerTaskExecutor()} creates a new vThread for each task added.
 
-To figure out when the whole tree has been processed without blocking anything, we use an \texttt{AtomicInteger} as a concurrent counter. Each task increments this counter when created and decrements it in a \texttt{finally} block at the end of its \texttt{run()} method. When the count hits zero, the last terminating thread triggers a \texttt{CountDownLatch} to signal the scan is done. Using concurrent utilities like \texttt{AtomicInteger} and \texttt{CountDownLatch} instead of \texttt{synchronized} blocks helps the virtual threads unmount correctly and prevents thread pinning.
+The \texttt{ScanContext} class coordinates the scanning and sets up the unbounded executor mentioned, the user will interact with this class only. The class is set up with the statistical paramethers and the directory to scan upon construction, then the user can start the scan, poll the statistic with the \texttt{getHistogram} method and eventually stop the scan. A method for synchronously waiting for the end of the scan is available.
 
-The Java Swing GUI (in the \texttt{View} class) integrates smoothly with this setup. Starting the scan doesn't block the Swing Event Dispatch Thread (EDT). Instead, a \texttt{ScheduledExecutorService} polls the \texttt{Histogram} every 100 milliseconds to update the UI with intermediate results. If the user stops the process, the GUI calls \texttt{executor.shutdownNow()}, which immediately interrupts the virtual threads and halts the I/O traversal cleanly.
+The \texttt{DirectoryTask} class handles the recursive traversal. When scanning a directory, it lists the contents and processes files to update the shared \texttt{Histogram}. Instead of making a blocking recursive call for subdirectories, the task submits a new \texttt{DirectoryTask} to the executor. This naturally fans out the traversal across thousands of concurrent virtual threads.
+
+The \texttt{Histogram} class serves as statistic aggregator for all the virtual threads running, so it implements \texttt{Atomic} counters to synchronize calls and avoid thread pinning. With the same methods, the histogram can also safely return a distribution report even during the scan.
+
+To synchronize the ScanContext with the threads, a \texttt{AtomicInteger} counter and together with a \texttt{CountDownLatch} are used. The counter counts the tasks currently running and the latch notifies the ScanContext that the scan is over by turning to zero when the task counter is zero.
+
+The Java Swing GUI (in the \texttt{View} class) implements the optional part. Starting the scan doesn't block the Swing Event Dispatch Thread (EDT). Instead, an \texttt{Executor} is scheduled to poll the \texttt{ScanContext} for new statistics every 100 milliseconds to update the UI with intermediate results. If the user stops the process, the GUI calls for shutdown both for the polling and for the scanning, which immediately interrupts the virtual threads and halts the I/O traversal cleanly.
 
 \section{Verification}
-% TODO: Explain how the 3 approaches were tested for consistency (producing the same output) and performance comparisons.
+\subsection{Virtual Threads}
+The virtual threads have a significant perfomance gain against a platform thread version.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.80\textwidth]{figures/platform-thread.png}\label{fig:platform-threads}
+  \caption{Creation a platform-thread-per-task executor}
+\end{figure}
+
+
+From tests coducted by switching between a `thread-per-task' exectuor with traditional platform threads, as seen in Figure~\ref{fig:platform-threads} and a virtual `thread-per-task' executor, the processing time is cut down by about 300 milliseconds as proven by Figures~\ref{fig:platform-time}~and~\ref{fig:vthread-time}, so a $\sim15\%$ cut.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.80\textwidth]{figures/platform-time.png}\label{fig:platform-time}
+  \caption{Run on $\sim80000$ files using platform threads}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.80\textwidth]{figures/vthread-time.png}\label{fig:vthread-time}
+  \caption{Run on $\sim80000$ files using virtual threads}
+\end{figure}
+
+
 
 \section{Conclusion}
 % TODO: Final remarks on the ease of programming, code maintainability, and performance trade-offs of the 3 paradigms.
