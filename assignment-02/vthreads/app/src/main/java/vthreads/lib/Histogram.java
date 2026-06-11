@@ -29,7 +29,7 @@ public class Histogram {
      * Adds the passed file size to the appropriate histogram band.
      * @param fileSize
      */
-    public synchronized void addFile(final long fileSize) {
+    public void addFile(final long fileSize) {
         if (fileSize > maxFileSize) {
             bands.addAndGet(numBands, 1);
         }
