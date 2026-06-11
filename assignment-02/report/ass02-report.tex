@@ -50,7 +50,7 @@ Combining this queue with asynchronous calls, the event-loop can proceed, execut
 \subsection{Reactive Programming (RxJava)}
 % TODO: Describe the stream-based modeling, Observers/Observables, backpressure handling, etc.
 
-\subsection{Virtual Threads}
+\subsection{Virtual Threads}\label{sec:des-vthreads}
 The Virtual Threads model lets us skip complex asynchronous callbacks and reactive pipelines, allowing us to write traditional, synchronous-looking code. They act as lightweight logical units of concurrency, giving us the benefits of standard threads without the overhead brought by traditional threads.
 In fact vThreads are managed directly by the JVM, which maps them to platform threads by mounting and unmouting them when they are performing blocking operations, freeing up resources for other vThreads to run on. Moreover, they do not have a stack like their platform counterparts but rather a smaller stack, improving on memory efficiency.
 
