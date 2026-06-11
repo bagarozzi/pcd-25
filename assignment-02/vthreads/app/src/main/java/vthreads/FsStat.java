@@ -21,14 +21,17 @@ public class FsStat {
     }
 
     public void run() {
+        long t0 = System.currentTimeMillis();
         scanContext.startScan();
         scanContext.waitForScan();
+        long t1 = System.currentTimeMillis();
         Histogram hist = scanContext.getHistogram();
         System.out.println("Scanned " + hist.getTotalFiles() + " files in " + hist.getDirectoryCount() + " directories.");
         System.out.println("File size distribution:");
         for(Entry<Pair<Long>, Integer> entry : hist.getDistribution()) {
             System.out.println("Band [" + formatBytes(entry.getKey().floor()) + " - " + formatBytes(entry.getKey().ceiling()) + "]: " + entry.getValue() + " files");
         }
+        System.out.println("\nTime taken:" + (t1 - t0));
     }
 
     private void parseArgs(String[] args) {
