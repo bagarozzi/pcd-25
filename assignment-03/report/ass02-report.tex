@@ -43,10 +43,60 @@
 \part[Odd and Even]{Odd and Even \\\LARGE{Synchronous message passing in Go}}
 
 \section{Analysis}
+It is required to build an application where actors interact to play a tournament of \textit{odd and even}.
+
+The required programming language is Go, it serves perfectly the purpose due to its native support for easy management of concurrency.
+
+The requirement is to use synchronous message passing so actors are required to actively wait for a message to be delivered
+and no memory has to be shared between the components.
 
 \section{Design}
+The idea is one of a centralized control, where a few components are considered the source of truth for the 
+game state, therefore consensus mechanisms are not needed to determine which player won a match or the entire tournament.
+
+The design expects the following components:
+\begin{enumerate}
+  \item a \textbf{Chief} that controls the tournament, matches the players against each other and keeps track of the
+    remaining players after each round.
+  \item some \textbf{Refree}s, tasked by the Chief to direct a match, coordinating the players, certifying and communicating
+    the result to the Chief
+  \item some \textbf{Player}s, waiting for a match to start and eventually terminating when loosing.
+    Players are passive components reacting to the messages arrived.
+\end{enumerate}
+
+For the communication, messaging channels have to be created together with a messaging protocol so that the components know
+what to expect from each other. 
+
+The messages that will be exchanged will be:
+\begin{enumerate}
+  \item a Refree requesting a choice between odd and even to a Player
+  \item a Refree requesting a number to a Player
+  \item a Player returning a number to a Refree
+  \item a Player returning its choice to a Refree
+  \item the Chief tasking a Refree to direct a match
+  \item a Refree reporting the winner and loser of a match to the Chief
+  \item the Chief asking a player to terminate after loosing.
+\end{enumerate}
+
+\textbf{TODO: COMMUNICATION CHANNELS USING WEIRD DIAGRAM}
+
+The Chief, having to manage in parallel but in a synchronous fashion different matches at the same time, is modeled as a
+Finite State Machine, as shown in Figure~\ref{fig:fsm}. The states represents the phases of a round, during which:
+\begin{enumerate}
+  \item matches are created by coupling together players, Refrees are tasked to direct said matches
+  \item the Chief synchronously waits for the Refrees to report the results, updating the tournament's state
+  \item the round passes or the tournament eventually ends, declaring a winner 
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.80\textwidth]{figures/chief-fsm.png}\label{fig:fsm}
+  \caption{The Chief's Finite State Machine}
+\end{figure}
+
 
 \section{Implementation}
+
 
 
 \end{document}
