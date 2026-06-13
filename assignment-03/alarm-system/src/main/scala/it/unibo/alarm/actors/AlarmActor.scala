@@ -15,28 +15,34 @@ object AlarmActor:
     case ArmAll
     case Disarm(zone: String)
     case DisarmAll
+    case Trigger
+    case Silence
 
   export Command.*
 
   def apply(zones: Map[String, Set[SensorActor.Type]]): Behavior[Command] =
     Behaviors.setup: context =>
       val zoneActors: Map[String, ActorRef[ZoneActor.Command]] = zones.view.map(z => (z._1, context.spawn(ZoneActor(z._2, context.self), z._1))).toMap
-      active(zoneActors, Map.empty)
+      activeState(zoneActors, Map.empty)
 
-  private def active(disarmedZones: Map[String, ActorRef[ZoneActor.Command]], armedZones: Map[String, ActorRef[ZoneActor.Command]]): Behavior[Command] =
+  private def activeState(disarmedZones: Map[String, ActorRef[ZoneActor.Command]], armedZones: Map[String, ActorRef[ZoneActor.Command]]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
         case Arm(zone) if !armedZones.contains(zone) && disarmedZones.contains(zone) => arm(Set(disarmedZones(zone)), disarmedZones.removed(zone), armedZones + (zone -> disarmedZones(zone)))
         case Disarm(zone) if armedZones.contains(zone) && !disarmedZones.contains(zone) => disarm(Set(armedZones(zone)), disarmedZones + (zone -> armedZones(zone)), armedZones.removed(zone))
         case ArmAll => arm(disarmedZones.values.toSet, Map.empty, armedZones ++ disarmedZones)
-        case DisarmAll => arm(armedZones.values.toSet, armedZones ++ disarmedZones, Map.empty)
-        case _ => active(disarmedZones, armedZones)
+        case DisarmAll => disarm(armedZones.values.toSet, armedZones ++ disarmedZones, Map.empty)
+        case Trigger => alarmState(disarmedZones, armedZones)
+        case _ => activeState(disarmedZones, armedZones)
+
+  private def alarmState(disarmedZones: Map[String, ActorRef[ZoneActor.Command]], armedZones: Map[String, ActorRef[ZoneActor.Command]]): Behavior[Command] =
+    Behaviors.receiveMessagePartial:
+      case Silence => disarm(armedZones.values.toSet, armedZones ++ disarmedZones, Map.empty)
 
   private def arm(zonesToArm: Set[ActorRef[ZoneActor.Command]], disarmedZones: Map[String, ActorRef[ZoneActor.Command]], armedZones: Map[String, ActorRef[ZoneActor.Command]]): Behavior[Command] =
     // send arm command to "zones"
-    active(disarmedZones, armedZones)
+    activeState(disarmedZones, armedZones)
 
   private def disarm(zonesToDisarm: Set[ActorRef[ZoneActor.Command]], disarmedZones: Map[String, ActorRef[ZoneActor.Command]], armedZones: Map[String, ActorRef[ZoneActor.Command]]): Behavior[Command] =
     // send disarm command zones
-    active(disarmedZones, armedZones)
-
+    activeState(disarmedZones, armedZones)
