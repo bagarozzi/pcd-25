@@ -27,9 +27,9 @@ object ZoneActor:
   def apply(sensors: Set[SensorActor.Type], alarm: ActorRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.setup: context =>
       sensors.zipWithIndex.foreach((s, i) => context.spawn(SensorActor(context.self, s), s"sensor-$i"))
-      active()
+      active(alarm)
 
-  private def active(): Behavior[Command] =
+  private def active(alarm: ActorRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
         case Disable => Behaviors.same
