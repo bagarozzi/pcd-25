@@ -5,6 +5,8 @@ import it.unibo.alarm.actors.SensorActor
 import it.unibo.alarm.actors.SensorActor.Type
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
 
+import scala.concurrent.duration.FiniteDuration
+
 /**
  * The actor coordinating the whole alarm: locking, unlocking and catching signals.
  */
@@ -20,9 +22,9 @@ object AlarmActor:
 
   export Command.*
 
-  def apply(zones: Map[String, Set[SensorActor.Type]]): Behavior[Command] =
+  def apply(zones: Map[String, Set[SensorActor.Type]], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Behavior[Command] =
     Behaviors.setup: context =>
-      val zoneActors: Map[String, ActorRef[ZoneActor.Command]] = zones.view.map(z => (z._1, context.spawn(ZoneActor(z._2, context.self), z._1))).toMap
+      val zoneActors: Map[String, ActorRef[ZoneActor.Command]] = zones.view.map(z => (z._1, context.spawn(ZoneActor(z._2, entryTimeout, exitTimeout, context.self), z._1))).toMap
       activeState(zoneActors, Map.empty)
 
   private def activeState(disarmedZones: Map[String, ActorRef[ZoneActor.Command]], armedZones: Map[String, ActorRef[ZoneActor.Command]]): Behavior[Command] =
