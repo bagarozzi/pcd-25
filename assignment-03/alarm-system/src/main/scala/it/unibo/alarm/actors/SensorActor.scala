@@ -22,6 +22,6 @@ object SensorActor:
   private def active(father: ActorRef[Command]): Behavior[Command] =
     Behaviors.receiveMessage:
       case Trigger =>
-        father ! (Trigger)
+        father ! Trigger
         Behaviors.same
       case null => Behaviors.same
