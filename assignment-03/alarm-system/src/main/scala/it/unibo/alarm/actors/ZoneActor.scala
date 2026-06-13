@@ -1,8 +1,8 @@
 package it.unibo.alarm.actors
 
-import org.apache.pekko.actor.typed.scaladsl.Behaviors
-import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 
+import org.apache.pekko.actor.typed.*
+import org.apache.pekko.actor.typed.scaladsl.*
 import scala.concurrent.duration.FiniteDuration
 
 /**
@@ -29,28 +29,37 @@ object ZoneActor:
    * @return
    */
   def apply(sensors: Set[SensorActor.Type], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
-    Behaviors.setup: context  =>
-      sensors.zipWithIndex.foreach((s, i) => context.spawn(SensorActor(context.self, s), s"sensor-$i"))
-      disarmed(alarmActor)
+    Behaviors.withTimers: timers =>
+      Behaviors.setup: context  =>
+        sensors.zipWithIndex.foreach((s, i) => context.spawn(SensorActor(context.self, s), s"sensor-$i"))
+        val actor = new ZoneActor(alarmActor, timers, entryTimeout, exitTimeout)
+        actor.disarmed()
 
-  private def disarmed(alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
-    Behaviors.receiveMessagePartial:
-        case Arm => exitDelay(alarmActor)
+  class ZoneActor(
+    val alarmActor: ActorRef[AlarmActor.Command],
+    val timers: TimerScheduler[Command],
+    val entryTimeout: FiniteDuration,
+    val exitTimeout: FiniteDuration,
+                 ):
 
-  private def exitDelay(alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
-    Behaviors.receiveMessagePartial:
-        case Disarm => disarmed(alarmActor)
-        case ArmDelayOver => armed(alarmActor)
+    def disarmed(): Behavior[Command] =
+      Behaviors.receiveMessagePartial:
+          case Arm => exitDelay()
 
-  private def armed(alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
-    Behaviors.receiveMessagePartial:
-      case Alert => entryDelay(alarmActor)
-      case Disarm => disarmed(alarmActor)
+    private def exitDelay(): Behavior[Command] =
+      Behaviors.receiveMessagePartial:
+          case Disarm => disarmed()
+          case ArmDelayOver => armed()
 
-  private def alarm(alarmActor: ActorRef[AlarmActor.Command]) : Behavior[Command] =
-    Behaviors.receiveMessagePartial:
-      case Disarm => disarmed(alarmActor)
+    private def armed(): Behavior[Command] =
+      Behaviors.receiveMessagePartial:
+        case Alert => entryDelay()
+        case Disarm => disarmed()
 
-  private def entryDelay(alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
-    Behaviors.receiveMessagePartial:
-      case Disarm | DisarmDelayOver => disarmed(alarmActor)
+    private def alarm() : Behavior[Command] =
+      Behaviors.receiveMessagePartial:
+        case Disarm => disarmed()
+
+    private def entryDelay(): Behavior[Command] =
+      Behaviors.receiveMessagePartial:
+        case Disarm | DisarmDelayOver => disarmed()

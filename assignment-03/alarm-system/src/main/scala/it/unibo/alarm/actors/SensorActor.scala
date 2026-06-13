@@ -21,8 +21,7 @@ object SensorActor:
       active(father)
 
   private def active(father: ActorRef[ZoneActor.Command]): Behavior[Command] =
-    Behaviors.receiveMessage:
+    Behaviors.receiveMessagePartial:
       case Trigger =>
         father ! Alert
         Behaviors.same
-      case _ => Behaviors.same
