@@ -1,5 +1,6 @@
 package it.unibo.alarm.actors
 
+import it.unibo.alarm.actors.ZoneActor.Command.Alert
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.scaladsl.*
 
@@ -15,13 +16,13 @@ object SensorActor:
   export Command.*
   export Type.*
 
-  def apply(father: ActorRef[Command], sensorType: Type): Behavior[Command] =
+  def apply(father: ActorRef[ZoneActor.Command], sensorType: Type): Behavior[Command] =
     Behaviors.setup: context =>
       active(father)
 
-  private def active(father: ActorRef[Command]): Behavior[Command] =
+  private def active(father: ActorRef[ZoneActor.Command]): Behavior[Command] =
     Behaviors.receiveMessage:
       case Trigger =>
-        father ! Trigger
+        father ! Alert
         Behaviors.same
-      case null => Behaviors.same
+      case _ => Behaviors.same
