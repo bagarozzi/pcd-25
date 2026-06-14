@@ -1,5 +1,6 @@
 package it.unibo.alarm.actors
 
+import it.unibo.alarm.actors.KeypadActor.Command.ExitAlert
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import it.unibo.alarm.actors.SensorActor
 import it.unibo.alarm.actors.SensorActor.Type
@@ -14,37 +15,58 @@ object AlarmActor:
 
   enum Command:
     case Arm(zone: String)
-    case ArmAll
+    case ArmAll()
     case Disarm(zone: String)
-    case DisarmAll
+    case DisarmAll()
     case Trigger
+    case Alert(from: String)
     case Silence
 
   export Command.*
 
-  def apply(zones: Map[String, Set[SensorActor.Type]], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Behavior[Command] =
+  def apply(keypad: ActorRef[KeypadActor.Command], zones: Map[String, Set[SensorActor.Type]], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Behavior[Command] =
     Behaviors.setup: context =>
       val zoneActors: Map[String, ActorRef[ZoneActor.Command]] = zones.view.map(z => (z._1, context.spawn(ZoneActor(z._2, entryTimeout, exitTimeout, context.self), z._1))).toMap
-      activeState(zoneActors, Map.empty)
+      new AlarmActor(zoneActors, Map.empty, keypad).activeState()
 
-  private def activeState(disarmedZones: Map[String, ActorRef[ZoneActor.Command]], armedZones: Map[String, ActorRef[ZoneActor.Command]]): Behavior[Command] =
-    Behaviors.receive: (context, message) =>
-      message match
-        case Arm(zone) if !armedZones.contains(zone) && disarmedZones.contains(zone) => arm(Set(disarmedZones(zone)), disarmedZones.removed(zone), armedZones + (zone -> disarmedZones(zone)))
-        case Disarm(zone) if armedZones.contains(zone) && !disarmedZones.contains(zone) => disarm(Set(armedZones(zone)), disarmedZones + (zone -> armedZones(zone)), armedZones.removed(zone))
-        case ArmAll => arm(disarmedZones.values.toSet, Map.empty, armedZones ++ disarmedZones)
-        case DisarmAll => disarm(armedZones.values.toSet, armedZones ++ disarmedZones, Map.empty)
-        case Trigger => alarmState(disarmedZones, armedZones)
-        case _ => activeState(disarmedZones, armedZones)
+  class AlarmActor(
+      var disarmedZones: Map[String, ActorRef[ZoneActor.Command]],
+      var armedZones: Map[String, ActorRef[ZoneActor.Command]],
+      val keypad: ActorRef[KeypadActor.Command]
+                  ):
 
-  private def alarmState(disarmedZones: Map[String, ActorRef[ZoneActor.Command]], armedZones: Map[String, ActorRef[ZoneActor.Command]]): Behavior[Command] =
-    Behaviors.receiveMessagePartial:
-      case Silence => disarm(armedZones.values.toSet, armedZones ++ disarmedZones, Map.empty)
+    def activeState(): Behavior[Command] =
+      Behaviors.receive: (context, message) =>
+        message match
+          case Arm(zone) => arm(Set(zone))
+          case ArmAll() => arm(disarmedZones.keySet)
+          case Disarm(zone) => disarm(Set(zone))
+          case DisarmAll() => disarm(armedZones.keySet)
+          case Alert(from) => keypad ! KeypadActor.Command.EntryAlert(from) ; activeState()
+          case Trigger => keypad ! KeypadActor.Command.AlarmAlert ; alarmState()
+          case _ => activeState()
 
-  private def arm(zonesToArm: Set[ActorRef[ZoneActor.Command]], disarmedZones: Map[String, ActorRef[ZoneActor.Command]], armedZones: Map[String, ActorRef[ZoneActor.Command]]): Behavior[Command] =
-    // send arm command to "zones"
-    activeState(disarmedZones, armedZones)
+    private def alarmState(): Behavior[Command] =
+      Behaviors.receive: (context, message) =>
+        message match
+          case Silence => disarm(armedZones.keySet)
+          case _ => Behaviors.same
 
-  private def disarm(zonesToDisarm: Set[ActorRef[ZoneActor.Command]], disarmedZones: Map[String, ActorRef[ZoneActor.Command]], armedZones: Map[String, ActorRef[ZoneActor.Command]]): Behavior[Command] =
-    // send disarm command zones
-    activeState(disarmedZones, armedZones)
+    private def arm(zonesToArm: Set[String]): Behavior[Command] =
+      zonesToArm.foreach(zoneToArm =>
+        if !armedZones.contains(zoneToArm) && disarmedZones.contains(zoneToArm) then
+          disarmedZones(zoneToArm) ! ZoneActor.Command.Arm
+          armedZones = armedZones + (zoneToArm -> disarmedZones(zoneToArm))
+          disarmedZones = disarmedZones.removed(zoneToArm)
+      )
+      keypad ! KeypadActor.Command.ExitAlert(zonesToArm)
+      activeState()
+
+    private def disarm(zonesToDisarm: Set[String]): Behavior[Command] =
+      zonesToDisarm.foreach(zoneToDisarm =>
+        if armedZones.contains(zoneToDisarm) && !disarmedZones.contains(zoneToDisarm) then
+          disarmedZones(zoneToDisarm) ! ZoneActor.Command.Disarm
+          disarmedZones = disarmedZones + (zoneToDisarm -> armedZones(zoneToDisarm))
+          armedZones = armedZones.removed(zoneToDisarm)
+      )
+      activeState()
