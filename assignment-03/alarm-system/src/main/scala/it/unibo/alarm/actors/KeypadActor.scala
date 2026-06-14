@@ -28,10 +28,10 @@ object KeypadActor:
   private def active(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
-        case Arm(pin, zone) => alarmActor ! AlarmActor.Command.Arm(zone) ; active(pin, alarmActor)
-        case Disarm(pin, zone) => alarmActor ! AlarmActor.Command.Disarm(zone) ; active(pin, alarmActor)
-        case ArmAll(pin) => alarmActor ! AlarmActor.Command.ArmAll() ; active(pin, alarmActor)
-        case DisarmAll(pin) => alarmActor ! AlarmActor.Command.DisarmAll() ; active(pin, alarmActor)
+        case Arm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Arm(zone) ; active(pin, alarmActor)
+        case Disarm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Disarm(zone) ; active(pin, alarmActor)
+        case ArmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.ArmAll() ; active(pin, alarmActor)
+        case DisarmAll(insertedPin) if insertedPin == pin =>alarmActor ! AlarmActor.Command.DisarmAll() ; active(pin, alarmActor)
         case EntryAlert(triggeredZones) => context.log.warn(s"The zone $triggeredZones is triggered, alarm will sound in 30 seconds") ; entryAlert(pin, alarmActor)
         case ExitAlert(armedZones) => context.log.info(s"The zones $armedZones be armed in 30 seconds") ; active(pin, alarmActor)
         case _ => Behaviors.same
