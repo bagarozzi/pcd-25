@@ -3,6 +3,7 @@ package it.unibo.alarm.actors
 
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.scaladsl.*
+
 import scala.concurrent.duration.FiniteDuration
 
 /**
@@ -53,9 +54,11 @@ object ZoneActor:
           case ArmDelayOver => armed()
 
     private def armed(): Behavior[Command] =
-      Behaviors.receiveMessagePartial:
-        case Alert => entryDelay()
-        case Disarm => disarmed()
+      Behaviors.receive: (context, message) =>
+        message match
+          case Alert => alarmActor ! AlarmActor.Command.Alert(context.self.path.toStringWithoutAddress) ; entryDelay()
+          case Disarm => disarmed()
+          case _ => Behaviors.same
 
     private def alarm() : Behavior[Command] =
       alarmActor ! Trigger
