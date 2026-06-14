@@ -32,8 +32,7 @@ object ZoneActor:
     Behaviors.withTimers: timers =>
       Behaviors.setup: context  =>
         sensors.zipWithIndex.foreach((s, i) => context.spawn(SensorActor(context.self, s), s"sensor-$i"))
-        val actor = new ZoneActor(alarmActor, timers, entryTimeout, exitTimeout)
-        actor.disarmed()
+        new ZoneActor(alarmActor, timers, entryTimeout, exitTimeout).disarmed()
 
   class ZoneActor(
     val alarmActor: ActorRef[AlarmActor.Command],
@@ -43,8 +42,10 @@ object ZoneActor:
                  ):
 
     def disarmed(): Behavior[Command] =
-      Behaviors.receiveMessagePartial:
+      Behaviors.receive: (context, message) =>
+        message match
           case Arm => exitDelay()
+          case _ => Behaviors.same
 
     private def exitDelay(): Behavior[Command] =
       Behaviors.receiveMessagePartial:
@@ -57,9 +58,11 @@ object ZoneActor:
         case Disarm => disarmed()
 
     private def alarm() : Behavior[Command] =
+      alarmActor ! Trigger
       Behaviors.receiveMessagePartial:
         case Disarm => disarmed()
 
     private def entryDelay(): Behavior[Command] =
       Behaviors.receiveMessagePartial:
-        case Disarm | DisarmDelayOver => disarmed()
+        case Disarm  => disarmed()
+        case DisarmDelayOver => alarm()
