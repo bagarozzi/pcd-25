@@ -6,7 +6,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class FSStatLib {
 
-    public static Observable<BandStats> getFSReport(String d, int MaxFS, int NB) {
+    public static FSreport getFSReport(String d, int MaxFS, int NB) {
         Observable<File> files = Observable.create(emitter -> {
             scanDir(new File(d), emitter);
             emitter.onComplete();
@@ -39,8 +39,7 @@ public class FSStatLib {
                         .filter(c -> c.getBand() == band.getBand())
                         .defaultIfEmpty(band));
         
-        result.subscribe(System.out::println);
-        return result;
+        return new FSreport(result);
 
     }
 
