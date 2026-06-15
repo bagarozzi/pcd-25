@@ -27,7 +27,7 @@ public class FSStatLib {
                     long lowerBound = group.getKey() * bandSize;
                     long upperBound = group.getKey() == NB ? Long.MAX_VALUE : (group.getKey() + 1) * bandSize;
                     return new BandStats(group.getKey(), count, lowerBound, upperBound);
-                }));
+                })).share();
 
         Observable<BandStats> allBands = Observable.range(0, NB + 1)
                 .map(i -> {
