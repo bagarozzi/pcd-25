@@ -54,7 +54,9 @@ object ZoneActor:
       timers.startSingleTimer(ArmDelayOver, exitTimeout);
       Behaviors.receive: (context, message) =>
         message match
-          case Disarm => disarmed()
+          case Disarm =>
+            context.log.info("Zone " + context.self.path.name + " disarmed.")
+            disarmed()
           case ArmDelayOver => context.log.info("Zone " + context.self.path.name + " armed.") ; armed()
           case _ => Behaviors.same
 
@@ -66,8 +68,12 @@ object ZoneActor:
           case _ => Behaviors.same
 
     private def alarm() : Behavior[Command] =
-      Behaviors.receiveMessagePartial:
-        case Disarm => disarmed()
+      Behaviors.receive: (context, message) =>
+        message match
+          case Disarm =>
+            context.log.info("Zone " + context.self.path.name + " disarmed.")
+            disarmed()
+          case _ => Behaviors.same
 
     private def entryDelay(): Behavior[Command] =
       timers.startSingleTimer(EntryDelayOver, entryTimeout);
@@ -75,6 +81,7 @@ object ZoneActor:
         message match
         case Disarm  => context.log.info("Zone " + context.self.path.name + " disarmed.") ; disarmed()
         case EntryDelayOver =>
+          context.log.info("Entry delay over in zone " + context.self.path.name)
           alarmActor ! Trigger
           alarm()
         case _ => Behaviors.same
