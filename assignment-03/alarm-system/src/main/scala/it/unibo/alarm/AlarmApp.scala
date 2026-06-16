@@ -1,28 +1,31 @@
 package it.unibo.alarm
 
+import it.unibo.alarm.actors.KeypadActor.Command.LinkAlarm
+import it.unibo.alarm.actors.{AlarmActor, KeypadActor, SensorActor}
 import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.*
-import it.unibo.alarm.Counter.Command
 
-class Counter(context: ActorContext[Command], private var from: Int, val to: Int)
-  extends AbstractBehavior[Command](context):
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.FiniteDuration
 
-  def onMessage(msg: Command): Behavior[Command] = msg match
-    case Command.Tick if from < to =>
-      context.log.info(s"Counter: $from")
-      from += 1
-      this
-    case _ => Behaviors.stopped
+object AlarmApp:
 
-object Counter:
+  @main def app(): Unit =
+    import actors.AlarmActor
+    import AlarmProtocol.*
 
-  enum Command:
-    case Tick
+    val homeMap = Map(
+      "kitchen" -> Set(SensorActor.Type.Door, SensorActor.Type.Motion),
+      "outside" -> Set(SensorActor.Type.Door, SensorActor.Type.Motion),
+    )
 
-  export Command.*
+    val system = ActorSystem(
+      KeypadActor("1234",
+        homeMap,
+        FiniteDuration(20, TimeUnit.SECONDS),
+        FiniteDuration(10, TimeUnit.SECONDS)),
+      "SmartAlarm"
+    )
 
-  def apply(to: Int): Behavior[Command] = Behaviors.setup(ctx => new Counter(ctx, 0, to))
+    system.tell(KeypadActor.Arm("1234", "kitchen"))
 
-@main def runObjectOrientedActor(): Unit =
-  val system = ActorSystem(Counter(10), "HelloAkka")
-  for _ <- 0 until 20 do system ! Command.Tick
