@@ -3,6 +3,8 @@ package it.unibo.alarm.actors
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
 
+import scala.concurrent.duration.FiniteDuration
+
 object KeypadActor:
 
   import it.unibo.alarm.actors.AlarmActor.Command.*
@@ -16,13 +18,20 @@ object KeypadActor:
     case EntryAlert(triggeredZones: String)
     case ExitAlert(armedZones: Set[String])
     case AlarmAlert
+    case LinkAlarm(alarmActor: ActorRef[AlarmActor.Command])
 
 
   export Command.*
 
-  def apply(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
+  def apply(
+            pin: String,
+            zones: Map[String, Set[SensorActor.Type]],
+            entryTimeout: FiniteDuration,
+            exitTimeout: FiniteDuration
+           ): Behavior[Command] =
     Behaviors.setup: context =>
-      context.log.info("initialized")
+      context.log.info("initialized with PIN" + pin)
+      val alarmActor = context.spawn(AlarmActor(context.self, zones, entryTimeout, exitTimeout), "alarm")
       active(pin, alarmActor)
 
   private def active(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
