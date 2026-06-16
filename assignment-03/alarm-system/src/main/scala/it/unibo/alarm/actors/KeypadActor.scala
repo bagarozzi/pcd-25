@@ -50,14 +50,21 @@ object KeypadActor:
       message match
         case DisarmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.DisarmAll() ; active(pin, alarmActor)
         case Disarm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Disarm(zone) ; active(pin, alarmActor)
-        case Disarm(insertedPin, _) if insertedPin != pin => alarmActor ! AlarmActor.Command.Trigger ; alarm(pin, alarmActor)
-        case DisarmAll(insertedPin) if insertedPin != pin => alarmActor ! AlarmActor.Command.Trigger ; alarm(pin, alarmActor)
-        case AlarmAlert => alarm(pin, alarmActor)
+        case Disarm(insertedPin, _) if insertedPin != pin =>
+          context.log.info("ALARM STATE: insert pin to silence the alarm")
+          alarmActor ! AlarmActor.Command.Trigger ; alarm(pin, alarmActor)
+        case DisarmAll(insertedPin) if insertedPin != pin =>
+          context.log.info("ALARM STATE: insert pin to silence the alarm")
+          alarmActor ! AlarmActor.Command.Trigger ; alarm(pin, alarmActor)
+        case AlarmAlert =>
+          context.log.info("ALARM STATE: insert pin to silence the alarm")
+          alarm(pin, alarmActor)
         case _ => Behaviors.same
 
   private def alarm(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
-      context.log.info("ALARM STATE: insert pin to silence the alarm")
       message match
-        case Silence(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.Silence ; active(pin, alarmActor)
+        case Silence(insertedPin) if insertedPin == pin =>
+          context.log.info("Pin correct, alarm silenced")
+          alarmActor ! AlarmActor.Command.Silence ; active(pin, alarmActor)
         case _ => Behaviors.same
