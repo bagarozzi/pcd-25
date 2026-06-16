@@ -18,7 +18,7 @@ object ZoneActor:
     case Arm
     case Disarm
     case Alert
-    case DisarmDelayOver
+    case EntryDelayOver
     case ArmDelayOver
 
   export Command.*
@@ -32,6 +32,7 @@ object ZoneActor:
   def apply(sensors: Set[SensorActor.Type], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.withTimers: timers =>
       Behaviors.setup: context  =>
+        context.log.info("spawned " + context.self.path.toStringWithoutAddress)
         sensors.zipWithIndex.foreach((s, i) => context.spawn(SensorActor(context.self, s), s"sensor-$i"))
         new ZoneActor(alarmActor, timers, entryTimeout, exitTimeout).disarmed()
 
@@ -49,6 +50,7 @@ object ZoneActor:
           case _ => Behaviors.same
 
     private def exitDelay(): Behavior[Command] =
+      timers.startSingleTimer(ArmDelayOver, exitTimeout);
       Behaviors.receiveMessagePartial:
           case Disarm => disarmed()
           case ArmDelayOver => armed()
@@ -66,6 +68,7 @@ object ZoneActor:
         case Disarm => disarmed()
 
     private def entryDelay(): Behavior[Command] =
+      timers.startSingleTimer(EntryDelayOver, entryTimeout);
       Behaviors.receiveMessagePartial:
         case Disarm  => disarmed()
-        case DisarmDelayOver => alarm()
+        case EntryDelayOver => alarm()
