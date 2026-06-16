@@ -18,6 +18,7 @@ object SensorActor:
 
   def apply(father: ActorRef[ZoneActor.Command], sensorType: Type): Behavior[Command] =
     Behaviors.setup: context =>
+      context.log.info("Spawned " + context.self.path.toStringWithoutAddress + " of type " + sensorType.toString)
       active(father)
 
   private def active(father: ActorRef[ZoneActor.Command]): Behavior[Command] =
