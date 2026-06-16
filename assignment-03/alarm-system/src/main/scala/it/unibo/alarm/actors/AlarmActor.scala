@@ -66,7 +66,7 @@ object AlarmActor:
     private def disarm(zonesToDisarm: Set[String]): Behavior[Command] =
       zonesToDisarm.foreach(zoneToDisarm =>
         if armedZones.contains(zoneToDisarm) && !disarmedZones.contains(zoneToDisarm) then
-          disarmedZones(zoneToDisarm) ! ZoneActor.Command.Disarm
+          armedZones(zoneToDisarm) ! ZoneActor.Command.Disarm
           disarmedZones = disarmedZones + (zoneToDisarm -> armedZones(zoneToDisarm))
           armedZones = armedZones.removed(zoneToDisarm)
       )
