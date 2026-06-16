@@ -6,7 +6,14 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class FSStatLib {
 
-    public static Observable<BandStats> getFSReport(String d, int MaxFS, int NB) {
+    /**
+     * 
+     * @param d path to the directory to scan
+     * @param MaxFS Maximum file size to consider for the bands in bytes
+     * @param NB Number of bands to create
+     * @return a Single<FSreport> containing the statistics of the files in the directory and its subdirectories
+     */
+    public static Single<FSreport> getFSReport(String d, int MaxFS, int NB) {
         Observable<File> files = Observable.create(emitter -> {
             scanDir(new File(d), emitter);
             emitter.onComplete();
@@ -20,7 +27,7 @@ public class FSStatLib {
                     long lowerBound = group.getKey() * bandSize;
                     long upperBound = group.getKey() == NB ? Long.MAX_VALUE : (group.getKey() + 1) * bandSize;
                     return new BandStats(group.getKey(), count, lowerBound, upperBound);
-                }));
+                })).share();
 
         Observable<BandStats> allBands = Observable.range(0, NB + 1)
                 .map(i -> {
@@ -39,8 +46,11 @@ public class FSStatLib {
                         .filter(c -> c.getBand() == band.getBand())
                         .defaultIfEmpty(band));
         
-        result.subscribe(System.out::println);
-        return result;
+        return result.reduce(new FSreport(), (acc, band) -> {
+            acc.addBand(band);
+            acc.addCount(band.getCount());
+            return acc;
+        });
 
     }
 

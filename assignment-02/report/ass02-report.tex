@@ -48,6 +48,7 @@ directories that will be added to the queue, and so on.
 Combining this queue with asynchronous calls, the event-loop can proceed, executing other tasks, while waiting for an async call to resolve, then return to it when done. 
 
 \subsection{Reactive Programming (RxJava)}
+The system is designed using a reactive, push-based approach, where filesystem traversal is modeled as a stream of asynchronous events. Each discovered file is emitted and processed through a declarative pipeline of transformations, leading to the final aggregation of statistics. The design emphasizes separation between data production and consumption, exposing the computation as a stream that clients can subscribe to and react upon. This enables composability, non-blocking execution, and a clear, stream-oriented architecture based on the Observer pattern.
 % TODO: Describe the stream-based modeling, Observers/Observables, backpressure handling, etc.
 
 \subsection{Virtual Threads}\label{sec:des-vthreads}
@@ -100,7 +101,20 @@ In the final part the function goes over every file, updating the report accordi
 We can see that the recursive calls are accumulated in the \texttt{statPromises} list then \texttt{await}-ed using \texttt{Promise.all\,()} so that the function resolves only once all the recursive calls have resolved, thus the root call to \texttt{scanDirectory} in \texttt{getFSReport} will keep waiting. We could say it acts as a \textit{barrier}.
 
 \subsection{Reactive Programming (RxJava)}
-% TODO: Detail the RxJava implementation (e.g., flatMap, Schedulers.io(), Flowable).
+The implementation is developed using the RxJava library, adopting a reactive and stream-oriented approach. The filesystem traversal is modeled as an \texttt{Observable<File>}, where each file discovered during the recursive exploration of the directory structure is emitted as an event.
+
+The emission process is implemented in a lazy and asynchronous fashion using \texttt{Observable.create}, allowing files to be produced incrementally as they are found.
+ In order to avoid blocking the main thread during I/O operations, the computation is executed on a dedicated scheduler (e.g., \texttt{Schedulers.io()}), which is specifically designed for handling I/O-bound tasks in a scalable manner.
+
+The stream is then processed through a transformation pipeline, where each file is mapped to its size and subsequently classified into a corresponding size band.
+
+To compute the distribution of file sizes, the stream is partitioned based on the computed bands using grouping operators, and each group is aggregated to produce instances of the \texttt{BandStats} class, which encapsulate the statistics associated with a specific band.
+
+Since the grouping mechanism naturally produces only non-empty groups, a second stream is generated to represent all possible bands. This stream is then combined with the computed one in order to include also the empty bands, ensuring a complete and consistent representation of the distribution.
+
+Finally, the resulting \texttt{Observable<BandStats>} is reduced into a single \texttt{FSreport} instance, which collects all band statistics and the total number of files. The use of a reduction step allows the aggregation of results in a declarative and compositional manner, avoiding explicit synchronization and shared mutable state.
+
+Overall, the implementation follows a fully reactive approach, where data is processed as it flows through the pipeline, and the final result is exposed as an asynchronous computation.
 
 \subsection{Virtual Threads}
 To satisfy the design at section Section~\ref{sec:des-vthreads}, a base for a solution that uses Java Virtual Threads is certainly the \texttt{Executor} framework. It implements thread safe call for submitting new tasks to a queue and manages the threads.
