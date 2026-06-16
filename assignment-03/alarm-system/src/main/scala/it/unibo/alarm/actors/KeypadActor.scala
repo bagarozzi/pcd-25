@@ -41,8 +41,8 @@ object KeypadActor:
         case Disarm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Disarm(zone) ; active(pin, alarmActor)
         case ArmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.ArmAll() ; active(pin, alarmActor)
         case DisarmAll(insertedPin) if insertedPin == pin =>alarmActor ! AlarmActor.Command.DisarmAll() ; active(pin, alarmActor)
-        case EntryAlert(triggeredZones) => context.log.warn(s"The zone $triggeredZones is triggered, alarm will sound in 30 seconds") ; entryAlert(pin, alarmActor)
-        case ExitAlert(armedZones) => context.log.info(s"The zones $armedZones be armed in 30 seconds") ; active(pin, alarmActor)
+        case EntryAlert(triggeredZones) => context.log.warn(s"The zone $triggeredZones is triggered, alarm will sound unless the PIN is inserted") ; entryAlert(pin, alarmActor)
+        case ExitAlert(armedZones) => context.log.info(s"The zones $armedZones be armed soon") ; active(pin, alarmActor)
         case _ => Behaviors.same
 
   private def entryAlert(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
