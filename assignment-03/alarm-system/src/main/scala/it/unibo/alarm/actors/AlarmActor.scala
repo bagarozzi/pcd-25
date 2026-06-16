@@ -26,6 +26,7 @@ object AlarmActor:
 
   def apply(keypad: ActorRef[KeypadActor.Command], zones: Map[String, Set[SensorActor.Type]], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Behavior[Command] =
     Behaviors.setup: context =>
+      context.log.info("Spawned AlarmActor for house")
       val zoneActors: Map[String, ActorRef[ZoneActor.Command]] = zones.view.map(z => (z._1, context.spawn(ZoneActor(z._2, entryTimeout, exitTimeout, context.self), z._1))).toMap
       new AlarmActor(zoneActors, Map.empty, keypad).activeState()
 
