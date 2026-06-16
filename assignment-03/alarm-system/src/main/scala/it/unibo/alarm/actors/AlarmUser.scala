@@ -18,7 +18,8 @@ object AlarmUser:
     case Arm(zone: String)
     case Disarm(zone: String)
     case LookForSensors
-    case WrongPin
+    case WrongPin(zone: String)
+    case Silence
 
   export Command.*
 
@@ -55,8 +56,11 @@ object AlarmUser:
         case LookForSensors =>
           context.system.receptionist ! Receptionist.Find(sensorKey, listingAdapter)
           Behaviors.same
-        case WrongPin =>
-          keypad ! KeypadActor.Disarm("4321", "outside")
+        case WrongPin(zone) =>
+          keypad ! KeypadActor.Disarm("4321", zone)
+          Behaviors.same
+        case Silence =>
+          keypad ! KeypadActor.Silence(pin)
           Behaviors.same
 
 
@@ -72,20 +76,48 @@ object AlarmUser:
       "SmartAlarm"
     )
 
-    system ! Arm("kitchen")
+    Thread.sleep(20000)
 
-    Thread.sleep(15000)
-
-    system ! Disarm("kitchen")
-
-    system ! TriggerSensors
-
-    system ! Arm("outside")
-
-    Thread.sleep(15000)
+    println("-"*50 + "INITIALIZATION DONE" + "-"*50)
+    println("-"*100)
+    println("-"*50 + "Sensors triggering on alarm disarmed" + "-"*50 + "\n")
 
     system ! TriggerSensors
 
     Thread.sleep(1000)
 
-    system ! WrongPin
+    println("-" * 100)
+    println("-" * 50 + "Arming zone \"kitchen\"" + "-" * 50 + "\n")
+
+    system ! Arm("kitchen")
+
+    Thread.sleep(15000)
+
+    println("-" * 100)
+    println("-" * 50 + "Triggering sensors" + "-" * 50 + "\n")
+    system ! TriggerSensors
+
+    Thread.sleep(2000)
+    println("-" * 100)
+    println("-" * 50 + "Disarming within the entry-delay" + "-" * 50 + "\n")
+    system ! Disarm("kitchen")
+
+    println("-" * 100)
+    println("-" * 50 + "Arming zone \"outside\"" + "-" * 50 + "\n")
+
+    system ! Arm("outside")
+
+    Thread.sleep(15000)
+
+    println("-" * 100)
+    println("-" * 50 + "Triggering sensors" + "-" * 50 + "\n")
+    system ! TriggerSensors
+
+    Thread.sleep(2000)
+    println("-" * 100)
+    println("-" * 50 + "Wrong pin on entry-delay, alarm should sound immediately" + "-" * 50 + "\n")
+    system ! WrongPin("outside")
+    Thread.sleep(5000)
+    println("-" * 100)
+    println("-" * 50 + "Silencing alarm" + "-" * 50 + "\n")
+    system ! Silence
