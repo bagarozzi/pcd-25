@@ -32,8 +32,9 @@ object ZoneActor:
   def apply(sensors: Set[SensorActor.Type], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.withTimers: timers =>
       Behaviors.setup: context  =>
-        context.log.info("spawned " + context.self.path.toStringWithoutAddress)
+        context.log.info("spawned " + context.self.path.name)
         sensors.zipWithIndex.foreach((s, i) => context.spawn(SensorActor(context.self, s), s"sensor-$i"))
+        context.log.info("Zone " + context.self.path.name + " disarmed.")
         new ZoneActor(alarmActor, timers, entryTimeout, exitTimeout).disarmed()
 
   class ZoneActor(
@@ -46,29 +47,34 @@ object ZoneActor:
     def disarmed(): Behavior[Command] =
       Behaviors.receive: (context, message) =>
         message match
-          case Arm => exitDelay()
+          case Arm => context.log.info("Zone " + context.self.path.name + " started arming.") ; exitDelay()
           case _ => Behaviors.same
 
     private def exitDelay(): Behavior[Command] =
       timers.startSingleTimer(ArmDelayOver, exitTimeout);
-      Behaviors.receiveMessagePartial:
+      Behaviors.receive: (context, message) =>
+        message match
           case Disarm => disarmed()
-          case ArmDelayOver => armed()
+          case ArmDelayOver => context.log.info("Zone " + context.self.path.name + " armed.") ; armed()
+          case _ => Behaviors.same
 
     private def armed(): Behavior[Command] =
       Behaviors.receive: (context, message) =>
         message match
-          case Alert => alarmActor ! AlarmActor.Command.Alert(context.self.path.toStringWithoutAddress) ; entryDelay()
-          case Disarm => disarmed()
+          case Alert => alarmActor ! AlarmActor.Command.Alert(context.self.path.toStringWithoutAddress) ; context.log.info("Zone " + context.self.path.name + " intrusion detected, started timer.") ; entryDelay()
+          case Disarm => context.log.info("Zone " + context.self.path.name + " disarmed.") ; disarmed()
           case _ => Behaviors.same
 
     private def alarm() : Behavior[Command] =
-      alarmActor ! Trigger
       Behaviors.receiveMessagePartial:
         case Disarm => disarmed()
 
     private def entryDelay(): Behavior[Command] =
       timers.startSingleTimer(EntryDelayOver, entryTimeout);
-      Behaviors.receiveMessagePartial:
-        case Disarm  => disarmed()
-        case EntryDelayOver => alarm()
+      Behaviors.receive: (context, message) =>
+        message match
+        case Disarm  => context.log.info("Zone " + context.self.path.name + " disarmed.") ; disarmed()
+        case EntryDelayOver =>
+          alarmActor ! Trigger
+          alarm()
+        case _ => Behaviors.same
