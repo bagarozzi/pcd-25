@@ -1,0 +1,8 @@
+<component name="ProjectCodeStyleConfiguration">
+  <code_scheme name="Project" version="173">
+    <ScalaCodeStyleSettings>
+      <option name="USE_ALTERNATE_CONTINUATION_INDENT_FOR_PARAMS" value="true" />
+      <option name="USE_SCALA3_INDENTATION_BASED_SYNTAX" value="true" />
+    </ScalaCodeStyleSettings>
+  </code_scheme>
+</component>

@@ -30,14 +30,110 @@
 \part[Smart Home Alarm System]{Smart Home Alarm System \\ \LARGE{Asynchronous message passing based on actors using Apache Pekko}}
 
 \section{Analysis}
+It is required to build an application that simulates a Smart Home Alarm System by using actors. The main requirement is to use 
+asynchronous message passing; to do so, the Scala Pekko Library is used, as it offers a framework that focuses on the actor's state
+and its relative behavior and handles autonomously the delivery of messages.
 
-\subsection{General Requirements}
+An actor is an entity that encapsulates a state, behavior and a control flow. It is strongly related to OOP, we could say that actors
+are concurrent versions of objects as they interact with each other and encapsulate a state. 
+Each actor changes behavior, the way it reacts to messages, according to it's previous behavior and an internal state.
 
-\subsection{Analysis of the Problem}
+The aspects that we have to keep in mind while designing and implementing the actors are:
+\begin{enumerate}
+  \item message passing is asynchronous, no assumptions can be made the deliveries apart that they will eventually happen
+  \item message delivery order can't be assumed
+  \item actors are purely reactive
+  \item only messages can be exchanged and other actors cannot access the state of other actors
+\end{enumerate}
+
+Some of the aspects mentioned are already handled by Pekko, others have to be addressed in the desing phase.
 
 \section{Design}
+Seen the base properties of actors, we can design each actor as a Finite State Machine (FSM) that will handle some messages relative to the 
+current state while other messages will be unhandled or have no effect on the state.
+
+First, each actor can create other actors as their children, with this in mind a \textit{tree} is created, 
+with at the root the first actor spawned.
+Seen the optional requirement of dividing the alarm system into \textbf{zone}s, we have thought to distribute the alarm's behavior
+in different \textbf{Zone Actors} so that each zone has an independent behavior. All the Zone Actors report to the 
+\textbf{Alarm Actor} that aggregates all the states and passes messages to the zones.
+An actor to interact with the system, the \textbf{Keypad Actor} is introduced.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{figures/alarm/actor-system.png}
+  \caption{The actor system with three zones configured}\label{fig:actor-system}
+\end{figure}
+
+Each \textbf{Zone Actor} is implemented as a FSM that has the following states:
+\begin{enumerate}
+  \item \textbf{Armed}: reacts to sensor triggering and enters Entry Delay
+  \item \textbf{Entry Delay}: gives some time before alarming the system
+  \item \textbf{Alarm}: waits to be disarmed
+  \item \textbf{Exit Delay}: when the alarm is set, doesn't react to sensor triggering for some time
+  \item \textbf{Disarmed}: does nothing, waits to be armed
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.80\textwidth]{figures/alarm/zone-fsm.png}
+  \caption{The Zone Actor's FSM}\label{fig:zone-fsm}
+\end{figure}
+
+
+The \textbf{Alarm Actor} aggregates all the zone actors, sends commands to them and enters alarm state when one or more zone
+actors are alarmed. In the analogy with a real alarm system, this is the central alarm and the speakers that produces sound.
+It only has two states: either it stays active and passes throught messages from the keypad to the zones and viceversa
+or is in alarm state if one or more armed zones are triggered.
+
+The \textbf{Keypad Actor} is the interaction point for the user, it stores a pin and talks to the Alarm Actor, receiving updates
+on the alarm state that have to be communicated to the user.
 
 \section{Implementation}
+In Apache Pekko each actor can be represented by its behavior. A behavior is a function that regulates the reactions to
+some (or all) types of messages.
+Each actor spawns its own childs and eventually passes its own reference (\texttt{ActorRef[Command]}) to them to 
+enable communication.
+For some behaviors, some message types remain unhandled and are ignored. 
+
+An interesting mechanism is used in the \texttt{AlarmUser} object. This object is used to represent the user as an actor
+so that it can communicate with the keypad through messages. 
+
+To verify the application, sensors have to be triggered and seen that they are spawned directly by ZoneActors, their reference
+is not directly available the Receptionist is used.
+The Receptionist is one of the two ways of discovering actors references in Pekko and its used when is impossible to directly
+access the actor's reference, as in this case.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{figures/alarm/sensor-registration.png}
+  \caption{The SensorActor registering to the Receptionist}\label{fig:sensor-reg}
+\end{figure}
+
+First, the actor that we want the reference from has to register to the Receptionist instance,
+as shown in Figure~\ref{fig:sensor-reg}, by creating a \texttt{ServiceKey} and passing it.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/alarm/sensor-find.png}
+  \caption{The AlarmUser creating an adapter for the Receptionist messages}\label{fig:sensor-find}
+\end{figure}
+
+Then, the AlarmUser registers a message adapater for the Receptionist reply, so that when a message arrives from the
+Receptionist, which type is not included in the possibile message, it can be \textit{converted} into a 
+message readable by the alarm user.
+Finally the Alarm user can send a \texttt{Find} message to the receptionist containing the same \texttt{ServiceKey}
+and the Receptionist will reply with a Set of all the registered actors for that key, as shown in Figure~\ref{fig:sensor-find-2}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/alarm/sensor-find-2.png}
+  \caption{The AlarmUser asking and getting the sensor's references}\label{fig:sensor-find-2}
+\end{figure}
+
+In this case the Receptionst is not interrogated immediately, but a timer is set (Fig.~\ref{fig:sensor-find})
+so that all the actors can be created
+and we are sure that by the time the \texttt{Find} message is sent all the actors have registered.
 
 \clearpage
 \part[Odd and Even]{Odd and Even \\\LARGE{Synchronous message passing in Go}}
@@ -80,8 +176,8 @@ The messages that will be exchanged will be:
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.87\textwidth]{figures/channels.png}\label{fig:chan}
-  \caption{Summary of channels and messages used between the components}
+  \includegraphics[width=0.87\textwidth]{figures/channels.png}
+  \caption{Summary of channels and messages used between the components}\label{fig:chan}
 \end{figure}
 
 
@@ -95,8 +191,8 @@ Finite State Machine, as shown in Figure~\ref{fig:fsm}. The states represents th
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.80\textwidth]{figures/chief-fsm.png}\label{fig:fsm}
-  \caption{The Chief's Finite State Machine}
+  \includegraphics[width=0.80\textwidth]{figures/chief-fsm.png}
+  \caption{The Chief's Finite State Machine}\label{fig:fsm}
 \end{figure}
 
 
@@ -105,6 +201,13 @@ As said, Go is a perfect language to develop this kind of design.
 
 Firstly, typed \texttt{struct}s are written to capture the necessary data for each component. It has been decided to give channels 
 to the Chief and the Players, as Refree will be short lived and can use the other component's channels to communicate. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\textwidth]{figures/player.png}
+  \caption{The player reacts to messages sent on his channel}\label{fig:player}
+\end{figure}
+
 
 Regarding channels, its important to note that Go offers buffered and unbuffered channels, the latter are intrinsically synchronous as there's
 no buffer to store the unread messages. By creating this kind of channels, goroutines will have to block upon sending a message until some other
@@ -116,13 +219,12 @@ In this case the goroutine will stop until one or more messages are available on
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.90\textwidth]{figures/for-select.png}\label{fig:fs}
-  \caption{The \texttt{for-select} idiom used to check two channels}
+  \includegraphics[width=0.90\textwidth]{figures/for-select.png}
+  \caption{The \texttt{for-select} idiom used to check two channels}\label{fig:fs}
 \end{figure}
 
 In the case of Figure~\ref{fig:fs}, the goroutine loops indefinitely and checks both \texttt{p.ctx.Done()} and \texttt{p.ch} channels.
 In this way it can either capture a closure from the first channel to terminate (generated by the context) or a message coming from
 the other components.
-
 
 \end{document}
