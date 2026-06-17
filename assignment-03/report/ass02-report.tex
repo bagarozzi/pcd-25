@@ -90,6 +90,50 @@ The \textbf{Keypad Actor} is the interaction point for the user, it stores a pin
 on the alarm state that have to be communicated to the user.
 
 \section{Implementation}
+In Apache Pekko each actor can be represented by its behavior. A behavior is a function that regulates the reactions to
+some (or all) types of messages.
+Each actor spawns its own childs and eventually passes its own reference (\texttt{ActorRef[Command]}) to them to 
+enable communication.
+For some behaviors, some message types remain unhandled and are ignored. 
+
+An interesting mechanism is used in the \texttt{AlarmUser} object. This object is used to represent the user as an actor
+so that it can communicate with the keypad through messages. 
+
+To verify the application, sensors have to be triggered and seen that they are spawned directly by ZoneActors, their reference
+is not directly available the Receptionist is used.
+The Receptionist is one of the two ways of discovering actors references in Pekko and its used when is impossible to directly
+access the actor's reference, as in this case.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{figures/alarm/sensor-registration.png}\label{fig:sensor-reg}
+  \caption{The Zone Actor's FSM}
+\end{figure}
+
+First, the actor that we want the reference from has to register to the Receptionist instance,
+as shown in Figure~\ref{fig:sensor-reg}, by creating a \texttt{ServiceKey} and passing it.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/alarm/sensor-find.png}\label{fig:sensor-find}
+  \caption{The Zone Actor's FSM}
+\end{figure}
+
+Then, the AlarmUser registers a message adapater for the Receptionist reply, so that when a message arrives from the
+Receptionist, which type is not included in the possibile message, it can be \textit{converted} into a 
+message readable by the alarm user.
+Finally the Alarm user can send a \texttt{Find} message to the receptionist containing the same \texttt{ServiceKey}
+and the Receptionist will reply with a Set of all the registered actors for that key, as shown in Figure~\ref{fig:sensor-find-2}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/alarm/sensor-find-2.png}\label{fig:sensor-find-2}
+  \caption{The Zone Actor's FSM}
+\end{figure}
+
+In this case the Receptionst is not interrogated immediately, but a timer is set (Fig.~\ref{fig:sensor-find})
+so that all the actors can be created
+and we are sure that by the time the \texttt{Find} message is sent all the actors have registered.
 
 \clearpage
 \part[Odd and Even]{Odd and Even \\\LARGE{Synchronous message passing in Go}}
