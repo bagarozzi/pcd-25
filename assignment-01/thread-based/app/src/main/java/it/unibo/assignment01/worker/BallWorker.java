@@ -18,14 +18,12 @@ public class BallWorker extends Thread {
 
     @Override
     public void run() {
-        while(true) {
-            queueTask.get().run();
-            // try {
-            //     Thread.sleep(5);
-            // } catch (InterruptedException e) {
-            //     // TODO Auto-generated catch block
-            //     e.printStackTrace();
-            // }
+        while(!Thread.currentThread().isInterrupted()) {
+            try {
+                queueTask.get().run();
+            } catch (InterruptedException e) {
+                break;
+            }
         }
     }
 
