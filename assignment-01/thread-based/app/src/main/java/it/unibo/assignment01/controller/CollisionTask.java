@@ -2,21 +2,21 @@ package it.unibo.assignment01.controller;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
+import it.unibo.assignment01.util.Latch;
 
 public class CollisionTask implements Runnable {
 
     private Board board;
     private List<Map.Entry<Long, List<Ball>>> myBatch;
-    private CountDownLatch latch;
+    private Latch latch;
     private SpatialHashGrid grid;
     private int index;
     private int numWorker;
 
-    public CollisionTask(List<Map.Entry<Long, List<Ball>>> myBatch, Board board, CountDownLatch latch,
+    public CollisionTask(List<Map.Entry<Long, List<Ball>>> myBatch, Board board, Latch latch,
             SpatialHashGrid grid, int workIndex, int numWorker) {
         this.board = board;
         this.myBatch = myBatch;

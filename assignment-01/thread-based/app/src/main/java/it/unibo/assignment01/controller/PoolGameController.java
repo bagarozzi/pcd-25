@@ -3,7 +3,6 @@ package it.unibo.assignment01.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.BallImpl;
@@ -14,6 +13,7 @@ import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.model.Speed;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
+import it.unibo.assignment01.util.Latch;
 import it.unibo.assignment01.util.Pair;
 import it.unibo.assignment01.util.SynchCell;
 import it.unibo.assignment01.view.View;
@@ -73,7 +73,7 @@ public class PoolGameController extends Thread implements Controller {
 			lastUpdateTime = System.currentTimeMillis();
 			spatialHashGrid.clear();
 			bigBallSpatialHashGrid.clear();
-			CountDownLatch moveLatch = new CountDownLatch(NUM_WORKERS);
+			Latch moveLatch = new Latch(NUM_WORKERS);
 
 			// Process continuous keyboard input
 			processHeldKeys();
@@ -103,7 +103,7 @@ public class PoolGameController extends Thread implements Controller {
 				bigBallSpatialHashGrid.insert(ball);
 			}
 
-			CountDownLatch colliisionLatch = new CountDownLatch(NUM_WORKERS);
+			Latch colliisionLatch = new Latch(NUM_WORKERS);
 			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
 			
 			// Calculate collisions with pair-wise checking to eliminate redundancy

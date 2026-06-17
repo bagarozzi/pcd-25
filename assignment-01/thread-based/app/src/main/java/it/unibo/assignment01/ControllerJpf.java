@@ -3,7 +3,7 @@ package it.unibo.assignment01;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import it.unibo.assignment01.util.Latch; 
 
 import it.unibo.assignment01.controller.Cmd;
 import it.unibo.assignment01.controller.CollisionTask;
@@ -31,7 +31,7 @@ public class ControllerJpf extends Thread implements Controller {
 
 	private final BoundedBuffer<Runnable> queueTask;
 	private final List<Pair<SynchCell<Runnable>, BallWorker>> workers;
-	private CountDownLatch latch;
+	private Latch latch;
 
 	public ControllerJpf() {
 
@@ -49,7 +49,7 @@ public class ControllerJpf extends Thread implements Controller {
 	@Override
 	public void run() {
 		for (int j = 0; j < 1; j++) {
-			latch = new CountDownLatch(NUM_WORKERS);
+			latch = new Latch(NUM_WORKERS);
 			spatialHashGrid.clear();
 
 			Thread t1 = new Thread(() -> {
@@ -111,7 +111,7 @@ public class ControllerJpf extends Thread implements Controller {
 			});
 			t2.start();
 
-			latch = new CountDownLatch(NUM_WORKERS);
+			latch = new Latch(NUM_WORKERS);
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
 			

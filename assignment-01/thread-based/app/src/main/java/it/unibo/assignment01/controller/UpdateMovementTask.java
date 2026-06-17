@@ -2,20 +2,20 @@ package it.unibo.assignment01.controller;
 
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
+import it.unibo.assignment01.util.Latch;
 
 public class UpdateMovementTask implements Runnable{
     private final List<Ball> ballBatch;
     private final long timeElapsed;
     private final Board board;
-    private final CountDownLatch latch;
+    private final Latch latch;
     private int index;
     private int numWorker;
     
-    public UpdateMovementTask(List<Ball> ballBatch, long timeElapsed, Board board, CountDownLatch latch, int workerIndex, int numWorker){
+    public UpdateMovementTask(List<Ball> ballBatch, long timeElapsed, Board board, Latch latch, int workerIndex, int numWorker){
         this.ballBatch = ballBatch;
         this.timeElapsed = timeElapsed;
         this.board = board;

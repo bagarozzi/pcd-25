@@ -1,17 +1,17 @@
 package it.unibo.assignment01.controller;
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
+import it.unibo.assignment01.util.Latch;
 
 public class CheckHoleTask implements Runnable {
     private final List<Ball> ballBatch;
     private final Board board;
-    private final CountDownLatch latch;
+    private final Latch latch;
     
-    public CheckHoleTask(List<Ball> ballBatch, Board board, CountDownLatch latch){
+    public CheckHoleTask(List<Ball> ballBatch, Board board, Latch latch){
         this.ballBatch = ballBatch;
         this.board = board;
         this.latch = latch;
