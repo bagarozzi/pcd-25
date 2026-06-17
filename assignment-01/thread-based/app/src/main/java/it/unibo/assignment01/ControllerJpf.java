@@ -19,6 +19,8 @@ import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.model.Speed;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
+import it.unibo.assignment01.util.Pair;
+import it.unibo.assignment01.util.SynchCell;
 import it.unibo.assignment01.worker.BallWorker;
 
 public class ControllerJpf extends Thread implements Controller {
@@ -28,7 +30,7 @@ public class ControllerJpf extends Thread implements Controller {
 	private SpatialHashGrid spatialHashGrid;
 
 	private final BoundedBuffer<Runnable> queueTask;
-	private final List<BallWorker> workers;
+	private final List<Pair<SynchCell<Runnable>,BallWorker>> workers;
 	private CountDownLatch latch;
 
 	public ControllerJpf() {
@@ -38,8 +40,9 @@ public class ControllerJpf extends Thread implements Controller {
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * 1.6);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
-			var worker = new BallWorker(queueTask);
-			this.workers.add(worker);
+			SynchCell<Runnable> cell = new SynchCell<>();
+			var worker = new BallWorker(cell);
+			this.workers.add(new Pair<SynchCell<Runnable>, BallWorker>(cell, worker));
 			worker.start();
 		}
 	}
@@ -48,12 +51,14 @@ public class ControllerJpf extends Thread implements Controller {
     public void run() {
 
 
-		for(int j=0; j<2; j++){
+		for(int j=0; j<1; j++){
 			latch = new CountDownLatch(NUM_WORKERS);
 			spatialHashGrid.clear();
 
-			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, 16, board, latch)));
-
+			List<List<Ball>> batches = splitList(board.getAllBall(), NUM_WORKERS);
+			for(int i = 0; i< NUM_WORKERS; i++) {
+				addWorkerTask(new UpdateMovementTask(batches.get(i), 16, board, latch), this.workers.get(i).getX());
+			}
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
@@ -68,11 +73,11 @@ public class ControllerJpf extends Thread implements Controller {
 			}
 
 			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
-			
+			latch = new CountDownLatch(NUM_WORKERS);
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(ballBatches.get(i), board, latch, spatialHashGrid));
+				addWorkerTask(new CollisionTask(ballBatches.get(i), board, latch, spatialHashGrid), this.workers.get(i).getX());
 			}
 			// Maybe another hitAndWait()...
 			try {
@@ -82,19 +87,16 @@ public class ControllerJpf extends Thread implements Controller {
 			 	e.printStackTrace();
 			}
 		}
-        for(BallWorker w : workers) {
-            addWorkerTask(() -> Thread.currentThread().interrupt());
+        for(Pair<SynchCell<Runnable>, BallWorker> w : workers) {
+            addWorkerTask(() -> Thread.currentThread().interrupt(), w.getX());
         }
 
     }
 
-	private void addWorkerTask(Runnable task) {
-		try {
-			queueTask.put(task);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	private void addWorkerTask(Runnable task, SynchCell<Runnable> cell) {
+			cell.set(task);
 	}
+
 
 	private <T> List<List<T>> splitList(List<T> list, int nList) {
 		List<List<T>> res = new ArrayList<>();

@@ -1,7 +1,7 @@
 package it.unibo.assignment01.worker;
 
 
-import it.unibo.assignment01.util.BoundedBuffer;
+import it.unibo.assignment01.util.SynchCell;
 
 /**
  * A BallWorker is a thread that computes, in the following order, the movements
@@ -10,20 +10,22 @@ import it.unibo.assignment01.util.BoundedBuffer;
  */
 public class BallWorker extends Thread {
     
-    private final BoundedBuffer<Runnable> queueTask; 
+    private final SynchCell<Runnable> queueTask; 
 
-    public BallWorker(final BoundedBuffer<Runnable> queueTask) {
+    public BallWorker(final SynchCell<Runnable> queueTask) {
         this.queueTask = queueTask;
     }
 
     @Override
     public void run() {
         while(true) {
-            try {
-                queueTask.get().run();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            queueTask.get().run();
+            // try {
+            //     Thread.sleep(5);
+            // } catch (InterruptedException e) {
+            //     // TODO Auto-generated catch block
+            //     e.printStackTrace();
+            // }
         }
     }
 

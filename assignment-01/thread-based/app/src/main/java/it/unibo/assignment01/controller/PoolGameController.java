@@ -14,6 +14,8 @@ import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.model.Speed;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
+import it.unibo.assignment01.util.Pair;
+import it.unibo.assignment01.util.SynchCell;
 import it.unibo.assignment01.view.View;
 import it.unibo.assignment01.view.ViewModel;
 import it.unibo.assignment01.worker.BallWorker;
@@ -29,7 +31,7 @@ public class PoolGameController extends Thread implements Controller {
 
 	private final BoundedBuffer<Cmd> cmdBuffer;
 	private final BoundedBuffer<Runnable> queueTask;
-	private final List<BallWorker> workers;
+	private final List<Pair<SynchCell<Runnable>, BallWorker>> workers;
 	private final SpatialHashGrid bigBallSpatialHashGrid;
 	private final ViewModel vm;
 
@@ -50,8 +52,9 @@ public class PoolGameController extends Thread implements Controller {
 		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS * 1.6);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
-			var worker = new BallWorker(queueTask);
-			this.workers.add(worker);
+			SynchCell<Runnable> cell = new SynchCell<>();
+			var worker = new BallWorker(cell);
+			this.workers.add(new Pair<SynchCell<Runnable>, BallWorker>(cell, worker));
 			worker.start();
 		}
 		vm = new ViewModel(board);
@@ -80,7 +83,10 @@ public class PoolGameController extends Thread implements Controller {
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
 
-			splitList(board.getAllBall(), NUM_WORKERS).forEach((ballBatch) -> addWorkerTask(new UpdateMovementTask(ballBatch, elapsed, board, moveLatch)));
+			List<List<Ball>> batches = splitList(board.getAllBall(), NUM_WORKERS);
+			for(int i = 0; i< NUM_WORKERS; i++) {
+				addWorkerTask(new UpdateMovementTask(batches.get(i), elapsed, board, moveLatch), this.workers.get(i).getX());
+			}
 
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
@@ -107,7 +113,7 @@ public class PoolGameController extends Thread implements Controller {
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(ballBatches.get(i), board, colliisionLatch, spatialHashGrid));
+				addWorkerTask(new CollisionTask(ballBatches.get(i), board, colliisionLatch, spatialHashGrid), this.workers.get(i).getX());
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			bigBallSpatialHashGrid.insert(board.getPlayerBall());
@@ -139,8 +145,8 @@ public class PoolGameController extends Thread implements Controller {
 			}*/
 		}
 		view.showEndGame(board.getWinner());
-		for(BallWorker w : workers) {
-            addWorkerTask(() -> Thread.currentThread().interrupt());
+		for(Pair<SynchCell<Runnable>, BallWorker> w : workers) {
+            addWorkerTask(() -> Thread.currentThread().interrupt(), w.getX());
         }
     }
 
@@ -168,12 +174,8 @@ public class PoolGameController extends Thread implements Controller {
 		}
 	}
 
-	private void addWorkerTask(Runnable task) {
-		try {
-			queueTask.put(task);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	private void addWorkerTask(Runnable task, SynchCell<Runnable> cell) {
+			cell.set(task);
 	}
 
 	private <T> List<List<T>> splitList(List<T> list, int nList) {
