@@ -30,7 +30,7 @@ public class ControllerJpf extends Thread implements Controller {
 	private SpatialHashGrid spatialHashGrid;
 
 	private final BoundedBuffer<Runnable> queueTask;
-	private final List<Pair<SynchCell<Runnable>,BallWorker>> workers;
+	private final List<Pair<SynchCell<Runnable>, BallWorker>> workers;
 	private CountDownLatch latch;
 
 	public ControllerJpf() {
@@ -43,60 +43,96 @@ public class ControllerJpf extends Thread implements Controller {
 			SynchCell<Runnable> cell = new SynchCell<>();
 			var worker = new BallWorker(cell);
 			this.workers.add(new Pair<SynchCell<Runnable>, BallWorker>(cell, worker));
-			worker.start();
 		}
 	}
 
 	@Override
-    public void run() {
-
-
-		for(int j=0; j<1; j++){
+	public void run() {
+		for (int j = 0; j < 1; j++) {
 			latch = new CountDownLatch(NUM_WORKERS);
 			spatialHashGrid.clear();
 
-			List<List<Ball>> batches = splitList(board.getAllBall(), NUM_WORKERS);
-			for(int i = 0; i< NUM_WORKERS; i++) {
-				addWorkerTask(new UpdateMovementTask(batches.get(i), 16, board, latch), this.workers.get(i).getX());
-			}
+			Thread t1 = new Thread(() -> {
+					try {
+						workers.get(0).getX().get().run();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 
+			});
+			t1.start();
+			Thread t2 = new Thread(() -> {
+					try {
+						workers.get(1).getX().get().run();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+			});
+			t2.start();
+
+			for(int i = 0; i< NUM_WORKERS; i++) {
+				addWorkerTask(new UpdateMovementTask(board.getBalls(), 16, board, latch, i, NUM_WORKERS), this.workers.get(i).getX());
+			}
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
-				latch.await();
+				t1.join();
+				t2.join();
 			} catch (InterruptedException e) {
-
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 			for (Ball ball : board.getAllBall()) {
 				spatialHashGrid.insert(ball);
 			}
 
-			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
+			t1 = new Thread(() -> {
+					try {
+						workers.get(0).getX().get().run();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+			});
+			t1.start();
+			t2 = new Thread(() -> {
+
+					try {
+						workers.get(1).getX().get().run();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+			});
+			t2.start();
+
 			latch = new CountDownLatch(NUM_WORKERS);
 			// Calculate collisions with pair-wise checking to eliminate redundancy
-			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
-			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(ballBatches.get(i), board, latch, spatialHashGrid), this.workers.get(i).getX());
+			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
+			
+			// Calculate collisions with pair-wise checking to eliminate redundancy
+			for (int i = 0; i < NUM_WORKERS; i++) {
+				addWorkerTask(new CollisionTask(cells, board, latch, spatialHashGrid, i, NUM_WORKERS), this.workers.get(i).getX());
 			}
 			// Maybe another hitAndWait()...
 			try {
-			 	latch.await();
+				t1.join();
+				t2.join();
 			} catch (InterruptedException e) {
-
-			 	e.printStackTrace();
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
-        for(Pair<SynchCell<Runnable>, BallWorker> w : workers) {
-            addWorkerTask(() -> Thread.currentThread().interrupt(), w.getX());
-        }
-
-    }
-
-	private void addWorkerTask(Runnable task, SynchCell<Runnable> cell) {
-			cell.set(task);
 	}
 
+	private void addWorkerTask(Runnable task, SynchCell<Runnable> cell) {
+		cell.set(task);
+	}
 
 	private <T> List<List<T>> splitList(List<T> list, int nList) {
 		List<List<T>> res = new ArrayList<>();
@@ -105,21 +141,20 @@ public class ControllerJpf extends Thread implements Controller {
 			int end = (i + 1) * list.size() / nList;
 			res.add(List.copyOf(list.subList(start, end)));
 		}
-		//System.err.println("Split list of size " + res.size() + nList );
-		//res.stream().forEach(l -> System.err.println(l.size()));
+		// System.err.println("Split list of size " + res.size() + nList );
+		// res.stream().forEach(l -> System.err.println(l.size()));
 		return res;
 	}
 
 	private List<Ball> createBalls() {
-        var balls = new ArrayList<Ball>();
-		balls.add(new BallImpl(new Position(0, 0), new Speed(0, 0), 0.2,  Ball.BALL_RADIUS));
-        balls.add(new BallImpl(new Position(Ball.BALL_RADIUS, 0), new Speed(-1.0, 0), 0.2,  Ball.BALL_RADIUS));
-        return balls;
+		var balls = new ArrayList<Ball>();
+		balls.add(new BallImpl(new Position(0, 0), new Speed(0, 0), 0.2, Ball.BALL_RADIUS));
+		balls.add(new BallImpl(new Position(Ball.BALL_RADIUS, 0), new Speed(-1.0, 0), 0.2, Ball.BALL_RADIUS));
+		return balls;
 	}
 
 	@Override
 	public void notifyCommand(Cmd cmd) {
 	}
-
 
 }

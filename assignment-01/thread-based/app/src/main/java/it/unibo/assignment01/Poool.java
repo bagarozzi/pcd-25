@@ -2,6 +2,7 @@ package it.unibo.assignment01;
 
 import it.unibo.assignment01.controller.PoolGameController;
 import it.unibo.assignment01.view.View;
+
 import it.unibo.assignment01.controller.Barrier;
 
 public class Poool {

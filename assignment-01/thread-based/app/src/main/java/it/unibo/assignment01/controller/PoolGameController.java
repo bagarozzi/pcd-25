@@ -30,7 +30,6 @@ public class PoolGameController extends Thread implements Controller {
 	private SpatialHashGrid spatialHashGrid;
 
 	private final BoundedBuffer<Cmd> cmdBuffer;
-	private final BoundedBuffer<Runnable> queueTask;
 	private final List<Pair<SynchCell<Runnable>, BallWorker>> workers;
 	private final SpatialHashGrid bigBallSpatialHashGrid;
 	private final ViewModel vm;
@@ -46,7 +45,6 @@ public class PoolGameController extends Thread implements Controller {
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
-		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * MULTIPY_FACTOR_FOR_RADIOUS);
 		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS * 1.6);
@@ -82,10 +80,8 @@ public class PoolGameController extends Thread implements Controller {
 
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
-
-			List<List<Ball>> batches = splitList(board.getAllBall(), NUM_WORKERS);
 			for(int i = 0; i< NUM_WORKERS; i++) {
-				addWorkerTask(new UpdateMovementTask(batches.get(i), elapsed, board, moveLatch), this.workers.get(i).getX());
+				addWorkerTask(new UpdateMovementTask(board.getAllBall(), elapsed, board, moveLatch, i, NUM_WORKERS), this.workers.get(i).getX());
 			}
 
 
@@ -111,9 +107,8 @@ public class PoolGameController extends Thread implements Controller {
 			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
 			
 			// Calculate collisions with pair-wise checking to eliminate redundancy
-			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
-			for (int i = 0; i < ballBatches.size(); i++) {
-				addWorkerTask(new CollisionTask(ballBatches.get(i), board, colliisionLatch, spatialHashGrid), this.workers.get(i).getX());
+			for (int i = 0; i < NUM_WORKERS; i++) {
+				addWorkerTask(new CollisionTask(cells, board, colliisionLatch, spatialHashGrid, i, NUM_WORKERS), this.workers.get(i).getX());
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			bigBallSpatialHashGrid.insert(board.getPlayerBall());
@@ -144,10 +139,11 @@ public class PoolGameController extends Thread implements Controller {
 				e.printStackTrace();
 			}*/
 		}
-		view.showEndGame(board.getWinner());
 		for(Pair<SynchCell<Runnable>, BallWorker> w : workers) {
             addWorkerTask(() -> Thread.currentThread().interrupt(), w.getX());
         }
+		view.showEndGame(board.getWinner());
+		
     }
 
 	public void notifyCommand(Cmd cmd) {
@@ -175,19 +171,7 @@ public class PoolGameController extends Thread implements Controller {
 	}
 
 	private void addWorkerTask(Runnable task, SynchCell<Runnable> cell) {
-			cell.set(task);
-	}
-
-	private <T> List<List<T>> splitList(List<T> list, int nList) {
-		List<List<T>> res = new ArrayList<>();
-		for (int i = 0; i < nList; i++) {
-			int start = i * list.size() / nList;
-			int end = (i + 1) * list.size() / nList;
-			res.add(List.copyOf(list.subList(start, end)));
-		}
-		//System.err.println("Split list of size " + res.size() + nList );
-		//res.stream().forEach(l -> System.err.println(l.size()));
-		return res;
+		cell.set(task);
 	}
 
 	private List<Ball> createBalls(final int rows, final int cols) {
