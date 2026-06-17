@@ -61,8 +61,8 @@ An actor to interact with the system, the \textbf{Keypad Actor} is introduced.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.95\textwidth]{figures/alarm/actor-system.png}\label{fig:actor-system}
-  \caption{The actor system with three zones configured}
+  \includegraphics[width=0.95\textwidth]{figures/alarm/actor-system.png}
+  \caption{The actor system with three zones configured}\label{fig:actor-system}
 \end{figure}
 
 Each \textbf{Zone Actor} is implemented as a FSM that has the following states:
@@ -76,8 +76,8 @@ Each \textbf{Zone Actor} is implemented as a FSM that has the following states:
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.80\textwidth]{figures/alarm/zone-fsm.png}\label{fig:zone-fsm}
-  \caption{The Zone Actor's FSM}
+  \includegraphics[width=0.80\textwidth]{figures/alarm/zone-fsm.png}
+  \caption{The Zone Actor's FSM}\label{fig:zone-fsm}
 \end{figure}
 
 
@@ -106,8 +106,8 @@ access the actor's reference, as in this case.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.95\textwidth]{figures/alarm/sensor-registration.png}\label{fig:sensor-reg}
-  \caption{The Zone Actor's FSM}
+  \includegraphics[width=0.95\textwidth]{figures/alarm/sensor-registration.png}
+  \caption{The SensorActor registering to the Receptionist}\label{fig:sensor-reg}
 \end{figure}
 
 First, the actor that we want the reference from has to register to the Receptionist instance,
@@ -115,8 +115,8 @@ as shown in Figure~\ref{fig:sensor-reg}, by creating a \texttt{ServiceKey} and p
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\textwidth]{figures/alarm/sensor-find.png}\label{fig:sensor-find}
-  \caption{The Zone Actor's FSM}
+  \includegraphics[width=0.85\textwidth]{figures/alarm/sensor-find.png}
+  \caption{The AlarmUser creating an adapter for the Receptionist messages}\label{fig:sensor-find}
 \end{figure}
 
 Then, the AlarmUser registers a message adapater for the Receptionist reply, so that when a message arrives from the
@@ -127,8 +127,8 @@ and the Receptionist will reply with a Set of all the registered actors for that
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\textwidth]{figures/alarm/sensor-find-2.png}\label{fig:sensor-find-2}
-  \caption{The Zone Actor's FSM}
+  \includegraphics[width=0.85\textwidth]{figures/alarm/sensor-find-2.png}
+  \caption{The AlarmUser asking and getting the sensor's references}\label{fig:sensor-find-2}
 \end{figure}
 
 In this case the Receptionst is not interrogated immediately, but a timer is set (Fig.~\ref{fig:sensor-find})
@@ -176,8 +176,8 @@ The messages that will be exchanged will be:
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.87\textwidth]{figures/channels.png}\label{fig:chan}
-  \caption{Summary of channels and messages used between the components}
+  \includegraphics[width=0.87\textwidth]{figures/channels.png}
+  \caption{Summary of channels and messages used between the components}\label{fig:chan}
 \end{figure}
 
 
@@ -191,8 +191,8 @@ Finite State Machine, as shown in Figure~\ref{fig:fsm}. The states represents th
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.80\textwidth]{figures/chief-fsm.png}\label{fig:fsm}
-  \caption{The Chief's Finite State Machine}
+  \includegraphics[width=0.80\textwidth]{figures/chief-fsm.png}
+  \caption{The Chief's Finite State Machine}\label{fig:fsm}
 \end{figure}
 
 
@@ -204,8 +204,8 @@ to the Chief and the Players, as Refree will be short lived and can use the othe
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.90\textwidth]{figures/player.png}\label{fig:player}
-  \caption{The player reacts to messages sent on his channel}
+  \includegraphics[width=0.90\textwidth]{figures/player.png}
+  \caption{The player reacts to messages sent on his channel}\label{fig:player}
 \end{figure}
 
 
@@ -219,8 +219,8 @@ In this case the goroutine will stop until one or more messages are available on
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.90\textwidth]{figures/for-select.png}\label{fig:fs}
-  \caption{The \texttt{for-select} idiom used to check two channels}
+  \includegraphics[width=0.90\textwidth]{figures/for-select.png}
+  \caption{The \texttt{for-select} idiom used to check two channels}\label{fig:fs}
 \end{figure}
 
 In the case of Figure~\ref{fig:fs}, the goroutine loops indefinitely and checks both \texttt{p.ctx.Done()} and \texttt{p.ch} channels.
