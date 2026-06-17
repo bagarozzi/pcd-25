@@ -30,12 +30,64 @@
 \part[Smart Home Alarm System]{Smart Home Alarm System \\ \LARGE{Asynchronous message passing based on actors using Apache Pekko}}
 
 \section{Analysis}
+It is required to build an application that simulates a Smart Home Alarm System by using actors. The main requirement is to use 
+asynchronous message passing; to do so, the Scala Pekko Library is used, as it offers a framework that focuses on the actor's state
+and its relative behavior and handles autonomously the delivery of messages.
 
-\subsection{General Requirements}
+An actor is an entity that encapsulates a state, behavior and a control flow. It is strongly related to OOP, we could say that actors
+are concurrent versions of objects as they interact with each other and encapsulate a state. 
+Each actor changes behavior, the way it reacts to messages, according to it's previous behavior and an internal state.
 
-\subsection{Analysis of the Problem}
+The aspects that we have to keep in mind while designing and implementing the actors are:
+\begin{enumerate}
+  \item message passing is asynchronous, no assumptions can be made the deliveries apart that they will eventually happen
+  \item message delivery order can't be assumed
+  \item actors are purely reactive
+  \item only messages can be exchanged and other actors cannot access the state of other actors
+\end{enumerate}
+
+Some of the aspects mentioned are already handled by Pekko, others have to be addressed in the desing phase.
 
 \section{Design}
+Seen the base properties of actors, we can design each actor as a Finite State Machine (FSM) that will handle some messages relative to the 
+current state while other messages will be unhandled or have no effect on the state.
+
+First, each actor can create other actors as their children, with this in mind a \textit{tree} is created, 
+with at the root the first actor spawned.
+Seen the optional requirement of dividing the alarm system into \textbf{zone}s, we have thought to distribute the alarm's behavior
+in different \textbf{Zone Actors} so that each zone has an independent behavior. All the Zone Actors report to the 
+\textbf{Alarm Actor} that aggregates all the states and passes messages to the zones.
+An actor to interact with the system, the \textbf{Keypad Actor} is introduced.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{figures/alarm/actor-system.png}\label{fig:actor-system}
+  \caption{The actor system with three zones configured}
+\end{figure}
+
+Each \textbf{Zone Actor} is implemented as a FSM that has the following states:
+\begin{enumerate}
+  \item \textbf{Armed}: reacts to sensor triggering and enters Entry Delay
+  \item \textbf{Entry Delay}: gives some time before alarming the system
+  \item \textbf{Alarm}: waits to be disarmed
+  \item \textbf{Exit Delay}: when the alarm is set, doesn't react to sensor triggering for some time
+  \item \textbf{Disarmed}: does nothing, waits to be armed
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.80\textwidth]{figures/alarm/zone-fsm.png}\label{fig:zone-fsm}
+  \caption{The Zone Actor's FSM}
+\end{figure}
+
+
+The \textbf{Alarm Actor} aggregates all the zone actors, sends commands to them and enters alarm state when one or more zone
+actors are alarmed. In the analogy with a real alarm system, this is the central alarm and the speakers that produces sound.
+It only has two states: either it stays active and passes throught messages from the keypad to the zones and viceversa
+or is in alarm state if one or more armed zones are triggered.
+
+The \textbf{Keypad Actor} is the interaction point for the user, it stores a pin and talks to the Alarm Actor, receiving updates
+on the alarm state that have to be communicated to the user.
 
 \section{Implementation}
 
