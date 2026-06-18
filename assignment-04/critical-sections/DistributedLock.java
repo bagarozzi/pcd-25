@@ -15,7 +15,7 @@ public class DistributedLock {
         ConnectionFactory factory = new ConnectionFactory();
         //user/host: metfivxb
         //password: pJd2_Nqv3HwjlyMQq1s9Q9mxaWvnSWHY
-        String amqpUrl = "amqps://metfivxb:pJd2_Nqv3HwjlyMQq1s9Q9mxaWvnSWHY@cow.rmq2.cloudamqp.com/metfivxb ";
+        String amqpUrl = "amqps://metfivxb:pJd2_Nqv3HwjlyMQq1s9Q9mxaWvnSWHY@cow.rmq2.cloudamqp.com/metfivxb";
         factory.setUri(amqpUrl);
 
         this.connection = factory.newConnection();
