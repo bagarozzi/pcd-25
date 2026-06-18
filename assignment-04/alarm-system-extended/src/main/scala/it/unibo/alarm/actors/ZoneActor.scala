@@ -1,8 +1,14 @@
 package it.unibo.alarm.actors
 
 
+import ch.qos.logback.core.model.processor.AllowAllModelFilter
+import it.unibo.alarm.cluster.CborSerializable
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.scaladsl.*
+import org.apache.pekko.cluster.sharding.typed.scaladsl.EntityTypeKey
+import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityRef}
+import com.typesafe.config.ConfigFactory
+import org.apache.pekko.cluster.sharding.ShardRegion.ClusterShardingStats
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -14,7 +20,9 @@ object ZoneActor:
 
   import it.unibo.alarm.actors.AlarmActor.Command.*
 
-  enum Command:
+  val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("ZoneEntity")
+
+  enum Command extends CborSerializable:
     case Arm
     case Disarm
     case Alert
@@ -25,20 +33,33 @@ object ZoneActor:
 
   /**
    * Initialize the Zone actor and the sensors passed.
+   * @param
    * @param sensors the sensors' type managed by the actor
    * @param alarmActor the AlarmActor that this actor has to report to
-   * @return
+   * @return the actor's behavior
    */
-  def apply(sensors: Set[SensorActor.Type], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
-    Behaviors.withTimers: timers =>
-      Behaviors.setup: context  =>
-        context.log.info("spawned " + context.self.path.name)
-        sensors.zipWithIndex.foreach((s, i) => context.spawn(SensorActor(context.self, s), s"sensor-$i"))
-        context.log.info("Zone " + context.self.path.name + " disarmed.")
-        new ZoneActor(alarmActor, timers, entryTimeout, exitTimeout).disarmed()
+  def apply(zoneId: String, sensors: Set[SensorActor.Type], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Unit =
+    val config = ConfigFactory.parseString(
+      s"""
+      pekko.remote.artery.canonical.port = 7354
+      """).withFallback(ConfigFactory.load("application-sharding.conf"))
+    val _ = ActorSystem(initialization(zoneId, sensors, entryTimeout, exitTimeout), "Zone-$zoneId")
+
+  private def initialization(zoneId: String, sensors: Set[SensorActor.Type], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Behavior[Command] =
+    Behaviors.setup: context =>
+      context.log.info(s"Spawned sharded ZoneActor for $zoneId")
+
+      val sharding = ClusterSharding(context.system)
+      
+      val alarmActorRef: EntityRef[AlarmActor.Command] = sharding.entityRefFor(AlarmActor.TypeKey, "central-alarm")
+
+      sensors.zipWithIndex.foreach((s, i) => context.spawn(SensorActor(context.self, s), s"sensor-$i"))
+
+      Behaviors.withTimers: timers =>
+        new ZoneActor(alarmActorRef, timers, entryTimeout, exitTimeout).disarmed()
 
   class ZoneActor(
-    val alarmActor: ActorRef[AlarmActor.Command],
+    val alarmActor: EntityRef[AlarmActor.Command],
     val timers: TimerScheduler[Command],
     val entryTimeout: FiniteDuration,
     val exitTimeout: FiniteDuration,
