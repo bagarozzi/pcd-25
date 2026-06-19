@@ -1,9 +1,12 @@
 package it.unibo.alarm.actors
 
+import it.unibo.alarm.AlarmProtocol
+import it.unibo.alarm.actors.KeypadActor.Command
 import it.unibo.alarm.actors.KeypadActor.Command.ExitAlert
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import it.unibo.alarm.actors.SensorActor
 import it.unibo.alarm.actors.SensorActor.Type
+import org.apache.pekko.actor.typed.pubsub.Topic
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
 import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityRef, EntityTypeKey}
 
@@ -30,15 +33,20 @@ object AlarmActor:
   def apply(hubId: String, zones: Set[String]): Behavior[Command] =
     Behaviors.setup: context =>
       context.log.info(s"Spawned $hubId Alarm Hub for house")
+
+      val keypadTopic = context.spawn(Topic[KeypadActor.Command](AlarmProtocol.KeypadTopicName), "KeypadTopicProxy")
+
+
       val sharding = ClusterSharding(context.system)
       val zoneActors: Map[String, EntityRef[ZoneActor.Command]] =
         zones.map(z => (z -> sharding.entityRefFor(ZoneActor.TypeKey, z))).toMap
-      new AlarmActor(zoneActors, Map.empty, keypad).activeState()
+
+      new AlarmActor(zoneActors, Map.empty, keypadTopic).activeState()
 
   class AlarmActor(
       var disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
       var armedZones: Map[String, EntityRef[ZoneActor.Command]],
-      val keypad: EntityRef[KeypadActor.Command]
+      val keypad: ActorRef[Topic.Command[KeypadActor.Command]]
                   ):
 
     def activeState(): Behavior[Command] =
@@ -48,8 +56,12 @@ object AlarmActor:
           case ArmAll() => arm(disarmedZones.keySet)
           case Disarm(zone) => disarm(Set(zone))
           case DisarmAll() => disarm(armedZones.keySet)
-          case Alert(from) => keypad ! KeypadActor.Command.EntryAlert(from) ; activeState()
-          case Trigger => keypad ! KeypadActor.Command.AlarmAlert ; alarmState()
+          case Alert(from) =>
+            keypad ! Topic.Publish(KeypadActor.EntryAlert(from))
+            activeState()
+          case Trigger =>
+            keypad ! Topic.publish(KeypadActor.Command.AlarmAlert)
+            alarmState()
           case _ => activeState()
 
     private def alarmState(): Behavior[Command] =
@@ -65,7 +77,7 @@ object AlarmActor:
           armedZones = armedZones + (zoneToArm -> disarmedZones(zoneToArm))
           disarmedZones = disarmedZones.removed(zoneToArm)
       )
-      keypad ! KeypadActor.Command.ExitAlert(zonesToArm)
+      keypad ! Topic.publish(KeypadActor.Command.ExitAlert(zonesToArm))
       activeState()
 
     private def disarm(zonesToDisarm: Set[String]): Behavior[Command] =
