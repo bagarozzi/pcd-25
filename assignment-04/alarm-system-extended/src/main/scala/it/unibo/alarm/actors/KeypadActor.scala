@@ -1,13 +1,19 @@
 package it.unibo.alarm.actors
 
+import it.unibo.alarm.AlarmProtocol
+import it.unibo.alarm.actors.AlarmActor.Command
+import org.apache.pekko.actor.typed.pubsub.Topic
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityRef, EntityTypeKey}
 
 import scala.concurrent.duration.FiniteDuration
 
 object KeypadActor:
 
   import it.unibo.alarm.actors.AlarmActor.Command.*
+
+  val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("AlarmHub")
 
   enum Command:
     case Arm(pin: String, zone: String)
@@ -23,18 +29,19 @@ object KeypadActor:
 
   export Command.*
 
-  def apply(
-            pin: String,
-            zones: Map[String, Set[SensorActor.Type]],
-            entryTimeout: FiniteDuration,
-            exitTimeout: FiniteDuration
-           ): Behavior[Command] =
+  def apply(keypadId: String, pin: String): Behavior[Command] =
     Behaviors.setup: context =>
-      context.log.info("initialized with PIN" + pin)
-      val alarmActor = context.spawn(AlarmActor(context.self, zones, entryTimeout, exitTimeout), "alarm")
-      active(pin, alarmActor)
+      context.log.info(s"Keypad $keypadId initialized with PIN $pin" )
 
-  private def active(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
+      val topic = context.spawn(Topic[Command](AlarmProtocol.KeypadTopicName), "KeypadTopicProxy")
+      topic ! Topic.Subscribe(context.self)
+
+      val sharding = ClusterSharding(context.system)
+      val alarmActorRef = sharding.entityRefFor(AlarmActor.TypeKey, "central-alarm")
+
+      active(pin, alarmActorRef)
+
+  private def active(pin: String, alarmActor: EntityRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
         case Arm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Arm(zone) ; active(pin, alarmActor)
@@ -45,7 +52,7 @@ object KeypadActor:
         case ExitAlert(armedZones) => context.log.info(s"The zones $armedZones be armed soon") ; active(pin, alarmActor)
         case _ => Behaviors.same
 
-  private def entryAlert(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
+  private def entryAlert(pin: String, alarmActor: EntityRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
         case DisarmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.DisarmAll() ; active(pin, alarmActor)
@@ -61,7 +68,7 @@ object KeypadActor:
           alarm(pin, alarmActor)
         case _ => Behaviors.same
 
-  private def alarm(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
+  private def alarm(pin: String, alarmActor: EntityRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
         case Silence(insertedPin) if insertedPin == pin =>
