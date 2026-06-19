@@ -19,7 +19,7 @@ public class SpatialHashGrid {
     }
 
     public void clear() {
-        grid.clear();
+        grid.values().forEach(List::clear);
     }
 
     private long hash(int x, int y) {
