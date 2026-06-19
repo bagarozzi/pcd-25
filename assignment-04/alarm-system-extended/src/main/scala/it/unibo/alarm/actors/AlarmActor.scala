@@ -27,9 +27,9 @@ object AlarmActor:
 
   export Command.*
 
-  def apply(keypad: ActorRef[KeypadActor.Command], zones: Set[String], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Behavior[Command] =
+  def apply(hubId: String, zones: Set[String]): Behavior[Command] =
     Behaviors.setup: context =>
-      context.log.info("Spawned AlarmActor for house")
+      context.log.info(s"Spawned $hubId Alarm Hub for house")
       val sharding = ClusterSharding(context.system)
       val zoneActors: Map[String, EntityRef[ZoneActor.Command]] =
         zones.map(z => (z -> sharding.entityRefFor(ZoneActor.TypeKey, z))).toMap
@@ -38,7 +38,7 @@ object AlarmActor:
   class AlarmActor(
       var disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
       var armedZones: Map[String, EntityRef[ZoneActor.Command]],
-      val keypad: ActorRef[KeypadActor.Command]
+      val keypad: EntityRef[KeypadActor.Command]
                   ):
 
     def activeState(): Behavior[Command] =
