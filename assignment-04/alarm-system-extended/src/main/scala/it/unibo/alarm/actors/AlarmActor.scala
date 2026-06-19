@@ -5,6 +5,7 @@ import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import it.unibo.alarm.actors.SensorActor
 import it.unibo.alarm.actors.SensorActor.Type
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityRef, EntityTypeKey}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -12,6 +13,8 @@ import scala.concurrent.duration.FiniteDuration
  * The actor coordinating the whole alarm: locking, unlocking and catching signals.
  */
 object AlarmActor:
+
+  val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("AlarmHub")
 
   enum Command:
     case Arm(zone: String)
@@ -24,15 +27,17 @@ object AlarmActor:
 
   export Command.*
 
-  def apply(keypad: ActorRef[KeypadActor.Command], zones: Map[String, Set[SensorActor.Type]], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Behavior[Command] =
+  def apply(keypad: ActorRef[KeypadActor.Command], zones: Set[String], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Behavior[Command] =
     Behaviors.setup: context =>
       context.log.info("Spawned AlarmActor for house")
-      val zoneActors: Map[String, ActorRef[ZoneActor.Command]] = zones.view.map(z => (z._1, context.spawn(ZoneActor(z._2, entryTimeout, exitTimeout, context.self), z._1))).toMap
+      val sharding = ClusterSharding(context.system)
+      val zoneActors: Map[String, EntityRef[ZoneActor.Command]] =
+        zones.map(z => (z -> sharding.entityRefFor(ZoneActor.TypeKey, z))).toMap
       new AlarmActor(zoneActors, Map.empty, keypad).activeState()
 
   class AlarmActor(
-      var disarmedZones: Map[String, ActorRef[ZoneActor.Command]],
-      var armedZones: Map[String, ActorRef[ZoneActor.Command]],
+      var disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
+      var armedZones: Map[String, EntityRef[ZoneActor.Command]],
       val keypad: ActorRef[KeypadActor.Command]
                   ):
 
