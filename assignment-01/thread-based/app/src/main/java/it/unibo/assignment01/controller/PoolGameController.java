@@ -73,7 +73,7 @@ public class PoolGameController extends Thread implements Controller {
 			lastUpdateTime = System.currentTimeMillis();
 			spatialHashGrid.clear();
 			bigBallSpatialHashGrid.clear();
-			Latch moveLatch = new Latch(NUM_WORKERS);
+			Latch latch = new Latch(NUM_WORKERS);
 
 			// Process continuous keyboard input
 			processHeldKeys();
@@ -81,7 +81,7 @@ public class PoolGameController extends Thread implements Controller {
 			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
 
 			for(int i = 0; i< NUM_WORKERS; i++) {
-				addWorkerTask(new UpdateMovementTask(board.getAllBall(), elapsed, board, moveLatch, i, NUM_WORKERS), this.workers.get(i).getX());
+				addWorkerTask(new UpdateMovementTask(board.getAllBall(), elapsed, board, latch, i, NUM_WORKERS), this.workers.get(i).getX());
 			}
 
 
@@ -93,7 +93,7 @@ public class PoolGameController extends Thread implements Controller {
 			// 	e.printStackTrace();
 			// }
 			try {
-				moveLatch.await();
+				latch.await();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -103,19 +103,19 @@ public class PoolGameController extends Thread implements Controller {
 				bigBallSpatialHashGrid.insert(ball);
 			}
 
-			Latch colliisionLatch = new Latch(NUM_WORKERS);
+			latch.refresh();
 			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
 			
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			for (int i = 0; i < NUM_WORKERS; i++) {
-				addWorkerTask(new CollisionTask(cells, board, colliisionLatch, spatialHashGrid, i, NUM_WORKERS), this.workers.get(i).getX());
+				addWorkerTask(new CollisionTask(cells, board, latch, spatialHashGrid, i, NUM_WORKERS), this.workers.get(i).getX());
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			bigBallSpatialHashGrid.insert(board.getPlayerBall());
 			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);
 			// Maybe another hitAndWait()...
 			try {
-				colliisionLatch.await();
+				latch.await();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
