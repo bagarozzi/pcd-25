@@ -10,12 +10,14 @@ import scala.reflect.ClassTag
 
 object SensorActor:
 
+  sealed trait Command extends CborSerializable
+
   enum Type:
     case Motion
     case Door
 
-  enum Command extends CborSerializable:
-    case Trigger
+  object Command:
+    case object Trigger extends Command
 
   export Command.*
   export Type.*
