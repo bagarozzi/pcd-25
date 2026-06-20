@@ -1,21 +1,18 @@
 package it.unibo.alarm.actors
 
 import it.unibo.alarm.AlarmProtocol
-import it.unibo.alarm.actors.AlarmActor.Command
+import it.unibo.alarm.cluster.CborSerializable
 import org.apache.pekko.actor.typed.pubsub.Topic
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
 import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityRef, EntityTypeKey}
-
-import scala.concurrent.duration.FiniteDuration
+import scala.reflect.ClassTag
 
 object KeypadActor:
 
-  import it.unibo.alarm.actors.AlarmActor.Command.*
-
   val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("AlarmHub")
 
-  enum Command:
+  enum Command extends CborSerializable:
     case Arm(pin: String, zone: String)
     case ArmAll(pin: String)
     case Disarm(pin: String, zone: String)
