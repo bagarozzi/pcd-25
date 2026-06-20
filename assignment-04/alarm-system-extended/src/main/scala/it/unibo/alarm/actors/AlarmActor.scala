@@ -2,10 +2,8 @@ package it.unibo.alarm.actors
 
 import it.unibo.alarm.AlarmProtocol
 import it.unibo.alarm.actors.KeypadActor.Command
-import it.unibo.alarm.actors.KeypadActor.Command.ExitAlert
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
-import it.unibo.alarm.actors.SensorActor
-import it.unibo.alarm.actors.SensorActor.Type
+import it.unibo.alarm.cluster.CborSerializable
 import org.apache.pekko.actor.typed.pubsub.Topic
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
 import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityRef, EntityTypeKey}
@@ -19,7 +17,7 @@ object AlarmActor:
 
   val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("AlarmHub")
 
-  enum Command:
+  enum Command extends CborSerializable:
     case Arm(zone: String)
     case ArmAll()
     case Disarm(zone: String)
