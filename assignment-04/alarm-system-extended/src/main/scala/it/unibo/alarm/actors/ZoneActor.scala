@@ -8,7 +8,7 @@ import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.cluster.sharding.typed.scaladsl.EntityTypeKey
 import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityRef}
 import com.typesafe.config.ConfigFactory
-import it.unibo.alarm.actors.AlarmActor.Command.*
+import it.unibo.alarm.actors.AlarmActor.Command.Trigger
 import org.apache.pekko.cluster.sharding.ShardRegion.ClusterShardingStats
 
 import scala.concurrent.duration.FiniteDuration
@@ -19,16 +19,16 @@ import scala.concurrent.duration.FiniteDuration
  */
 object ZoneActor:
 
-  import it.unibo.alarm.actors.AlarmActor.Command.*
+  sealed trait Command extends CborSerializable
 
   val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("ZoneEntity")
 
-  enum Command extends CborSerializable:
-    case Arm
-    case Disarm
-    case Alert
-    case EntryDelayOver
-    case ArmDelayOver
+  object Command:
+    case object Arm extends Command
+    case object Disarm extends Command
+    case object Alert extends Command
+    case object EntryDelayOver extends Command
+    case object ArmDelayOver extends Command
 
   export Command.*
 
