@@ -10,18 +10,20 @@ import scala.reflect.ClassTag
 
 object KeypadActor:
 
+  sealed trait Command extends CborSerializable
+
   val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("AlarmHub")
 
-  enum Command extends CborSerializable:
-    case Arm(pin: String, zone: String)
-    case ArmAll(pin: String)
-    case Disarm(pin: String, zone: String)
-    case DisarmAll(pin: String)
-    case Silence(pin: String)
-    case EntryAlert(triggeredZones: String)
-    case ExitAlert(armedZones: Set[String])
-    case AlarmAlert
-    case LinkAlarm(alarmActor: ActorRef[AlarmActor.Command])
+  object Command:
+    case class Arm(pin: String, zone: String) extends Command
+    case class ArmAll(pin: String) extends Command
+    case class Disarm(pin: String, zone: String) extends Command
+    case class DisarmAll(pin: String) extends Command
+    case class Silence(pin: String) extends Command
+    case class EntryAlert(triggeredZones: String) extends Command
+    case class ExitAlert(armedZones: Set[String]) extends Command
+    case object AlarmAlert extends Command
+    case class LinkAlarm(alarmActor: ActorRef[AlarmActor.Command]) extends Command
 
 
   export Command.*
@@ -43,8 +45,8 @@ object KeypadActor:
       message match
         case Arm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Arm(zone) ; active(pin, alarmActor)
         case Disarm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Disarm(zone) ; active(pin, alarmActor)
-        case ArmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.ArmAll() ; active(pin, alarmActor)
-        case DisarmAll(insertedPin) if insertedPin == pin =>alarmActor ! AlarmActor.Command.DisarmAll() ; active(pin, alarmActor)
+        case ArmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.ArmAll ; active(pin, alarmActor)
+        case DisarmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.DisarmAll ; active(pin, alarmActor)
         case EntryAlert(triggeredZones) => context.log.warn(s"The zone $triggeredZones is triggered, alarm will sound unless the PIN is inserted") ; entryAlert(pin, alarmActor)
         case ExitAlert(armedZones) => context.log.info(s"The zones $armedZones be armed soon") ; active(pin, alarmActor)
         case _ => Behaviors.same
@@ -52,7 +54,7 @@ object KeypadActor:
   private def entryAlert(pin: String, alarmActor: EntityRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
-        case DisarmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.DisarmAll() ; active(pin, alarmActor)
+        case DisarmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.DisarmAll ; active(pin, alarmActor)
         case Disarm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Disarm(zone) ; active(pin, alarmActor)
         case Disarm(insertedPin, _) if insertedPin != pin =>
           context.log.info("ALARM STATE: insert pin to silence the alarm")
