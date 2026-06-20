@@ -11,10 +11,10 @@ import it.unibo.alarm.actors.{AlarmActor, SensorActor, ZoneActor}
 object AlarmNode:
 
     def apply(zones: Set[String]): Unit =
-        val config = ConfigFactory.parseString(
-            s"""
-          pekko.remote.artery.canonical.port = 7354
-          """).withFallback(ConfigFactory.load("application-sharding.conf"))
+        val config = ConfigFactory.parseString("""
+                    pekko.remote.artery.canonical.port = 2551
+                    pekko.cluster.roles = ["central-node"]
+                    """).withFallback(ConfigFactory.load("application.conf"))
         val _ = ActorSystem(initialization(zones), "AlarmCluster", config)
 
     private def initialization(zones: Set[String]): Behavior[Nothing] =
@@ -23,7 +23,7 @@ object AlarmNode:
 
             val _ = sharding.init(Entity(typeKey = AlarmActor.TypeKey) { entityContext =>
                 AlarmActor(entityContext.entityId: String, zones)
-            })
+            }.withRole("central-node"))
             Behaviors.empty
 
 
