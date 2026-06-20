@@ -6,8 +6,9 @@ import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import it.unibo.alarm.cluster.CborSerializable
 import org.apache.pekko.actor.typed.pubsub.Topic
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
-import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityRef, EntityTypeKey}
+import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityRef, EntityTypeKey}
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
 /**
@@ -15,16 +16,18 @@ import scala.concurrent.duration.FiniteDuration
  */
 object AlarmActor:
 
+  sealed trait Command extends CborSerializable
+
   val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("AlarmHub")
 
-  enum Command extends CborSerializable:
-    case Arm(zone: String)
-    case ArmAll()
-    case Disarm(zone: String)
-    case DisarmAll()
-    case Trigger
-    case Alert(from: String)
-    case Silence
+  object Command:
+    case class Arm(zone: String) extends Command
+    case object ArmAll extends Command
+    case class Disarm(zone: String) extends Command
+    case object DisarmAll extends Command
+    case object Trigger extends Command
+    case class Alert(from: String) extends Command
+    case object Silence extends Command
 
   export Command.*
 
@@ -34,10 +37,11 @@ object AlarmActor:
 
       val keypadTopic = context.spawn(Topic[KeypadActor.Command](AlarmProtocol.KeypadTopicName), "KeypadTopicProxy")
 
-
       val sharding = ClusterSharding(context.system)
       val zoneActors: Map[String, EntityRef[ZoneActor.Command]] =
         zones.map(z => (z -> sharding.entityRefFor(ZoneActor.TypeKey, z))).toMap
+
+      zoneActors.values.foreach(zoneRef => zoneRef ! ZoneActor.Command.Disarm)
 
       new AlarmActor(zoneActors, Map.empty, keypadTopic).activeState()
 
@@ -51,9 +55,9 @@ object AlarmActor:
       Behaviors.receive: (context, message) =>
         message match
           case Arm(zone) => arm(Set(zone))
-          case ArmAll() => arm(disarmedZones.keySet)
+          case ArmAll => arm(disarmedZones.keySet)
           case Disarm(zone) => disarm(Set(zone))
-          case DisarmAll() => disarm(armedZones.keySet)
+          case DisarmAll => disarm(armedZones.keySet)
           case Alert(from) =>
             keypad ! Topic.Publish(KeypadActor.EntryAlert(from))
             activeState()
