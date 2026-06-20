@@ -72,7 +72,7 @@ object ZoneActor:
           case _ => Behaviors.same
 
     private def exitDelay(): Behavior[Command] =
-      timers.startSingleTimer(ArmDelayOver, exitTimeout);
+      timers.startSingleTimer(ArmDelayOver, exitTimeout)
       Behaviors.receive: (context, message) =>
         message match
           case Disarm =>
@@ -104,7 +104,7 @@ object ZoneActor:
           case _ => Behaviors.same
 
     private def entryDelay(): Behavior[Command] =
-      timers.startSingleTimer(EntryDelayOver, entryTimeout);
+      timers.startSingleTimer(EntryDelayOver, entryTimeout)
       Behaviors.receive: (context, message) =>
         message match
         case Disarm  =>
