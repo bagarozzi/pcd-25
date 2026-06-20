@@ -11,21 +11,20 @@ import it.unibo.alarm.actors.{AlarmActor, KeypadActor, SensorActor, ZoneActor}
 
 object KeypadNode:
 
-    def apply(pin: String): Unit =
-        val config = ConfigFactory.parseString(
-            s"""
-          pekko.remote.artery.canonical.port = 7354
-          """).withFallback(ConfigFactory.load("application-sharding.conf"))
-        val _ = ActorSystem(initialization(pin), "AlarmCluster", config)
+    def apply(keypadId: String, pin: String): ActorSystem[KeypadActor.Command] =
+        val config = ConfigFactory.parseString("pekko.remote.artery.canonical.port = 0")
+            .withFallback(ConfigFactory.load("application.conf"))
+        ActorSystem(init(keypadId, pin), "AlarmCluster", config)
 
-    private def initialization(pin: String): Behavior[Nothing] =
+    private def init(keypadId: String, pin: String): Behavior[KeypadActor.Command] =
         Behaviors.setup: context =>
             val sharding = ClusterSharding(context.system)
 
-            val _ = sharding.init(Entity(typeKey = KeypadActor.TypeKey) { entityContext =>
-                KeypadActor(entityContext.entityId: String, pin)
-            })
-            Behaviors.empty
+            sharding.init(Entity(typeKey = AlarmActor.TypeKey) { entityContext =>
+                AlarmActor(entityContext.entityId, Set.empty)
+            }.withRole("central-node"))
+
+            KeypadActor(keypadId, pin)
 
 
 
