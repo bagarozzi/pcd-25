@@ -21,7 +21,7 @@ object ZoneNode:
 
             val _ = sharding.init(Entity(typeKey = ZoneActor.TypeKey) { entityContext =>
                 ZoneActor(entityContext.entityId: String, sensors: Set[SensorActor.Type], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration)
-            })
+            }.withRole("worker-node"))
 
             sharding.init(Entity(typeKey = AlarmActor.TypeKey) { entityContext =>
                 AlarmActor(entityContext.entityId, Set.empty)
