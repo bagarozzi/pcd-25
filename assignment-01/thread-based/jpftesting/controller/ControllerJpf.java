@@ -1,29 +1,25 @@
-package it.unibo.assignment01;
+package jpftesting.controller;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import it.unibo.assignment01.util.Latch; 
+import jpftesting.util.Latch; 
 
-import it.unibo.assignment01.controller.Cmd;
-import it.unibo.assignment01.controller.CollisionTask;
-import it.unibo.assignment01.controller.Controller;
-import it.unibo.assignment01.controller.SpatialHashGrid;
-import it.unibo.assignment01.controller.UpdateMovementTask;
-import it.unibo.assignment01.model.Ball;
-import it.unibo.assignment01.model.BallImpl;
-import it.unibo.assignment01.model.Board;
-import it.unibo.assignment01.model.BoardImpl;
-import it.unibo.assignment01.model.Position;
-import it.unibo.assignment01.model.SimpleCollisionDetector;
-import it.unibo.assignment01.model.Speed;
-import it.unibo.assignment01.util.BoundedBuffer;
-import it.unibo.assignment01.util.BoundedBufferImpl;
-import it.unibo.assignment01.util.Pair;
-import it.unibo.assignment01.util.SynchCell;
-import it.unibo.assignment01.worker.BallWorker;
+import jpftesting.controller.CollisionTask;
+import jpftesting.controller.SpatialHashGrid;
+import jpftesting.controller.UpdateMovementTask;
+import jpftesting.model.Ball;
+import jpftesting.model.BallImpl;
+import jpftesting.model.Board;
+import jpftesting.model.BoardImpl;
+import jpftesting.model.Position;
+import jpftesting.model.SimpleCollisionDetector;
+import jpftesting.model.Speed;
+import jpftesting.util.Pair;
+import jpftesting.util.SynchCell;
+import jpftesting.worker.BallWorker;
 
-public class ControllerJpf extends Thread implements Controller {
+public class ControllerJpf extends Thread {
 
 	private final int NUM_WORKERS = 2;
 	private final long STATIC_ELAPSED_TIME = 16L;
@@ -31,20 +27,19 @@ public class ControllerJpf extends Thread implements Controller {
 	private Board board;
 	private SpatialHashGrid spatialHashGrid;
 
-	private final BoundedBuffer<Runnable> queueTask;
 	private final List<Pair<SynchCell<Runnable>, BallWorker>> workers;
 	private Latch latch;
 
 	public ControllerJpf() {
 
 		this.board = new BoardImpl(createBalls(), new SimpleCollisionDetector());
-		this.queueTask = new BoundedBufferImpl<>(NUM_WORKERS * 2);
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * 1.6);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
 			SynchCell<Runnable> cell = new SynchCell<>();
 			var worker = new BallWorker(cell);
 			this.workers.add(new Pair<SynchCell<Runnable>, BallWorker>(cell, worker));
+			worker.start();
 		}
 	}
 
@@ -87,6 +82,10 @@ public class ControllerJpf extends Thread implements Controller {
 
 			latch.refresh();
 		}
+
+		for(Pair<SynchCell<Runnable>, BallWorker> w : workers) {
+            addWorkerTask(() -> Thread.currentThread().interrupt(), w.getX());
+        }
 	}
 
 	private void addWorkerTask(Runnable task, SynchCell<Runnable> cell) {
@@ -110,10 +109,6 @@ public class ControllerJpf extends Thread implements Controller {
 		balls.add(new BallImpl(new Position(0, 0), new Speed(0, 0), 0.2, Ball.BALL_RADIUS));
 		balls.add(new BallImpl(new Position(Ball.BALL_RADIUS, 0), new Speed(-1.0, 0), 0.2, Ball.BALL_RADIUS));
 		return balls;
-	}
-
-	@Override
-	public void notifyCommand(Cmd cmd) {
 	}
 
 }
