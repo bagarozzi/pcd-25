@@ -39,7 +39,7 @@ object AlarmActor:
 
       val sharding = ClusterSharding(context.system)
       val zoneActors: Map[String, EntityRef[ZoneActor.Command]] =
-        zones.map(z => (z -> sharding.entityRefFor(ZoneActor.TypeKey, z))).toMap
+        zones.map(z => z -> sharding.entityRefFor(ZoneActor.TypeKey, z)).toMap
 
       zoneActors.values.foreach(zoneRef => zoneRef ! ZoneActor.Command.Disarm)
 
