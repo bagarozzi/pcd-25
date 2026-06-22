@@ -10,16 +10,21 @@ import it.unibo.assignment01.util.Latch;
 public class CollisionTask implements Runnable {
 
     private Board board;
-    private List<Map.Entry<Long, List<Ball>>> myBatch;
     private Latch latch;
     private SpatialHashGrid grid;
     private int index;
     private int numWorker;
 
-    public CollisionTask(List<Map.Entry<Long, List<Ball>>> myBatch, Board board, Latch latch,
+    private static final int[][] NEIGHBOR_OFFSETS = {
+        {1, 0},   // Right (East)
+        {-1, 1},  // Bottom-Left (South-West)
+        {0, 1},   // Bottom (South)
+        {1, 1}    // Bottom-Right (South-East)
+    };
+
+    public CollisionTask(Board board, Latch latch,
             SpatialHashGrid grid, int workIndex, int numWorker) {
         this.board = board;
-        this.myBatch = myBatch;
         this.latch = latch;
         this.grid = grid;
         this.index = workIndex;
@@ -29,10 +34,8 @@ public class CollisionTask implements Runnable {
     @Override
     public void run() {
 
-        for (int i = this.index; i < myBatch.size(); i += this.numWorker) {
-            for (Ball ball : myBatch.get(i).getValue()) {
-                resolveNearbyCollisions(ball, grid, board);
-            }
+        for (int i = this.index; i < board.getAllBall().size(); i += this.numWorker) {
+            resolveNearbyCollisions(board.getAllBall().get(i), grid, board);
         }
         latch.countDown();
     }
