@@ -46,8 +46,8 @@ public class PoolGameController extends Thread implements Controller {
 
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
 		cmdBuffer = new BoundedBufferImpl<>(10);
-		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * MULTIPY_FACTOR_FOR_RADIOUS);
-		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS * 1.6);
+		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * MULTIPY_FACTOR_FOR_RADIOUS, board.getBounds());
+		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS * 1.6, board.getBounds());
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
 			SynchCell<Runnable> cell = new SynchCell<>();
@@ -104,11 +104,10 @@ public class PoolGameController extends Thread implements Controller {
 			}
 
 			latch.refresh();
-			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
 			
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			for (int i = 0; i < NUM_WORKERS; i++) {
-				addWorkerTask(new CollisionTask(cells, board, latch, spatialHashGrid, i, NUM_WORKERS), this.workers.get(i).getX());
+				addWorkerTask(new CollisionTask(board, latch, spatialHashGrid, i, NUM_WORKERS), this.workers.get(i).getX());
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			bigBallSpatialHashGrid.insert(board.getPlayerBall());
