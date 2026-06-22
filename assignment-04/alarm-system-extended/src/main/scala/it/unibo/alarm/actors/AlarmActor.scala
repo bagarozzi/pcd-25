@@ -43,50 +43,66 @@ object AlarmActor:
 
       zoneActors.values.foreach(zoneRef => zoneRef ! ZoneActor.Command.Disarm)
 
-      new AlarmActor(zoneActors, Map.empty, keypadTopic).activeState()
+      activeState(zoneActors, Map.empty, keypadTopic)
 
-  class AlarmActor(
-      var disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
-      var armedZones: Map[String, EntityRef[ZoneActor.Command]],
-      val keypad: ActorRef[Topic.Command[KeypadActor.Command]]
-                  ):
+  private def activeState(
+       disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
+       armedZones: Map[String, EntityRef[ZoneActor.Command]],
+       keypad: ActorRef[Topic.Command[KeypadActor.Command]]
+   ): Behavior[Command] =
+    Behaviors.receive: (context, message) =>
+      message match
+        case Arm(zone) => arm(Set(zone), disarmedZones, armedZones, keypad)
+        case ArmAll => arm(disarmedZones.keySet, disarmedZones, armedZones, keypad)
+        case Disarm(zone) => disarm(Set(zone), disarmedZones, armedZones, keypad)
+        case DisarmAll => disarm(armedZones.keySet, disarmedZones, armedZones, keypad)
+        case Alert(from) =>
+          keypad ! Topic.Publish(KeypadActor.EntryAlert(from))
+          activeState(disarmedZones, armedZones, keypad)
+        case Trigger =>
+          keypad ! Topic.publish(KeypadActor.Command.AlarmAlert)
+          alarmState(disarmedZones, armedZones, keypad)
+        case _ => activeState(disarmedZones, armedZones, keypad)
 
-    def activeState(): Behavior[Command] =
-      Behaviors.receive: (context, message) =>
-        message match
-          case Arm(zone) => arm(Set(zone))
-          case ArmAll => arm(disarmedZones.keySet)
-          case Disarm(zone) => disarm(Set(zone))
-          case DisarmAll => disarm(armedZones.keySet)
-          case Alert(from) =>
-            keypad ! Topic.Publish(KeypadActor.EntryAlert(from))
-            activeState()
-          case Trigger =>
-            keypad ! Topic.publish(KeypadActor.Command.AlarmAlert)
-            alarmState()
-          case _ => activeState()
+  private def alarmState(
+      disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
+      armedZones: Map[String, EntityRef[ZoneActor.Command]],
+      keypad: ActorRef[Topic.Command[KeypadActor.Command]]
+  ): Behavior[Command] =
+    Behaviors.receive: (context, message) =>
+      message match
+        case Silence => disarm(armedZones.keySet, disarmedZones, armedZones, keypad)
+        case _ => Behaviors.same
 
-    private def alarmState(): Behavior[Command] =
-      Behaviors.receive: (context, message) =>
-        message match
-          case Silence => disarm(armedZones.keySet)
-          case _ => Behaviors.same
+  private def arm(
+      zonesToArm: Set[String],
+      disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
+      armedZones: Map[String, EntityRef[ZoneActor.Command]],
+      keypad: ActorRef[Topic.Command[KeypadActor.Command]]
+  ): Behavior[Command] =
+    val validZonesMap = zonesToArm
+        .filter(disarmedZones.contains)
+        .filterNot(armedZones.contains)
+        .map(z => z -> disarmedZones(z))
+        .toMap
 
-    private def arm(zonesToArm: Set[String]): Behavior[Command] =
-      zonesToArm.foreach(zoneToArm =>
-        if !armedZones.contains(zoneToArm) && disarmedZones.contains(zoneToArm) then
-          disarmedZones(zoneToArm) ! ZoneActor.Command.Arm
-          armedZones = armedZones + (zoneToArm -> disarmedZones(zoneToArm))
-          disarmedZones = disarmedZones.removed(zoneToArm)
-      )
-      keypad ! Topic.publish(KeypadActor.Command.ExitAlert(zonesToArm))
-      activeState()
+    validZonesMap.values.foreach(ref => ref ! ZoneActor.Command.Arm)
 
-    private def disarm(zonesToDisarm: Set[String]): Behavior[Command] =
-      zonesToDisarm.foreach(zoneToDisarm =>
-        if armedZones.contains(zoneToDisarm) && !disarmedZones.contains(zoneToDisarm) then
-          armedZones(zoneToDisarm) ! ZoneActor.Command.Disarm
-          disarmedZones = disarmedZones + (zoneToDisarm -> armedZones(zoneToDisarm))
-          armedZones = armedZones.removed(zoneToDisarm)
-      )
-      activeState()
+    keypad ! Topic.publish(KeypadActor.Command.ExitAlert(zonesToArm))
+    activeState(disarmedZones -- validZonesMap.keys, armedZones ++ validZonesMap, keypad)
+
+  private def disarm(
+      zonesToDisarm: Set[String],
+      disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
+      armedZones: Map[String, EntityRef[ZoneActor.Command]],
+      keypad: ActorRef[Topic.Command[KeypadActor.Command]]
+  ): Behavior[Command] =
+    val validZonesMap = zonesToDisarm
+        .filter(armedZones.contains)
+        .filterNot(disarmedZones.contains)
+        .map(z => z -> disarmedZones(z))
+        .toMap
+
+    validZonesMap.values.foreach(ref => ref ! ZoneActor.Command.Disarm)
+
+    activeState(disarmedZones ++ validZonesMap, armedZones -- validZonesMap.keys, keypad)
