@@ -6,7 +6,7 @@ import java.util.Map;
 import jpftesting.util.Latch; 
 
 import jpftesting.controller.CollisionTask;
-import jpftesting.controller.SpatialHashGrid;
+import jpftesting.model.SpatialHashGrid;
 import jpftesting.controller.UpdateMovementTask;
 import jpftesting.model.Ball;
 import jpftesting.model.BallImpl;
@@ -33,7 +33,7 @@ public class ControllerJpf extends Thread {
 	public ControllerJpf() {
 
 		this.board = new BoardImpl(createBalls(), new SimpleCollisionDetector());
-		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * 1.6);
+		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * 2);
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
 			SynchCell<Runnable> cell = new SynchCell<>();
@@ -49,7 +49,7 @@ public class ControllerJpf extends Thread {
 			latch = new Latch(NUM_WORKERS);
 			spatialHashGrid.clear();
 
-			for(int i = 0; i< NUM_WORKERS; i++) {
+			/*for(int i = 0; i< NUM_WORKERS; i++) {
 				addWorkerTask(new UpdateMovementTask(board.getAllBall(), STATIC_ELAPSED_TIME, board, latch, i, NUM_WORKERS), this.workers.get(i).getX());
 			}
 
@@ -57,9 +57,9 @@ public class ControllerJpf extends Thread {
 				latch.await();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-			}
+			}*/
 			
-
+			
 			for (Ball ball : board.getAllBall()) {
 				spatialHashGrid.insert(ball);
 			}

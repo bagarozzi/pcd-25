@@ -1,4 +1,4 @@
-package it.unibo.assignment01.controller;
+package jpftesting.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,17 +19,12 @@ public class SpatialHashGrid {
     }
 
     public void clear() {
-        grid.values().forEach(List::clear);
+        grid.clear();
     }
 
     private long hash(int x, int y) {
-        // Morton code (Z-order curve) for better 2D spatial locality
-        long result = 0;
-        for (int i = 0; i < 32; i++) {
-            result |= ((long) ((x >> i) & 1) << (2 * i));
-            result |= ((long) ((y >> i) & 1) << (2 * i + 1));
-        }
-        return result;
+        // Pack x into the upper 32 bits, and y into the lower 32 bits.
+        return ((long) x << 32) | (y & 0xFFFFFFFFL);
     }
 
     public void insert(Ball b) {

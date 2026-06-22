@@ -1,4 +1,4 @@
-package it.unibo.assignment01.controller;
+package jpftesting.model;
 
 
 import java.util.List;

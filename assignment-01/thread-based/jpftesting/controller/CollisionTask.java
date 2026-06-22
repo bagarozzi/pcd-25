@@ -7,6 +7,8 @@ import jpftesting.model.Ball;
 import jpftesting.model.Board;
 import jpftesting.util.Latch;
 
+import jpftesting.model.SpatialHashGrid;
+
 public class CollisionTask implements Runnable {
 
     private Board board;

@@ -1,4 +1,4 @@
-package it.unibo.assignment01.controller;
+package jpftesting.model;
 
 import java.util.List;
 import java.util.Map;
@@ -6,6 +6,7 @@ import java.util.Map;
 import jpftesting.model.Ball;
 import jpftesting.model.Board;
 import jpftesting.util.Latch;
+import jpftesting.model.SpatialHashGrid;
 
 public class CollisionTask implements Runnable {
 
