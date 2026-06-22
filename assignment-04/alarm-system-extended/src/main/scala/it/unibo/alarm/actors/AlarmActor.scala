@@ -80,16 +80,7 @@ object AlarmActor:
       armedZones: Map[String, EntityRef[ZoneActor.Command]],
       keypad: ActorRef[Topic.Command[KeypadActor.Command]]
   ): Behavior[Command] =
-    val validZonesMap = zonesToArm
-        .filter(disarmedZones.contains)
-        .filterNot(armedZones.contains)
-        .map(z => z -> disarmedZones(z))
-        .toMap
-
-    validZonesMap.values.foreach(ref => ref ! ZoneActor.Command.Arm)
-
-    keypad ! Topic.publish(KeypadActor.Command.ExitAlert(zonesToArm))
-    activeState(disarmedZones -- validZonesMap.keys, armedZones ++ validZonesMap, keypad)
+    consumeZones(zonesToArm, disarmedZones, armedZones, keypad)(ref => ref ! ZoneActor.Command.Arm)
 
   private def disarm(
       zonesToDisarm: Set[String],
@@ -97,12 +88,21 @@ object AlarmActor:
       armedZones: Map[String, EntityRef[ZoneActor.Command]],
       keypad: ActorRef[Topic.Command[KeypadActor.Command]]
   ): Behavior[Command] =
-    val validZonesMap = zonesToDisarm
-        .filter(armedZones.contains)
-        .filterNot(disarmedZones.contains)
-        .map(z => z -> disarmedZones(z))
+    consumeZones(zonesToDisarm, disarmedZones, armedZones, keypad)(ref => ref ! ZoneActor.Command.Disarm)
+
+  private def consumeZones(
+        target: Set[String],
+        fromConsume: Map[String, EntityRef[ZoneActor.Command]],
+        toConsume: Map[String, EntityRef[ZoneActor.Command]],
+        keypad: ActorRef[Topic.Command[KeypadActor.Command]]
+    )(consumer: EntityRef[ZoneActor.Command] => Unit): Behavior[Command] =
+    val validZonesMap = target
+        .filter(fromConsume.contains)
+        .filterNot(toConsume.contains)
+        .map(z => z -> fromConsume(z))
         .toMap
 
-    validZonesMap.values.foreach(ref => ref ! ZoneActor.Command.Disarm)
+    validZonesMap.values.foreach(consumer)
 
-    activeState(disarmedZones ++ validZonesMap, armedZones -- validZonesMap.keys, keypad)
+    keypad ! Topic.publish(KeypadActor.Command.ExitAlert(validZonesMap.keySet))
+    activeState(fromConsume -- validZonesMap.keys, toConsume ++ validZonesMap, keypad)
