@@ -80,7 +80,9 @@ object AlarmActor:
       armedZones: Map[String, EntityRef[ZoneActor.Command]],
       keypad: ActorRef[Topic.Command[KeypadActor.Command]]
   ): Behavior[Command] =
-    consumeZones(zonesToArm, disarmedZones, armedZones, keypad)(ref => ref ! ZoneActor.Command.Arm)
+    val zones = consumeZones(zonesToArm, disarmedZones, armedZones, keypad)(ref => ref ! ZoneActor.Command.Arm)
+    keypad ! Topic.publish(KeypadActor.Command.ExitAlert(zones.keySet))
+    activeState(disarmedZones -- zones.keys, armedZones ++ zones, keypad)
 
   private def disarm(
       zonesToDisarm: Set[String],
@@ -88,14 +90,15 @@ object AlarmActor:
       armedZones: Map[String, EntityRef[ZoneActor.Command]],
       keypad: ActorRef[Topic.Command[KeypadActor.Command]]
   ): Behavior[Command] =
-    consumeZones(zonesToDisarm, disarmedZones, armedZones, keypad)(ref => ref ! ZoneActor.Command.Disarm)
+    val zones = consumeZones(zonesToDisarm, armedZones, disarmedZones, keypad)(ref => ref ! ZoneActor.Command.Disarm)
+    activeState(disarmedZones ++ zones, armedZones -- zones.keys, keypad)
 
   private def consumeZones(
         target: Set[String],
         fromConsume: Map[String, EntityRef[ZoneActor.Command]],
         toConsume: Map[String, EntityRef[ZoneActor.Command]],
         keypad: ActorRef[Topic.Command[KeypadActor.Command]]
-    )(consumer: EntityRef[ZoneActor.Command] => Unit): Behavior[Command] =
+    )(consumer: EntityRef[ZoneActor.Command] => Unit): Map[String, EntityRef[ZoneActor.Command]] =
     val validZonesMap = target
         .filter(fromConsume.contains)
         .filterNot(toConsume.contains)
@@ -104,5 +107,4 @@ object AlarmActor:
 
     validZonesMap.values.foreach(consumer)
 
-    keypad ! Topic.publish(KeypadActor.Command.ExitAlert(validZonesMap.keySet))
-    activeState(fromConsume -- validZonesMap.keys, toConsume ++ validZonesMap, keypad)
+    validZonesMap
