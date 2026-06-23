@@ -50,7 +50,7 @@ public class DistributedLock {
     public void release() throws IOException {
         String tokenMessage = "TOKEN";
         channel.basicPublish("", queueName, MessageProperties.PERSISTENT_TEXT_PLAIN, tokenMessage.getBytes());
-        System.out.println("[" + Thread.currentThread().getName() + "] Lock rilasciato.");
+        System.out.println("Lock rilasciato.");
     }
 
     public void close() throws IOException, TimeoutException {
