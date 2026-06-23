@@ -2,7 +2,7 @@ public class WorkerManager {
     public static void main(String[] args) {
         int numWorkers = 5;
 
-        //new Thread(() -> runFailedWorker(6)).start();
+        new Thread(() -> runFailedWorker(6)).start();
 
 
         for (int i = 0; i < numWorkers; i++) {
@@ -18,10 +18,9 @@ public class WorkerManager {
         DistributedLock lock = new DistributedLock(queueName);
 
         try {
-            lock.init();
-            System.out.println("Worker-" + id + " pronto.");
-
-            for (int j = 0; j < 3; j++) {
+            try{
+                lock.init();
+                System.out.println("Worker-" + id + " pronto.");
                 // Lavoro fuori sezione critica
                 Thread.sleep(1000);
 
@@ -29,12 +28,13 @@ public class WorkerManager {
 
                 System.out.println("Worker-" + id + " sta lavorando nella sezione critica.");
                 Thread.sleep(1000); // Lavoro nella sezione critica
-
+            } finally {
                 lock.release();
+                lock.close();
             }
-            lock.close();
         } catch (Exception e) {
             e.printStackTrace();
+            return;
         }
     }
 
@@ -43,18 +43,26 @@ public class WorkerManager {
         DistributedLock lock = new DistributedLock(queueName);
 
         try {
-            lock.init();
-            System.out.println("Worker-" + id + " pronto.");
+            try {
+                lock.init();
+                System.out.println("Worker-" + id + " pronto.");
                 // Lavoro fuori sezione critica
                 Thread.sleep(1000);
 
                 lock.acquire();
 
                 System.out.println("Worker-" + id + " esce senza rilasciare la lock");
+                Thread.sleep(1000);
                 return;
+            }
+            finally {
+                System.out.println("Worker" + id + " rilascia la lock anche se è fallito");
+                lock.release();
+                lock.close();
+            }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
+            return;
         }
     }
 }
