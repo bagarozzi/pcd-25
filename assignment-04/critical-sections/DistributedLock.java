@@ -1,5 +1,7 @@
 import com.rabbitmq.client.*;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 public class DistributedLock {
@@ -26,16 +28,22 @@ public class DistributedLock {
     }
 
     public void acquire() throws IOException, InterruptedException {
-        while (true) {
-            GetResponse response = channel.basicGet(queueName, false); // autoAck = false per sicurezza
-            if (response != null) {
-                //token aquired
-                channel.basicAck(response.getEnvelope().getDeliveryTag(), false);
-                System.out.println("[" + Thread.currentThread().getName() + "] Lock acquisito con successo.");
-                return;
-            }
-            // Se la coda è vuota, attendiamo tot ms prima di riprovare
-            Thread.sleep(100);
+        CompletableFuture<Void> request = new CompletableFuture<>(); 
+
+        DeliverCallback dcb = (consumerTag, delivery) -> {
+            channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+            request.complete(null);
+        };
+
+        CancelCallback ccb = (consumerTagInfo) -> request.completeExceptionally(new RuntimeException());
+
+        String consumerTag = channel.basicConsume(queueName, false, dcb, ccb);
+        try {
+            request.get(); 
+        } catch (ExecutionException e) {
+            throw new RuntimeException("Errore durante l'acquisizione del lock", e.getCause());
+        } finally {
+            channel.basicCancel(consumerTag);
         }
     }
 
