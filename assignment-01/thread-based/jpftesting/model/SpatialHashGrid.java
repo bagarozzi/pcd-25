@@ -7,55 +7,94 @@ import java.util.Map;
 import java.util.Set;
 
 import jpftesting.model.Ball;
+import jpftesting.model.Boundary;
 
 public class SpatialHashGrid {
 
     private final double cellSize;
 
-    private final Map<Long, List<Ball>> grid = new HashMap<>();
+    private final Boundary bounds; 
 
-    public SpatialHashGrid(double cellSize) {
+    private final int rows;
+    private final int cols;
+
+    //private final Map<Long, List<Ball>> grid = new HashMap<>();
+    private final List<Ball>[] grid;
+
+@SuppressWarnings("unchecked")
+    public SpatialHashGrid(double cellSize, Boundary bounds) {
         this.cellSize = cellSize;
+        this.bounds = bounds;
+        
+        this.cols = (int) Math.ceil((bounds.x1() - bounds.x0()) / cellSize);
+        this.rows = (int) Math.ceil((bounds.y1() - bounds.y0()) / cellSize);
+
+        this.grid = new ArrayList[cols * rows];
+        for (int i = 0; i < grid.length; i++) {
+            grid[i] = new ArrayList<>();
+        }
     }
 
     public void clear() {
-        grid.clear();
+        for (List<Ball> cell : grid) {
+            cell.clear();
+        }
     }
 
-    private long hash(int x, int y) {
-        // Pack x into the upper 32 bits, and y into the lower 32 bits.
-        return ((long) x << 32) | (y & 0xFFFFFFFFL);
+    private int indexFromCoordinates(double x, double y) {
+        double shiftedX = x - bounds.x0();
+        double shiftedY = y - bounds.y0();
+
+        int cellX = (int) (shiftedX / cellSize);
+        int cellY = (int) (shiftedY / cellSize);
+
+        if (cellX >= cols) cellX = cols - 1;
+        if (cellX < 0) cellX = 0;
+        
+        if (cellY >= rows) cellY = rows - 1;
+        if (cellY < 0) cellY = 0;
+
+        return indexFromCells(cellX, cellY);
+    }
+
+    private int indexFromCells(int x, int y) {
+        return (y * cols) + x;
     }
 
     public void insert(Ball b) {
-
-        int cellX = (int) Math.floor(b.getPos().x() / cellSize);
-        int cellY = (int) Math.floor(b.getPos().y() / cellSize);
-
-        long key = hash(cellX, cellY);
-        List<Ball> cell = grid.get(key);
-
-        if (cell == null) {
-            cell = new ArrayList<>();
-            grid.put(key, cell);
-        }
-
-        cell.add(b);
+        int index = indexFromCoordinates(b.getPos().x(), b.getPos().y());
+        grid[index].add(b);
     }
 
     public List<Ball> getCell(int x, int y) {
-        return grid.getOrDefault(hash(x, y), List.of());
+        if (x < 0 || x >= cols || y < 0 || y >= rows) {
+            return List.of(); 
+        }
+        return grid[indexFromCells(x, y)];
     }
 
     public int getCellX(Ball b) {
-        return (int) Math.floor(b.getPos().x() / cellSize);
+        double shiftedX = b.getPos().x() - bounds.x0();
+        int cx = (int)(shiftedX / cellSize);
+        return Math.max(0, Math.min(cx, cols - 1));
     }
 
     public int getCellY(Ball b) {
-        return (int) Math.floor(b.getPos().y() / cellSize);
+        double shiftedY = b.getPos().y() - bounds.y0();
+        int cy = (int)(shiftedY / cellSize);
+        return Math.max(0, Math.min(cy, rows - 1));
     }
 
-    public Set<Map.Entry<Long, List<Ball>>> getCells() {
-        return grid.entrySet();
+    public int getSize() {
+        return grid.length;
     }
+
+    public int getCols() {
+        return cols;
+    }
+
+    public int getRows() {
+        return rows;
+    }
+
 }

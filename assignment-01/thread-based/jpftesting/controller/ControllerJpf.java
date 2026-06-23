@@ -33,7 +33,7 @@ public class ControllerJpf extends Thread {
 	public ControllerJpf() {
 
 		this.board = new BoardImpl(createBalls(), new SimpleCollisionDetector());
-		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * 2);
+		this.spatialHashGrid = new SpatialHashGrid(1.8, board.getBounds());
 		this.workers = new ArrayList<>();
 		for (int i = 0; i < NUM_WORKERS; i++) {
 			SynchCell<Runnable> cell = new SynchCell<>();
@@ -64,13 +64,12 @@ public class ControllerJpf extends Thread {
 				spatialHashGrid.insert(ball);
 			}
 
-			latch.refresh();
 			// Calculate collisions with pair-wise checking to eliminate redundancy
-			List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
+			//List<Map.Entry<Long, List<Ball>>> cells = new ArrayList<>(spatialHashGrid.getCells());
 			
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			for (int i = 0; i < NUM_WORKERS; i++) {
-				addWorkerTask(new CollisionTask(cells, board, latch, spatialHashGrid, i, NUM_WORKERS), this.workers.get(i).getX());
+				addWorkerTask(new CollisionTask(board, latch, spatialHashGrid, i, NUM_WORKERS), this.workers.get(i).getX());
 			}
 			// Maybe another hitAndWait()...
 			try {

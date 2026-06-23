@@ -1,7 +1,7 @@
 package jpftesting.model;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.ArrayList;
 
 public class BoardImpl implements Board {
     private static final double Y1 = 1.0;
@@ -25,10 +25,9 @@ public class BoardImpl implements Board {
 
     public BoardImpl(List<Ball> balls, CollisionDetector collisionDetector) {
         this.bounds = new Boundary(X0, Y0, X1, Y1);
-        this.balls = new CopyOnWriteArrayList<>(balls);
+        this.balls = new ArrayList<>(balls);
         this.collisionDetector = collisionDetector;
-        this.playerBall = new BallImpl(new Position(-0.5, -0.5), new Speed(0, 0), 2.0, 0.07);        allBalls = new CopyOnWriteArrayList<>(balls);
-        allBalls.add(playerBall);
+        allBalls = new ArrayList<>(balls);
     }
 
     @Override
