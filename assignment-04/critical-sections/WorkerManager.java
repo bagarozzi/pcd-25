@@ -2,7 +2,6 @@ public class WorkerManager {
     public static void main(String[] args) {
         int numWorkers = 5;
 
-        new Thread(() -> runFailedWorker(6)).start();
 
 
         for (int i = 0; i < numWorkers; i++) {
@@ -10,6 +9,12 @@ public class WorkerManager {
             new Thread(() -> {
                 runWorker(workerId);
             }).start();
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 
@@ -20,10 +25,8 @@ public class WorkerManager {
         try {
             try{
                 lock.init();
-                System.out.println("Worker-" + id + " pronto.");
+                //System.out.println("Worker-" + id + " pronto.");
                 // Lavoro fuori sezione critica
-                Thread.sleep(1000);
-
                 lock.acquire();
 
                 System.out.println("Worker-" + id + " sta lavorando nella sezione critica.");
