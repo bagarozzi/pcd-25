@@ -2,6 +2,9 @@ public class WorkerManager {
     public static void main(String[] args) {
         int numWorkers = 5;
 
+        //new Thread(() -> runFailedWorker(6)).start();
+
+
         for (int i = 0; i < numWorkers; i++) {
             final int workerId = i;
             new Thread(() -> {
@@ -32,6 +35,26 @@ public class WorkerManager {
             lock.close();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void runFailedWorker(int id) {
+        String queueName = "distributed_mutex_queue";
+        DistributedLock lock = new DistributedLock(queueName);
+
+        try {
+            lock.init();
+            System.out.println("Worker-" + id + " pronto.");
+                // Lavoro fuori sezione critica
+                Thread.sleep(1000);
+
+                lock.acquire();
+
+                System.out.println("Worker-" + id + " esce senza rilasciare la lock");
+                return;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
         }
     }
 }
