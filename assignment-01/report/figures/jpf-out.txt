@@ -1,0 +1,23 @@
+root@fa7e6b5b49f4:/home/jpf-core# java -jar build/RunJPF.jar /pcd-jpf/Poool.jpf
+JavaPathfinder core system v8.0 (rev 2bf98722c49a8149f9a6f68acb9edc6ba5cdd557) - (C) 2005-2014 United States Government. All rights reserved.
+
+
+====================================================== system under test
+jpftesting.PooolJpf.main()
+
+====================================================== search started: 6/24/26, 12:06 PM
+
+====================================================== results
+no errors detected
+
+====================================================== statistics
+elapsed time:       01:11:09
+states:             new=25106911,visited=49742552,backtracked=74849463,end=6994
+search:             maxDepth=786,constraints=0
+choice generators:  thread=25106475 (signal=2193642,lock=3735609,sharedRef=17232914,threadApi=3,reschedule=1944307), data=0
+heap:               new=2362075,released=45921634,maxLive=675,gcCycles=63363100
+instructions:       648258054
+max memory:         1081MB
+loaded code:        classes=121,methods=2775
+
+====================================================== search finished: 6/24/26, 1:17 PM

@@ -28,6 +28,7 @@ public class ControllerJpf extends Thread {
 	private SpatialHashGrid spatialHashGrid;
 
 	private final List<Pair<SynchCell<Runnable>, BallWorker>> workers;
+	private final List<Pair<UpdateMovementTask, CollisionTask>> staticTasks;
 	private Latch latch;
 
 	public ControllerJpf() {
@@ -35,24 +36,29 @@ public class ControllerJpf extends Thread {
 		this.board = new BoardImpl(createBalls(), new SimpleCollisionDetector());
 		this.spatialHashGrid = new SpatialHashGrid(1.8, board.getBounds());
 		this.workers = new ArrayList<>();
-		/*for (int i = 0; i < NUM_WORKERS; i++) {
+		this.staticTasks = new ArrayList<>();
+		latch = new Latch(NUM_WORKERS);
+		for (int i = 0; i < NUM_WORKERS; i++) {
 			SynchCell<Runnable> cell = new SynchCell<>();
 			var worker = new BallWorker(cell);
 			this.workers.add(new Pair<SynchCell<Runnable>, BallWorker>(cell, worker));
+			staticTasks.add(
+				new Pair<>(
+					new UpdateMovementTask(board.getAllBall(), 0, board, latch, i, NUM_WORKERS),
+					new CollisionTask(board, latch, spatialHashGrid, i, NUM_WORKERS)
+			));
 			worker.start();
-		}*/
-		latch = new Latch(NUM_WORKERS);
+		}
 	}
 
 	@Override
 	public void run() {
 		for (int j = 0; j < 2; j++) {
 
-			var t1 = new Thread(new UpdateMovementTask(board.getAllBall(), STATIC_ELAPSED_TIME, board, latch, 0, NUM_WORKERS));
-			var t2 = new Thread(new UpdateMovementTask(board.getAllBall(), STATIC_ELAPSED_TIME, board, latch, 1, NUM_WORKERS));
-
-			t1.start();
-			t2.start();
+			for(int i = 0; i< NUM_WORKERS; i++) {
+				staticTasks.get(i).getX().updateParamethers(board.getAllBall(), STATIC_ELAPSED_TIME);
+				addWorkerTask(staticTasks.get(i).getX(), this.workers.get(i).getX());
+			}
 
 			try {
 				latch.await();
@@ -62,16 +68,13 @@ public class ControllerJpf extends Thread {
 
 			latch.refresh();
 			
-			
 			for (Ball ball : board.getAllBall()) {
 				spatialHashGrid.insert(ball);
 			}
 
-			t1 = new Thread(new CollisionTask(board, latch, spatialHashGrid, 0, NUM_WORKERS));
-			t2 = new Thread(new CollisionTask(board, latch, spatialHashGrid, 1, NUM_WORKERS));
-
-			t1.start();
-			t2.start();
+			for (int i = 0; i < NUM_WORKERS; i++) {
+				addWorkerTask(staticTasks.get(i).getY(), this.workers.get(i).getX());
+			}
 
 			try {
 				latch.await();
@@ -83,14 +86,14 @@ public class ControllerJpf extends Thread {
 			latch.refresh();
 		}
 
-		/*for(Pair<SynchCell<Runnable>, BallWorker> w : workers) {
+		for(Pair<SynchCell<Runnable>, BallWorker> w : workers) {
             addWorkerTask(() -> Thread.currentThread().interrupt(), w.getX());
-        }*/
+        }
 	}
 
-	//private void addWorkerTask(Runnable task, SynchCell<Runnable> cell) {
-	//	cell.set(task);
-	//}
+	private void addWorkerTask(Runnable task, SynchCell<Runnable> cell) {
+		cell.set(task);
+	}
 
 	private <T> List<List<T>> splitList(List<T> list, int nList) {
 		List<List<T>> res = new ArrayList<>();
@@ -107,7 +110,7 @@ public class ControllerJpf extends Thread {
 	private List<Ball> createBalls() {
 		var balls = new ArrayList<Ball>();
 		balls.add(new BallImpl(new Position(0, 0), new Speed(0, 0), 0.2, Ball.BALL_RADIUS));
-		balls.add(new BallImpl(new Position(1.0, 0), new Speed(0, 0), 0.2, Ball.BALL_RADIUS));
+		balls.add(new BallImpl(new Position(0, Ball.BALL_RADIUS*1.5), new Speed(0, 0), 0.2, Ball.BALL_RADIUS));
 		return balls;
 	}
 
