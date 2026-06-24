@@ -7,6 +7,7 @@
 \usepackage{float}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{siunitx}
 \usepackage{tikz}
 \usetikzlibrary{petri, arrows.meta}
 \tikzset{
@@ -174,11 +175,34 @@ This makes easier the the collision detection as the worker has to look only at
 the adjacient cells for each ball.  
 
 \section{Verification}
-\subsection{Unit testing}
-Show the few unit tests performed.
-
 \subsection{Model checking}
-Show verification throught Java PathFinder.
+Model checking is done throught Java Path Finder, a system to verify executable Java bytecode programs. A stripped-down
+version of the application is created specifically, by removing the View, calls to \texttt{Java.util.Random},
+use of \texttt{System.time.millis},
+the player, the bot and adding just two balls to simulate a collision; all this to prevent state space explosion
+and complete the tests in a reasonable time.
+
+\texttt{PreciseRaceDetector} and \texttt{DeadlockAnalyzer} are used to model-check the program.
+
+\begin{center}
+    \begin{tabular}{ c | c | c }
+        Test listener & Time taken & State explored \\
+        \hline\hline
+        DeadlockAnalyzer & 01:12:06 & \num{25106911} \\
+        PreciseRaceDetector & 01:13:19 & \num{25106911} \\
+        PreciseRaceDetector (with collisions) & ... & \num{100}
+    \end{tabular}
+\end{center}
+
+However, the first test did not include a proper collision, just ball movement, so another test is perfomend
+where the balls are initially colliding.
+All the test display an output as in Figure~\ref{fig:jpf-out}.
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{figures/jpf-out.png} 
+    \centering
+    \caption{Output of Java PathFinder}\label{fig:jpf-out}
+\end{figure}
 
 \subsection{Performance tests}
 Maybe add some explicit figures about how available cores are exploited using Java Mission Control
