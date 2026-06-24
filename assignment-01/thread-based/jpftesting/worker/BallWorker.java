@@ -22,6 +22,7 @@ public class BallWorker extends Thread {
             try {
                 queueTask.get().run();
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 break;
             }
         }
