@@ -28,6 +28,7 @@ public class ControllerJpf extends Thread {
 	private SpatialHashGrid spatialHashGrid;
 
 	private final List<Pair<SynchCell<Runnable>, BallWorker>> workers;
+	private final List<Pair<UpdateMovementTask, CollisionTask>> staticTasks;
 	private Latch latch;
 
 	public ControllerJpf() {
@@ -35,13 +36,19 @@ public class ControllerJpf extends Thread {
 		this.board = new BoardImpl(createBalls(), new SimpleCollisionDetector());
 		this.spatialHashGrid = new SpatialHashGrid(1.8, board.getBounds());
 		this.workers = new ArrayList<>();
+		this.staticTasks = new ArrayList<>();
+		latch = new Latch(NUM_WORKERS);
 		for (int i = 0; i < NUM_WORKERS; i++) {
 			SynchCell<Runnable> cell = new SynchCell<>();
 			var worker = new BallWorker(cell);
 			this.workers.add(new Pair<SynchCell<Runnable>, BallWorker>(cell, worker));
+			staticTasks.add(
+				new Pair<>(
+					new UpdateMovementTask(board.getAllBall(), 0, board, latch, i, NUM_WORKERS),
+					new CollisionTask(board, latch, spatialHashGrid, i, NUM_WORKERS)
+			));
 			worker.start();
 		}
-		latch = new Latch(NUM_WORKERS);
 	}
 
 	@Override
@@ -49,7 +56,8 @@ public class ControllerJpf extends Thread {
 		for (int j = 0; j < 2; j++) {
 
 			for(int i = 0; i< NUM_WORKERS; i++) {
-				addWorkerTask(new UpdateMovementTask(board.getAllBall(), STATIC_ELAPSED_TIME, board, latch, i, NUM_WORKERS), this.workers.get(i).getX());
+				staticTasks.get(i).getX().updateParamethers(board.getAllBall(), STATIC_ELAPSED_TIME);
+				addWorkerTask(staticTasks.get(i).getX(), this.workers.get(i).getX());
 			}
 
 			try {
@@ -65,7 +73,7 @@ public class ControllerJpf extends Thread {
 			}
 
 			for (int i = 0; i < NUM_WORKERS; i++) {
-				addWorkerTask(new CollisionTask(board, latch, spatialHashGrid, i, NUM_WORKERS), this.workers.get(i).getX());
+				addWorkerTask(staticTasks.get(i).getY(), this.workers.get(i).getX());
 			}
 
 			try {
