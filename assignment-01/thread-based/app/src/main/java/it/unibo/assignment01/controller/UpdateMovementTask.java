@@ -8,8 +8,8 @@ import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.util.Latch;
 
 public class UpdateMovementTask implements Runnable{
-    private final List<Ball> ballBatch;
-    private final long timeElapsed;
+    private List<Ball> ballBatch;
+    private long timeElapsed;
     private final Board board;
     private final Latch latch;
     private int index;
@@ -22,6 +22,11 @@ public class UpdateMovementTask implements Runnable{
         this.latch = latch;
         this.index = workerIndex;
         this.numWorker = numWorker;
+    }
+
+    public void updateParamethers(final List<Ball> ballBatch, long timeElapsed) {
+        this.ballBatch = ballBatch;
+        this.timeElapsed = timeElapsed;
     }
 
     @Override
