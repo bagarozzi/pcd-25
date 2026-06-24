@@ -61,6 +61,27 @@ public class CollisionTask implements Runnable {
         }
     }
 
+        
+    public static void resolveNearbyCollisions(Ball ball, SpatialHashGrid grid, Board board) {
+        int cx = grid.getCellX(ball);
+        int cy = grid.getCellY(ball);
+
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+
+                List<Ball> nearby = grid.getCell(cx + dx, cy + dy);
+
+                for (Ball other : nearby) {
+
+                    if (!ball.equals(other)) {
+                        board.resolveCollision(ball, other);
+                        ;
+                    }
+                }
+            }
+        }
+    }
+
     /*
      * @Override
      * public void run() {
