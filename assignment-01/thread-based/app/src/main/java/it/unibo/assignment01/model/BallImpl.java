@@ -33,6 +33,11 @@ public class BallImpl implements Ball {
     }
 
     @Override
+    public synchronized Ball getSnapshot() {
+        return new BallImpl(this.pos, this.vel, this.mass, this.radius);
+    }
+
+    @Override
     public synchronized Position getPos() {
         return this.pos;
     }
