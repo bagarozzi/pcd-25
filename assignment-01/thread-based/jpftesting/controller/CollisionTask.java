@@ -1,19 +1,15 @@
-package it.unibo.assignment01.controller;
+package jpftesting.controller;
 
 import java.util.List;
 import java.util.Map;
 
-import it.unibo.assignment01.model.Ball;
-import it.unibo.assignment01.model.Board;
-import it.unibo.assignment01.util.Latch;
+import jpftesting.model.Ball;
+import jpftesting.model.Board;
+import jpftesting.util.Latch;
+
+import jpftesting.model.SpatialHashGrid;
 
 public class CollisionTask implements Runnable {
-
-    private Board board;
-    private Latch latch;
-    private SpatialHashGrid grid;
-    private int index;
-    private int numWorker;
 
     private static final int[][] NEIGHBOR_OFFSETS = {
         {1, 0},   // Right (East)
@@ -21,6 +17,12 @@ public class CollisionTask implements Runnable {
         {0, 1},   // Bottom (South)
         {1, 1}    // Bottom-Right (South-East)
     };
+
+    private Board board;
+    private Latch latch;
+    private SpatialHashGrid grid;
+    private int index;
+    private int numWorker;
 
     public CollisionTask(Board board, Latch latch,
             SpatialHashGrid grid, int workIndex, int numWorker) {
@@ -60,28 +62,6 @@ public class CollisionTask implements Runnable {
             }
         }
     }
-
-        
-    public static void resolveNearbyCollisions(Ball ball, SpatialHashGrid grid, Board board) {
-        int cx = grid.getCellX(ball);
-        int cy = grid.getCellY(ball);
-
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-
-                List<Ball> nearby = grid.getCell(cx + dx, cy + dy);
-
-                for (Ball other : nearby) {
-
-                    if (!ball.equals(other)) {
-                        board.resolveCollision(ball, other);
-                        ;
-                    }
-                }
-            }
-        }
-    }
-
     /*
      * @Override
      * public void run() {

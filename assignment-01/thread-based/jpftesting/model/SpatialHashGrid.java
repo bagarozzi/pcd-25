@@ -1,4 +1,4 @@
-package it.unibo.assignment01.controller;
+package jpftesting.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import it.unibo.assignment01.model.Ball;
-import it.unibo.assignment01.model.Boundary;
+import jpftesting.model.Ball;
+import jpftesting.model.Boundary;
 
 public class SpatialHashGrid {
 

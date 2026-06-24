@@ -1,4 +1,6 @@
-package it.unibo.assignment01;
+package jpftesting;
+
+import jpftesting.controller.ControllerJpf;
 
 public class PooolJpf {
     public static void main(String[] args) {

@@ -1,4 +1,4 @@
-package it.unibo.assignment01.model;
+package jpftesting.model;
 
 
 public class SimpleCollisionDetector implements CollisionDetector {

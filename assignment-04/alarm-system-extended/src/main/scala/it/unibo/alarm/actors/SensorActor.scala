@@ -1,19 +1,23 @@
 package it.unibo.alarm.actors
 
 import it.unibo.alarm.actors.ZoneActor.Command.Alert
+import it.unibo.alarm.cluster.CborSerializable
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
 import org.apache.pekko.actor.typed.scaladsl.*
+
 import scala.reflect.ClassTag
 
 object SensorActor:
+
+  sealed trait Command extends CborSerializable
 
   enum Type:
     case Motion
     case Door
 
-  enum Command:
-    case Trigger
+  object Command:
+    case object Trigger extends Command
 
   export Command.*
   export Type.*

@@ -1,7 +1,7 @@
-package it.unibo.assignment01.worker;
+package jpftesting.worker;
 
 
-import it.unibo.assignment01.util.SynchCell;
+import jpftesting.util.SynchCell;
 
 /**
  * A BallWorker is a thread that computes, in the following order, the movements

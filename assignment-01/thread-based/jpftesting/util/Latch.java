@@ -1,4 +1,4 @@
-package it.unibo.assignment01.util;
+package jpftesting.util;
 
 public class Latch {
 

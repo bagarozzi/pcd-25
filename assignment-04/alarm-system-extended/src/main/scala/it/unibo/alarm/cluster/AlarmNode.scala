@@ -1,0 +1,40 @@
+package it.unibo.alarm.cluster
+
+import com.typesafe.config.ConfigFactory
+import org.apache.pekko.actor.typed.{ActorSystem, Behavior}
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity}
+
+import scala.concurrent.duration.FiniteDuration
+import it.unibo.alarm.actors.{AlarmActor, SensorActor, ZoneActor}
+
+import java.util.concurrent.TimeUnit
+
+object AlarmNode:
+
+    def apply(zones: Set[String]): Unit =
+        val config = ConfigFactory.parseString("""
+                    pekko.remote.artery.canonical.port = 2551
+                    pekko.cluster.roles = ["central-node"]
+                    """).withFallback(ConfigFactory.load("application.conf"))
+        val _ = ActorSystem(initialization(zones), "AlarmCluster", config)
+
+    private def initialization(zones: Set[String]): Behavior[Nothing] =
+        Behaviors.setup: context =>
+            val sharding = ClusterSharding(context.system)
+
+
+            val _ = sharding.init(Entity(typeKey = ZoneActor.TypeKey) { entityContext =>
+                ZoneActor(entityContext.entityId, Set.empty, FiniteDuration(10, TimeUnit.SECONDS), FiniteDuration(15, TimeUnit.SECONDS))
+            }.withRole("worker-node"))
+
+
+            val _ = sharding.init(Entity(typeKey = AlarmActor.TypeKey) { entityContext =>
+                AlarmActor(entityContext.entityId: String, zones)
+            }.withRole("central-node"))
+            Behaviors.empty
+
+
+
+
+

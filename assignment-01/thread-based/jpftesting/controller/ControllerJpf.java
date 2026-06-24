@@ -1,0 +1,114 @@
+package jpftesting.controller;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import jpftesting.util.Latch; 
+
+import jpftesting.controller.CollisionTask;
+import jpftesting.model.SpatialHashGrid;
+import jpftesting.controller.UpdateMovementTask;
+import jpftesting.model.Ball;
+import jpftesting.model.BallImpl;
+import jpftesting.model.Board;
+import jpftesting.model.BoardImpl;
+import jpftesting.model.Position;
+import jpftesting.model.SimpleCollisionDetector;
+import jpftesting.model.Speed;
+import jpftesting.util.Pair;
+import jpftesting.util.SynchCell;
+import jpftesting.worker.BallWorker;
+
+public class ControllerJpf extends Thread {
+
+	private final int NUM_WORKERS = 2;
+	private final long STATIC_ELAPSED_TIME = 16L;
+
+	private Board board;
+	private SpatialHashGrid spatialHashGrid;
+
+	private final List<Pair<SynchCell<Runnable>, BallWorker>> workers;
+	private Latch latch;
+
+	public ControllerJpf() {
+
+		this.board = new BoardImpl(createBalls(), new SimpleCollisionDetector());
+		this.spatialHashGrid = new SpatialHashGrid(1.8, board.getBounds());
+		this.workers = new ArrayList<>();
+		/*for (int i = 0; i < NUM_WORKERS; i++) {
+			SynchCell<Runnable> cell = new SynchCell<>();
+			var worker = new BallWorker(cell);
+			this.workers.add(new Pair<SynchCell<Runnable>, BallWorker>(cell, worker));
+			worker.start();
+		}*/
+		latch = new Latch(NUM_WORKERS);
+	}
+
+	@Override
+	public void run() {
+		for (int j = 0; j < 2; j++) {
+
+			var t1 = new Thread(new UpdateMovementTask(board.getAllBall(), STATIC_ELAPSED_TIME, board, latch, 0, NUM_WORKERS));
+			var t2 = new Thread(new UpdateMovementTask(board.getAllBall(), STATIC_ELAPSED_TIME, board, latch, 1, NUM_WORKERS));
+
+			t1.start();
+			t2.start();
+
+			try {
+				latch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			latch.refresh();
+			
+			
+			for (Ball ball : board.getAllBall()) {
+				spatialHashGrid.insert(ball);
+			}
+
+			t1 = new Thread(new CollisionTask(board, latch, spatialHashGrid, 0, NUM_WORKERS));
+			t2 = new Thread(new CollisionTask(board, latch, spatialHashGrid, 1, NUM_WORKERS));
+
+			t1.start();
+			t2.start();
+
+			try {
+				latch.await();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			spatialHashGrid.clear();
+			latch.refresh();
+		}
+
+		/*for(Pair<SynchCell<Runnable>, BallWorker> w : workers) {
+            addWorkerTask(() -> Thread.currentThread().interrupt(), w.getX());
+        }*/
+	}
+
+	//private void addWorkerTask(Runnable task, SynchCell<Runnable> cell) {
+	//	cell.set(task);
+	//}
+
+	private <T> List<List<T>> splitList(List<T> list, int nList) {
+		List<List<T>> res = new ArrayList<>();
+		for (int i = 0; i < nList; i++) {
+			int start = i * list.size() / nList;
+			int end = (i + 1) * list.size() / nList;
+			res.add(List.copyOf(list.subList(start, end)));
+		}
+		// System.err.println("Split list of size " + res.size() + nList );
+		// res.stream().forEach(l -> System.err.println(l.size()));
+		return res;
+	}
+
+	private List<Ball> createBalls() {
+		var balls = new ArrayList<Ball>();
+		balls.add(new BallImpl(new Position(0, 0), new Speed(0, 0), 0.2, Ball.BALL_RADIUS));
+		balls.add(new BallImpl(new Position(1.0, 0), new Speed(0, 0), 0.2, Ball.BALL_RADIUS));
+		return balls;
+	}
+
+}

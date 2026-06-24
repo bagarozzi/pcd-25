@@ -1,70 +1,108 @@
 package it.unibo.alarm.actors
 
+import it.unibo.alarm.AlarmProtocol
+import it.unibo.alarm.cluster.CborSerializable
+import org.apache.pekko.actor.typed.pubsub.Topic
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
-
-import scala.concurrent.duration.FiniteDuration
+import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityRef, EntityTypeKey}
+import scala.reflect.ClassTag
 
 object KeypadActor:
 
-  import it.unibo.alarm.actors.AlarmActor.Command.*
+  sealed trait Command extends CborSerializable
 
-  enum Command:
-    case Arm(pin: String, zone: String)
-    case ArmAll(pin: String)
-    case Disarm(pin: String, zone: String)
-    case DisarmAll(pin: String)
-    case Silence(pin: String)
-    case EntryAlert(triggeredZones: String)
-    case ExitAlert(armedZones: Set[String])
-    case AlarmAlert
-    case LinkAlarm(alarmActor: ActorRef[AlarmActor.Command])
+  val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("AlarmHub")
+
+  object Command:
+    case class Arm(pin: String, zone: String) extends Command
+    case class ArmAll(pin: String) extends Command
+    case class Disarm(pin: String, zone: String) extends Command
+    case class DisarmAll(pin: String) extends Command
+    case class Silence(pin: String) extends Command
+    case class EntryAlert(triggeredZones: String) extends Command
+    case class ExitAlert(armedZones: Set[String]) extends Command
+    case object AlarmAlert extends Command
+    case class LinkAlarm(alarmActor: ActorRef[AlarmActor.Command]) extends Command
+    case object OtherKeypadSilenced extends Command
+    case object OtherKeypadDisarmed extends Command
 
 
   export Command.*
 
-  def apply(
-            pin: String,
-            zones: Map[String, Set[SensorActor.Type]],
-            entryTimeout: FiniteDuration,
-            exitTimeout: FiniteDuration
-           ): Behavior[Command] =
+  def apply(keypadId: String, pin: String): Behavior[Command] =
     Behaviors.setup: context =>
-      context.log.info("initialized with PIN" + pin)
-      val alarmActor = context.spawn(AlarmActor(context.self, zones, entryTimeout, exitTimeout), "alarm")
-      active(pin, alarmActor)
+      context.log.info(s"Keypad $keypadId initialized with PIN $pin" )
 
-  private def active(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
+      val topic = context.spawn(Topic[Command](AlarmProtocol.KeypadTopicName), "KeypadTopicProxy")
+      topic ! Topic.Subscribe(context.self)
+
+      val sharding = ClusterSharding(context.system)
+      val alarmActorRef = sharding.entityRefFor(AlarmActor.TypeKey, "central-alarm")
+
+      active(topic, keypadId, pin, alarmActorRef)
+
+  private def active(keypadTopic:ActorRef[Topic.Command[KeypadActor.Command]], keypadId: String, pin: String, alarmActor: EntityRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
-        case Arm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Arm(zone) ; active(pin, alarmActor)
-        case Disarm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Disarm(zone) ; active(pin, alarmActor)
-        case ArmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.ArmAll() ; active(pin, alarmActor)
-        case DisarmAll(insertedPin) if insertedPin == pin =>alarmActor ! AlarmActor.Command.DisarmAll() ; active(pin, alarmActor)
-        case EntryAlert(triggeredZones) => context.log.warn(s"The zone $triggeredZones is triggered, alarm will sound unless the PIN is inserted") ; entryAlert(pin, alarmActor)
-        case ExitAlert(armedZones) => context.log.info(s"The zones $armedZones be armed soon") ; active(pin, alarmActor)
+        case Arm(insertedPin, zone) if insertedPin == pin =>
+          alarmActor ! AlarmActor.Command.Arm(zone)
+          active(keypadTopic, keypadId, pin, alarmActor)
+        case Disarm(insertedPin, zone) if insertedPin == pin =>
+          alarmActor ! AlarmActor.Command.Disarm(zone)
+          active(keypadTopic, pin, keypadId, alarmActor)
+        case ArmAll(insertedPin) if insertedPin == pin =>
+          alarmActor ! AlarmActor.Command.ArmAll
+          active(keypadTopic, keypadId, pin, alarmActor)
+        case DisarmAll(insertedPin) if insertedPin == pin =>
+          alarmActor ! AlarmActor.Command.DisarmAll
+          active(keypadTopic, keypadId, pin, alarmActor)
+        case EntryAlert(triggeredZones) =>
+          context.log.warn(s"KEYPAD-$keypadId:  The zone $triggeredZones is triggered, alarm will sound unless the PIN is inserted")
+          entryAlert(keypadTopic, keypadId, pin, alarmActor)
+        case ExitAlert(armedZones) =>
+          context.log.info(s"KEYPAD-$keypadId: The zones $armedZones be armed soon")
+          active(keypadTopic, keypadId, pin, alarmActor)
         case _ => Behaviors.same
 
-  private def entryAlert(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
+  private def entryAlert(keypadTopic:ActorRef[Topic.Command[KeypadActor.Command]], keypadId: String, pin: String, alarmActor: EntityRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
-        case DisarmAll(insertedPin) if insertedPin == pin => alarmActor ! AlarmActor.Command.DisarmAll() ; active(pin, alarmActor)
-        case Disarm(insertedPin, zone) if insertedPin == pin => alarmActor ! AlarmActor.Command.Disarm(zone) ; active(pin, alarmActor)
+        case DisarmAll(insertedPin) if insertedPin == pin =>
+          context.log.info(s"KEYPAD-$keypadId: the alarm was disarmed within the entry-timeout")
+          keypadTopic ! Topic.publish(OtherKeypadDisarmed)
+          alarmActor ! AlarmActor.Command.DisarmAll
+          active(keypadTopic, keypadId, pin, alarmActor)
+        case Disarm(insertedPin, zone) if insertedPin == pin =>
+          context.log.info(s"KEYPAD-$keypadId: the zone $zone was disarmed within the entry-timeout")
+          keypadTopic ! Topic.publish(OtherKeypadDisarmed)
+          alarmActor ! AlarmActor.Command.Disarm(zone)
+          active(keypadTopic, keypadId, pin, alarmActor)
         case Disarm(insertedPin, _) if insertedPin != pin =>
-          context.log.info("ALARM STATE: insert pin to silence the alarm")
-          alarmActor ! AlarmActor.Command.Trigger ; alarm(pin, alarmActor)
+          context.log.info(s"KEYPAD-$keypadId: ALARM STATE: insert pin to silence the alarm")
+          alarmActor ! AlarmActor.Command.Trigger
+          alarm(keypadTopic, keypadId, pin, alarmActor)
         case DisarmAll(insertedPin) if insertedPin != pin =>
-          context.log.info("ALARM STATE: insert pin to silence the alarm")
-          alarmActor ! AlarmActor.Command.Trigger ; alarm(pin, alarmActor)
+          context.log.info(s"KEYPAD-$keypadId: ALARM STATE: insert pin to silence the alarm")
+          alarmActor ! AlarmActor.Command.Trigger
+          alarm(keypadTopic, keypadId, pin, alarmActor)
         case AlarmAlert =>
-          context.log.info("ALARM STATE: insert pin to silence the alarm")
-          alarm(pin, alarmActor)
+          context.log.info(s"KEYPAD-$keypadId: ALARM STATE: insert pin to silence the alarm")
+          alarm(keypadTopic, keypadId, pin, alarmActor)
+        case OtherKeypadDisarmed =>
+          context.log.warn(s"KEYPAD-$keypadId: alarm was disarmed from another keypad")
+          active(keypadTopic, keypadId, pin, alarmActor)
         case _ => Behaviors.same
 
-  private def alarm(pin: String, alarmActor: ActorRef[AlarmActor.Command]): Behavior[Command] =
+  private def alarm(keypadTopic:ActorRef[Topic.Command[KeypadActor.Command]], keypadId: String, pin: String, alarmActor: EntityRef[AlarmActor.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
         case Silence(insertedPin) if insertedPin == pin =>
-          context.log.info("Pin correct, alarm silenced")
-          alarmActor ! AlarmActor.Command.Silence ; active(pin, alarmActor)
+          context.log.info(s"KEYPAD-$keypadId: Pin correct, alarm silenced")
+          keypadTopic ! Topic.publish(OtherKeypadSilenced)
+          alarmActor ! AlarmActor.Command.Silence
+          active(keypadTopic, keypadId, pin, alarmActor)
+        case OtherKeypadSilenced =>
+          context.log.warn(s"KEYPAD-$keypadId: alarm was silenced from another keypad")
+          active(keypadTopic, keypadId, pin, alarmActor)
         case _ => Behaviors.same
