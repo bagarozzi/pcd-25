@@ -1,0 +1,25 @@
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={No. of workers},
+        ylabel={Test execution time [ms]},
+        xmin=0, xmax=17,
+        ymin=6000, ymax=20500,
+        xtick={1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+        ytick={},
+        legend pos=north west,
+        ymajorgrids=true,
+        xmajorgrids=true,
+        ymode=log,
+        grid style=dashed,
+    ]
+
+    \addplot[
+        color=blue,
+        mark=square,
+        ]
+        coordinates {
+        (1,19664)(2,9701)(3,9701)(4,8400)(5,8197)(6,7478)(7,7669)(8,7336)
+        (9,7493)(10,7282)(11,7073)(12,6831)(13,7367)(14,7056)(15,7180)(16,7288)
+        };
+    \end{axis}
+\end{tikzpicture}
