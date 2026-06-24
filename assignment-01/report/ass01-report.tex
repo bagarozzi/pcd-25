@@ -190,7 +190,7 @@ and complete the tests in a reasonable time.
         \hline\hline
         DeadlockAnalyzer & 01:12:06 & \num{25106911} \\
         PreciseRaceDetector & 01:13:19 & \num{25106911} \\
-        PreciseRaceDetector (with collisions) & ... & \num{100}
+        PreciseRaceDetector (with collisions) & 01:11:09 & \num{25106911}
     \end{tabular}
 \end{center}
 
@@ -205,8 +205,14 @@ All the test display an output as in Figure~\ref{fig:jpf-out}.
 \end{figure}
 
 \subsection{Performance tests}
-Maybe add some explicit figures about how available cores are exploited using Java Mission Control
-or similar.
+Performance test are conducted with \num{4500} balls on the board and a varying number of cores assigned:
+from 1 (sequential) to 16.
+
+As test platform, the final headless application is used and the workers' number is tuned accordingly.
+To test the sequential version, a special version of the application is made where the \texttt{Controller}
+also does the movement and collisions calculations inside it's loop.
+To calculate times and ensure that all the tests do the same amount of work 
+
 
 \section{Conclusion}
 \subsection{Perfomance improvement}
