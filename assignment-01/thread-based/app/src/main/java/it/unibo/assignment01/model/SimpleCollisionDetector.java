@@ -4,14 +4,6 @@ package it.unibo.assignment01.model;
 public class SimpleCollisionDetector implements CollisionDetector {
     private static double RESTITUTION_FACTOR = 1; 
 
-    private boolean isColliding(Ball a, Ball b) {
-        double dx   = b.getPos().x() - a.getPos().x();
-        double dy   = b.getPos().y() - a.getPos().y();
-        double dist = Math.hypot(dx, dy);
-        double minD = a.getRadius() + b.getRadius();
-        return dist < minD && dist > 1e-6;
-    }
-
     @Override
     /**
      * 
