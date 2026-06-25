@@ -11,6 +11,7 @@ import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.model.Speed;
+import it.unibo.assignment01.util.Barrier;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
 import it.unibo.assignment01.util.Latch;
