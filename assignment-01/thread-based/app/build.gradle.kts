@@ -30,6 +30,12 @@ java {
     }
 }
 
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "it.unibo.assignment01.Poool" // Replace with your fully qualified class name
+    }
+}
+
 application {
     // Define the main class for the application.
     mainClass = "it.unibo.assignment01.Poool"
