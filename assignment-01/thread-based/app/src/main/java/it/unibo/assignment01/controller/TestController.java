@@ -23,7 +23,6 @@ public class TestController extends Thread {
 	private final int NUM_WORKERS;
 	private Board board;
 	private SpatialHashGrid spatialHashGrid;
-	private final Ball breakerBall;
 
 	private final List<Pair<SynchCell<Runnable>, BallWorker>> workers;
 	private final List<Pair<UpdateMovementTask, CollisionTask>> staticTasks;
@@ -38,9 +37,6 @@ public class TestController extends Thread {
         this.testFrames = testFrames;
         this.warmupFrames = warmupFrames;
 
-		this.breakerBall = new BallImpl(new Position(-0.95, -0.35), new Speed(0,0), 15.0, Ball.BALL_RADIUS);
-		List<Ball> balls = createBalls(50, 90);
-		balls.add(breakerBall);
 		this.board = new TestBoard(createBalls(50, 90), new SimpleCollisionDetector());
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * MULTIPY_FACTOR_FOR_RADIOUS, board.getBounds());
 
@@ -69,7 +65,6 @@ public class TestController extends Thread {
 
             if(k == warmupFrames) {
                 testStartTime = System.nanoTime();
-				breakerBall.kick(new Speed(4,4));
             }
 
 			spatialHashGrid.clear();
