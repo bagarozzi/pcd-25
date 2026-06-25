@@ -19,6 +19,8 @@ import it.unibo.assignment01.util.SynchCell;
 import it.unibo.assignment01.view.View;
 import it.unibo.assignment01.view.ViewModel;
 import it.unibo.assignment01.worker.BallWorker;
+import it.unibo.assignment01.worker.CollisionTask;
+import it.unibo.assignment01.worker.UpdateMovementTask;
 
 public class PoolGameController extends Thread implements Controller {
 

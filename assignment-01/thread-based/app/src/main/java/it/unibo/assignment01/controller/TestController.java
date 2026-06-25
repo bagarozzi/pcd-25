@@ -14,6 +14,8 @@ import it.unibo.assignment01.util.Latch;
 import it.unibo.assignment01.util.Pair;
 import it.unibo.assignment01.util.SynchCell;
 import it.unibo.assignment01.worker.BallWorker;
+import it.unibo.assignment01.worker.CollisionTask;
+import it.unibo.assignment01.worker.UpdateMovementTask;
 
 public class TestController extends Thread {
 
