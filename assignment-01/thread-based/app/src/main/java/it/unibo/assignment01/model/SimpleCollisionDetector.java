@@ -1,5 +1,7 @@
 package it.unibo.assignment01.model;
 
+import it.unibo.assignment01.model.ball.Ball;
+import it.unibo.assignment01.model.ball.BallView;
 
 public class SimpleCollisionDetector implements CollisionDetector {
     private static double RESTITUTION_FACTOR = 1; 

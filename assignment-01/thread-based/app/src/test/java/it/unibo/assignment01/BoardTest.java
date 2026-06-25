@@ -8,13 +8,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import it.unibo.assignment01.model.Ball;
-import it.unibo.assignment01.model.BallImpl;
 import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.model.Speed;
+import it.unibo.assignment01.model.ball.Ball;
+import it.unibo.assignment01.model.ball.BallImpl;
 
 public class BoardTest {
 

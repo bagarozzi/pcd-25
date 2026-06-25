@@ -1,6 +1,10 @@
-package it.unibo.assignment01.model;
+package it.unibo.assignment01.model.ball;
 
 import java.util.Random;
+
+import it.unibo.assignment01.model.Board;
+import it.unibo.assignment01.model.Position;
+import it.unibo.assignment01.model.Speed;
 
 public class EnemyBall extends BallImpl {
 

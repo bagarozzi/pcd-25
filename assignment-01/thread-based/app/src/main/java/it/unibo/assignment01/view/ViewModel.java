@@ -1,7 +1,8 @@
 package it.unibo.assignment01.view;
 
-import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
+import it.unibo.assignment01.model.ball.Ball;
+
 import java.util.List;
 
 public class ViewModel {

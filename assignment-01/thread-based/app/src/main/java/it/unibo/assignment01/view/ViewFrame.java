@@ -2,9 +2,9 @@ package it.unibo.assignment01.view;
 
 import it.unibo.assignment01.controller.Controller;
 import it.unibo.assignment01.controller.MoveCmd;
-import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
+import it.unibo.assignment01.model.ball.Ball;
 import it.unibo.assignment01.util.RenderSynch;
 
 import javax.swing.*;

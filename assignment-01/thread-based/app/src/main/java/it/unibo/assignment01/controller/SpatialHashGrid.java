@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Boundary;
+import it.unibo.assignment01.model.ball.Ball;
 
 public class SpatialHashGrid {
 

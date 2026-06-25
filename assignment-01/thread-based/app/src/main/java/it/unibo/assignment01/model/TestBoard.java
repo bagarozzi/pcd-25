@@ -3,6 +3,8 @@ package it.unibo.assignment01.model;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import it.unibo.assignment01.model.ball.Ball;
+
 public class TestBoard implements Board {
     private static final double Y1 = 1.0;
     private static final double X1 = 1.5;
