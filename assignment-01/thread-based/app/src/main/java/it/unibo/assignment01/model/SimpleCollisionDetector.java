@@ -15,8 +15,8 @@ public class SimpleCollisionDetector implements CollisionDetector {
     	
     	/* compute dv = b.getPos - a.getPos vector */
 
-		Ball a_snap = a.getSnapshot();
-		Ball b_snap = b.getSnapshot();
+		BallView a_snap = a.getSnapshot();
+		BallView b_snap = b.getSnapshot();
 
     	double dx   = b_snap.getPos().x() - a_snap.getPos().x();
         double dy   = b_snap.getPos().y() - a_snap.getPos().y();
@@ -28,7 +28,6 @@ public class SimpleCollisionDetector implements CollisionDetector {
          * 
          */
         if (dist < minD && dist > 1e-6)  {
-			synchronized(this) {
 	        /* 
 	         * Collision case - what to do:
 	         * 
@@ -77,7 +76,6 @@ public class SimpleCollisionDetector implements CollisionDetector {
 	        	a.setVel(new Speed(a_snap.getVel().x() - (imp / a_snap.getMass()) * nx, a_snap.getVel().y() - (imp / a_snap.getMass()) * ny));                
 	        	b.setVel(new Speed(b_snap.getVel().x() + (imp / b_snap.getMass()) * nx, b_snap.getVel().y() + (imp / b_snap.getMass()) * ny));
 	        }
-		}
         }
     }
     
