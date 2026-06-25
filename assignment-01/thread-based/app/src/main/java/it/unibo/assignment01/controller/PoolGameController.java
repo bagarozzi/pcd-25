@@ -2,7 +2,6 @@ package it.unibo.assignment01.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.BoardImpl;

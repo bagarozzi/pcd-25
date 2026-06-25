@@ -1,10 +1,7 @@
 package it.unibo.assignment01.controller;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import it.unibo.assignment01.model.Boundary;
 import it.unibo.assignment01.model.ball.Ball;
