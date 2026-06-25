@@ -1,7 +1,6 @@
 package it.unibo.assignment01.worker;
 
 import java.util.List;
-import java.util.Map;
 
 import it.unibo.assignment01.controller.SpatialHashGrid;
 import it.unibo.assignment01.model.Board;
