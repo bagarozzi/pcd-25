@@ -232,13 +232,14 @@ will use the same JVM and the latter instances will benefit from a fully-warmed 
 Seven execution times are gathered and outliers, the biggest and the lowest times, are removed
 to filter out eventual GC or OS slowdowns. An average is calcuated with the remaining five results.
 
-\subsection{Results}
+\subsection{Results and explanation}
+In Table~\ref{fig:test-table} are represented the execution times from 1 to 16 workers count together with the
+relative speedup.
+
 \begin{table}[H]
     \input{./figures/verification/test-table.tex}
     \caption{Execution times varying the workers' count}\label{fig:test-table}
 \end{table}
-In Table~\ref{fig:test-table} are represented the execution times from 1 to 16 workers count together with the
-relative speedup.
 
 Speedup is the ratio of improvement in speed execution between the sequential and parallel versions of a program,
 it's calculated as follows:
@@ -248,34 +249,54 @@ it's calculated as follows:
 \]
 Where $N$ is the number of processors used.
 
-We can observe that the lowest execution time is at 12 assigned cores, from then it slowly picks up
-again. The same times are plotted in logarithmic scale in Figure~\ref{fig:test-plot}.
+We can observe that the lowest execution time is at 16 assigned cores.
+The same times are plotted in logarithmic scale in Figure~\ref{fig:test-plot}.
 \begin{figure}[H]
     \input{./figures/verification/test-plot.tikz}
     \centering
     \caption{Executions times over number of worker for each test}\label{fig:test-plot}
 \end{figure}
 
-We can explain the \textit{bottleneck} that happens with more than 12 processors using Amdahl's law.
-In fact not all the parts of the game can be made parallel, the parts that are strictly sequential pose
-an upper limit to the parallelization.
-Amdahl's law mathematically expresses this upper limit on speed up while using $N$ processors:
+We can see that, the more workers are added, the execution time trends downward. Although this
+trend slows down towards 12 workers. This can be explained with Amdahl's law that
+mathematically expresses the upper limit on speedup while using $N$ processors:
 
 \[
-    S = \frac{1}{(1-P)+\frac{P}{N}}
+    S = \frac{1}{(1-P)+\frac{P}{N}} \,\,\text{ with }\,\, 0\le P\le1
 \]
 where $P$ is the parallelizable part of the program.
 
+The slowdown in performance gain from 12 cores and on is likely due to the fact that the non-parallel
+part of the program ($1-P$) is still too great relative to the paralellizable part, and adding 
+more workers is only granting a marginal gain.
+
 We can plot the speedup of the test instances against the ideal speedup, achieved if a program could be totally
-paralellizable ($P=1$), thus giving a linear increase in speedup.
+paralellizable ($P=1$), thus giving a linear increase in performance.
 
 \begin{figure}[H]
     \input{./figures/verification/amdahl-plot.tikz}
     \centering
-    \caption{Executions times over number of worker for each test}\label{fig:amdahl-plot}
+    \caption{Speedup of Poool against the ideal speedup}\label{fig:amdahl-plot}
 \end{figure}
 
-As we expected, in Figure
+As we anticipated, the speedup is far lower than the ideal one, this is due to the sequential part
+of the program taking its toll (mainly the spatial grid's creation and many more small wastes).
+
+Another figure that we can calculate and that further explains the situation is Efficiency,
+that measures how effectively each processor is used.
+It's calculated by normalizing the speedup value to the number of processors $N$:
+\[
+E = \frac{S}{N}
+\]
+For each worker count we calculate the efficiency as the values in  Table~\ref{fig:eff-table}.
+\begin{table}[H]
+    \input{./figures/verification/eff-table.tex}
+    \centering
+    \caption{Efficiency for each worker count}\label{fig:eff-table}
+\end{table}
+
+Being related to speedup, a program with an ideal speedup will also have an ideal efficiency.
+We can see that the ideal efficiency value ($S=1$) is approached only for $N=1$,
 
 \section{Conclusion}
 \subsection{Perfomance improvement}
