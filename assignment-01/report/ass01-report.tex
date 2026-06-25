@@ -177,8 +177,7 @@ to a specific cell and its hash code will reflect its position in the grid.
 This makes easier the the collision detection as the worker has to look only at 
 the adjacient cells for each ball.  
 
-\section{Verification}
-\subsection{Model checking}
+\section{Formal verification}
 Model checking is done throught Java Path Finder, a system to verify executable Java bytecode programs. A stripped-down
 version of the application is created specifically, by removing the View, calls to \texttt{Java.util.Random},
 use of \texttt{System.time.millis},
@@ -207,11 +206,14 @@ All the test display an output as in Figure~\ref{fig:jpf-out}.
     \caption{Output of Java PathFinder}\label{fig:jpf-out}
 \end{figure}
 
-\subsection{Performance tests}
+\section{Performance evaluation}
+
+\subsection{Methodology}
 Performance test are conducted on the final, headless, application set up with \num{4500} balls
 on the board and a varying number of cores assigned for the workers: from 1 to 16.
 To create a repeatable testing environment, the game loop is modified to run a finite
-number of \num{10000} ticks.
+number of \num{10000} ticks. The high number of ticks is needed so that each test run can be distinguished from another and errors up to 
+\qty{100}{\milli\second} will not interfere with the calculations.
 
 The first \num{5000} ticks are to warm up the JVM, during this time the JIT (Just-In-Time) compiler
 creates optimized versions of the \textit{hot} methods. This can also be observed in the graphic version
@@ -221,9 +223,16 @@ The second \num{5000} ticks are measured using \texttt{System.nanoTime} and use 
 ball to scatter the other balls in a more predictable way, although it has been observed that the same collision
 can produce slightly different trajectories.
 
-The high number of ticks is needed so that each test run can be distinguished from another and errors up to 
-\qty{100}{\milli\second} will not interfere with the calculations.
+Each run is performed by running the \texttt{.jar} executable file created by setting
+the \texttt{TestController} class each time with the number of workers needed for that 
+test instance. In this way a new JVM is created each time and the results are independent.
+In fact, running all the tests in the same \texttt{for}-loop, or using \texttt{gradle run}
+will use the same JVM and the latter instances will benefit from a fully-warmed up JVM.
 
+Seven execution times are gathered and outliers, the biggest and the lowest times, are removed
+to filter out eventual GC or OS slowdowns. An average is calcuated with the remaining five results.
+
+\subsection{Results}
 \begin{table}[H]
     \input{./figures/verification/test-table.tex}
     \caption{Execution times varying the workers' count}\label{fig:test-table}
@@ -265,6 +274,8 @@ paralellizable ($P=1$), thus giving a linear increase in speedup.
     \centering
     \caption{Executions times over number of worker for each test}\label{fig:amdahl-plot}
 \end{figure}
+
+As we expected, in Figure
 
 \section{Conclusion}
 \subsection{Perfomance improvement}
