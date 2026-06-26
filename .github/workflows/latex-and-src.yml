@@ -23,15 +23,6 @@ jobs:
         with:
           ruby-version: '3.0'
 
-      - name: Install dependencies
-        run: |
-          gem install bibtex-ruby
-
-      - name: Generate bibliography
-        working-directory: assignment-01/report
-        run: |
-          ruby bibtex_prettifier.rb
-
       - name: Compile LaTeX
         uses: DanySK/compile-and-publish-all-latex@2.2.3
         with:
