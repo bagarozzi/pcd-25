@@ -60,7 +60,7 @@ jobs:
 
           mkdir -p staging3/doc staging3/src/alarm staging3/src/odd-and-even
           cp -r assignment-03/alarm-system/src/main/scala/it/unibo/alarm/* staging3/src/alarm/    
-          cp -r assignment-03/* staging3/src/odd-and-even/ 
+          cp -r assignment-03/odd-and-even/* staging3/src/odd-and-even/ 
           mv assignment-03/report/*.pdf staging3/doc/      
 
           cd staging3
