@@ -5,10 +5,11 @@ on:
     branches:
       - main
     paths:
-      - 'assignment-01/report/**'
-      - 'assignment-02/report/**'
-      - 'assignment-03/report/**'
-      - 'assignment-04/report/**'
+      - 'assignment-01/**'
+      - 'assignment-02/**'
+      - 'assignment-03/**'
+      - 'assignment-04/**'
+      - '.github/workflows/latex-and-src.yml'
   workflow_dispatch:
 
 permissions:
@@ -48,10 +49,10 @@ jobs:
           cd ..
 
           mkdir -p staging2/doc staging2/src/event-loop staging2/src/java-rx staging2/src/vthreads
-          cp -r assignment-02/event-loop/* staging/src/event-loop/
-          cp -r assignment-02/java-rx/app/src/main/java/rxFSStat/* staging/src/java-rx/
-          cp -r assignment-02/vthreads/app/src/main/java/vthreads/* staging/src/java-rx/
-          mv assignment-02/report/*.pdf staging3/doc/      
+          cp -r assignment-02/event-loop/* staging2/src/event-loop/
+          cp -r assignment-02/java-rx/app/src/main/java/rxFSStat/* staging2/src/java-rx/
+          cp -r assignment-02/vthreads/app/src/main/java/vthreads/* staging2/src/vthreads/
+          mv assignment-02/report/*.pdf staging2/doc/      
 
           cd staging2
           zip -r ../Assignment-02.zip . -x "*.aux" "*.log" "*.out" "*.toc" "*.fls" "*.fdb_latexmk" "*.synctex.gz" "*.bbl" "*.blg" "*.run.xml" "*.bcf"
@@ -67,9 +68,9 @@ jobs:
           cd ..
 
           mkdir -p staging4/doc staging4/src/alarm-system staging4/src/critical-sections
-          cp -r assignment-04/src/main/scala/it/unibo/alarm/* staging/src/alarm-system/      
-          cp -r assignment-04/critical-sections/*.java staging/src/critical-sections/
-          mv assignment-01/report/*.pdf staging/doc/      
+          cp -r assignment-04/src/main/scala/it/unibo/alarm/* staging4/src/alarm-system/      
+          cp -r assignment-04/critical-sections/*.java staging4/src/critical-sections/
+          mv assignment-04/report/*.pdf staging4/doc/      
 
           cd staging4
           zip -r ../Assignment-04.zip . -x "*.aux" "*.log" "*.out" "*.toc" "*.fls" "*.fdb_latexmk" "*.synctex.gz" "*.bbl" "*.blg" "*.run.xml" "*.bcf"
