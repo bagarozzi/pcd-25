@@ -131,7 +131,7 @@ The components mentioned in Section~\ref{sec:comp} and Section~\ref{analysis:pro
     method so that the active components can hit it once their work is done. % chktex 36
     
     \item A barrier between the View and the Controller, as modeled in Figure~\ref{fig:vc-petri},
-    is also necessary so that an update doesn't start before the rendering of the current frame.
+    may be necessary so that an update doesn't start before the rendering of the current frame.
 
     \item Each ball is modeled as a monitor to prevent races during the collisions calculation.
 
@@ -192,6 +192,32 @@ the collisions without interacting directly with the monitor, minimizing the int
 In the \textbf{task-based version} components such as the SynchCell are not needed because the
 Executor API manages the task delivery, but the latch is needed anyway to synchronise work.
 
+\subsection{Posthumous implementations}\label{sec:post-impl}
+After the verification and testing of the project, some tweaking has been made to answer the question on 
+performance.
+As Section~\ref{sec:perf} will later explain, the execution time to compute 5000 frames was measured to be
+rather quick, around $\qty{6506}{\milli\second}/5000=\qty{1.30}{\milli\second}$ with 16 worker threads.
+This figure was totally out of line from the framerate of 47FPS produced by the graphical version of the game,
+meaning that the frame rendering and some other checks not executed in the test environment would take \qty{19}{\milli\second}.
+
+An explanation can be found in the \texttt{RenderSynch} class used in the View. This class was originally used
+in the initial sketches for the project and provided synchronization between the View and the Model, preventing
+the Model's next frame until the current frame was completely rendered by the View.
+This negated the paradigm of the Event-Dispatch Thread (EDT), that should act asynchronously and receive
+communications from model's threads with methods such as \texttt{SwingUtilities}\texttt{.invokeLater()} to add
+events to the queue.
+
+This means that the synchronous repaint took longer than the asynchronous one, this is likely because the painting
+itself took around \qty{10}{\milli\second} and the synchronization mechanisms (\texttt{wait}s, \texttt{notify}s) took
+the other \qty{9}{\milli\second}.
+Forcing a synchronous behavior on the EDT voids potential optimization in the painting and forces
+the Model to wait for this process, effectively making the rendering sequential.
+Other than this, using the event queue assures that the controller always calculates the freshest game state
+and the EDT worries about painting, potentially packing multiple repaints in one update. 
+
+After this change the framerate (not the actual framerate, but the updates per second executed in the controller) reached
+around 1100FPS with 16 workers. It is not known the actual framerate produced by the UI.
+
 \section{Formal verification}
 Model checking is done throught Java Path Finder, a system to verify executable Java bytecode programs. A stripped-down
 version of the application is created specifically, by removing the View, calls to \texttt{Java.util.Random},
@@ -225,7 +251,7 @@ It's important to note that after refactoring and removing a serious amount of o
 each run, the JPF running time dropped to 11:12 minutes. That is likely because the model checker has to track
 the state of less objects.
 
-\section{Performance evaluation}
+\section{Performance evaluation}\label{sec:perf}
 
 \subsection{Methodology}
 Performance test are conducted on the final, headless, application set up with \num{4500} balls
@@ -320,8 +346,15 @@ We can see that the ideal efficiency value ($E=1$) is approached only for $N=2$.
 \section{Conclusion}
 \subsection{Perfomance improvement}
 Performance was seriously improved from the sequential version, offering a pleasing gaming experience
-of about $\sim 1000$ FPS on a 8-core machine. Much more improvements could be done to the architecture and
+on a 8-core machine. Much more improvements could be done to the architecture and
 minor efficinecies could be implemented.
+
+The greatest and unexpected improvement was given by the change mentioned in Section~\ref{sec:post-impl}.
+In fact, if we run the GUI version of the game with one worker, the game will be smooth and run at about 
+800FPS, whereas the 16-worker version will run at 1100FPS (on a 8-core physical machine).
+This means that the multi-thread extension of the game does not move the results as much as the collisions
+calculation optimization brought by the \texttt{SpatialHashGrid}.
+
 \subsection{Further improvements}
 The overall structure of the controller loop is solid but a refactoring is certainly necessary
 to improve the components behavior. For instance a better way of work assignment could be implemented
