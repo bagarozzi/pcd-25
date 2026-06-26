@@ -128,7 +128,7 @@ The components mentioned in Section~\ref{sec:comp} and Section~\ref{analysis:pro
         so that the master can send them to the worker who will execute them.
 
     \item The barriers, one for each computational task, are modeled with objects exposing a
-    \texttt{hit()} method so that the active components can hit it once their work is done. % chktex 36
+    method so that the active components can hit it once their work is done. % chktex 36
     
     \item A barrier between the View and the Controller, as modeled in Figure~\ref{fig:vc-petri},
     is also necessary so that an update doesn't start before the rendering of the current frame.
@@ -155,9 +155,17 @@ cores to exploit all the system's resources and keep the CPU busy.
 In fact creating a larger number of threads would mean more context switching
 and it would prove damaging to performance.
 
+The passive component used to pass tasks to the workers is implemented as a \texttt{Synchcell},
+a single buffer assigned to each worker.
+In this way, each worker will have a separate interaction while waiting for a task and prevent race
+conditions.
+
 The \textbf{tasks} are implemented as \texttt{Java.Runnable} classes and passed to
-the workers throught a bounded buffer, that itself implements monitor
-behaviour for concurrent access.
+the workers.
+
+The barrier to synchronise the work in each calculation phase is implemented as a \textbf{Latch}.
+When a worker hits this component an internal counter is decreased, when the counter hits zero
+the controller is woken up and can proceed to the next calculation.
 
 A \textbf{double buffer} is implemented in the \texttt{ViewFrame} class.
 This mechanism uses two images: while one image is displayed, 
@@ -177,6 +185,9 @@ to a specific cell and its hash code will reflect its position in the grid.
 This makes easier the the collision detection as the worker has to look only at 
 the adjacient cells for each ball.  
 
+In the \textbf{task-based version} components such as the SynchCell are not needed because the
+Executor API manages the task delivery, but the latch is needed anyway to synchronise work.
+
 \section{Formal verification}
 Model checking is done throught Java Path Finder, a system to verify executable Java bytecode programs. A stripped-down
 version of the application is created specifically, by removing the View, calls to \texttt{Java.util.Random},
@@ -187,9 +198,9 @@ and complete the tests in a reasonable time.
 \texttt{PreciseRaceDetector} and \texttt{DeadlockAnalyzer} are used to model-check the program.
 
 \begin{center}
-    \begin{tabular}{ c | c | c }
+    \begin{tabular}{ c | c | c }% chktex 44
         Test listener & Time taken & State explored \\
-        \hline\hline
+        \hline\hline% chktex 44
         DeadlockAnalyzer & 01:12:06 & \num{25106911} \\
         PreciseRaceDetector & 01:13:19 & \num{25106911} \\
         PreciseRaceDetector (with collisions) & 01:11:09 & \num{25106911}
@@ -205,6 +216,10 @@ All the test display an output as in Figure~\ref{fig:jpf-out}.
     \centering
     \caption{Output of Java PathFinder}\label{fig:jpf-out}
 \end{figure}
+
+It's important to note that after refactoring and removing a serious amount of objects created at 
+each run, the JPF running time dropped to 11:12 minutes. That is likely because the model checker has to track
+the state of less objects.
 
 \section{Performance evaluation}
 
@@ -296,7 +311,7 @@ For each worker count we calculate the efficiency as the values in  Table~\ref{f
 \end{table}
 
 Being related to speedup, a program with an ideal speedup will also have an ideal efficiency.
-We can see that the ideal efficiency value ($S=1$) is approached only for $N=1$,
+We can see that the ideal efficiency value ($E=1$) is approached only for $N=2$.
 
 \section{Conclusion}
 \subsection{Perfomance improvement}
@@ -305,7 +320,7 @@ of about 45 FPS on a 8-core machine. Much more improvements could be done to the
 minor efficinecies could be implemented.
 \subsection{Further improvements}
 The overall structure of the controller loop is solid but a refactoring is certainly necessary
-to improved the components behavior. For instance a better way of work assignment could be implemented
+to improve the components behavior. For instance a better way of work assignment could be implemented
 both to prevent resource sharing and to give an equal amount of work, better exploiting the resources. 
 
 \end{document}
