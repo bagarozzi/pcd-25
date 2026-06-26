@@ -3,6 +3,8 @@ package it.unibo.assignment01.model;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import javax.annotation.processing.SupportedSourceVersion;
+
 import it.unibo.assignment01.model.ball.Ball;
 import it.unibo.assignment01.model.ball.BallImpl;
 import it.unibo.assignment01.model.ball.EnemyBall;
@@ -25,8 +27,8 @@ public class BoardImpl implements Board {
     private Position playerHoles = new Position(X0, Y1);
     private Position enemyHoles = new Position(X1, Y1);
     private CollisionDetector collisionDetector;
-    private boolean gameEnded = false;
-    private String winner;
+    private volatile boolean gameEnded = false;
+    private volatile String winner;
 
     public BoardImpl(List<Ball> balls, CollisionDetector collisionDetector) {
         this.bounds = new Boundary(X0, Y0, X1, Y1);
@@ -61,7 +63,16 @@ public class BoardImpl implements Board {
 
     @Override
     public boolean checkHole(Ball b) {
-        if (inTheHole(b, playerHoles)) {
+        if(b.equals(playerBall) && (inTheHole(b, enemyHoles) || inTheHole(b, playerHoles))){
+                endGame();
+                System.out.println("Player suicide");
+                this.winner = "Enemy is the winner!";
+                return true;
+        }else if(b.equals(enemyBall) && ( inTheHole(b, enemyHoles) || inTheHole(b, playerHoles))){
+            endGame();
+            this.winner = "You are the winner!";
+            return true;
+        } else if (inTheHole(b, playerHoles)) {
             playerScore++;
             balls.remove(b);
             allBalls.remove(b);
@@ -70,14 +81,6 @@ public class BoardImpl implements Board {
             enemyScore++;
             balls.remove(b);
             allBalls.remove(b);
-            return true;
-        } else if(b.equals(playerBall) && inTheHole(b, enemyHoles) || inTheHole(b, playerHoles)){
-            endGame();
-            this.winner = "Enemy is the winner!";
-            return true;
-        }else if(b.equals(enemyBall) && inTheHole(b, enemyHoles) || inTheHole(b, playerHoles)){
-            endGame();
-            this.winner = "You are the winner!";
             return true;
         }
         return false;
