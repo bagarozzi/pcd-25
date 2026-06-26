@@ -26,10 +26,6 @@ jobs:
         with:
           ruby-version: '3.0'
 
-      - name: Hide other LaTeX files from the compiler
-        run: |
-          find . -type f -name "*.tex" ! -path "./assignment-01/report/*" -delete
-
       - name: Compile LaTeX
         uses: DanySK/compile-and-publish-all-latex@2.2.3
         with:
@@ -42,23 +38,54 @@ jobs:
         run: |
           LATEST_RELEASE=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
 
-          mkdir -p staging/doc staging/src/thread-based staging/src/executor-based 
-          cp -r assignment-01/report/* staging/src/
-          cp -r assignment-01/thread-based/app/src/main/java/it/unibo/assignment01/* staging/src/thread-based/      
-          cp -r assignment-01/executor-based/app/src/main/java/it/unibo/assignment01/* staging/src/executor-based/
+          mkdir -p staging1/doc staging/src/thread-based staging/src/executor-based 
+          cp -r assignment-01/thread-based/app/src/main/java/it/unibo/assignment01/* staging1/src/thread-based/      
+          cp -r assignment-01/executor-based/app/src/main/java/it/unibo/assignment01/* staging1/src/executor-based/
+          mv assignment-01/report/*.pdf staging1/doc/      
+
+          cd staging1
+          zip -r ../Assignment-01.zip . -x "*.aux" "*.log" "*.out" "*.toc" "*.fls" "*.fdb_latexmk" "*.synctex.gz" "*.bbl" "*.blg" "*.run.xml" "*.bcf"
+          cd ..
+
+          mkdir -p staging2/doc staging2/src/event-loop staging2/src/java-rx staging2/src/vthreads
+          cp -r assignment-02/event-loop/* staging/src/event-loop/
+          cp -r assignment-02/java-rx/app/src/main/java/rxFSStat/* staging/src/java-rx/
+          cp -r assignment-02/vthreads/app/src/main/java/vthreads/* staging/src/java-rx/
+          mv assignment-02/report/*.pdf staging3/doc/      
+
+          cd staging2
+          zip -r ../Assignment-02.zip . -x "*.aux" "*.log" "*.out" "*.toc" "*.fls" "*.fdb_latexmk" "*.synctex.gz" "*.bbl" "*.blg" "*.run.xml" "*.bcf"
+          cd ..
+
+          mkdir -p staging3/doc staging3/src/alarm staging3/src/odd-and-even
+          cp -r assignment-03/alarm-system/src/main/scala/it/unibo/alarm/* staging3/src/alarm/    
+          cp -r assignment-03/* staging3/src/odd-and-even/ 
+          mv assignment-03/report/*.pdf staging3/doc/      
+
+          cd staging3
+          zip -r ../Assignment-03.zip . -x "*.aux" "*.log" "*.out" "*.toc" "*.fls" "*.fdb_latexmk" "*.synctex.gz" "*.bbl" "*.blg" "*.run.xml" "*.bcf"
+          cd ..
+
+          mkdir -p staging4/doc staging4/src/alarm-system staging4/src/critical-sections
+          cp -r assignment-04/src/main/scala/it/unibo/alarm/* staging/src/alarm-system/      
+          cp -r assignment-04/critical-sections/*.java staging/src/critical-sections/
           mv assignment-01/report/*.pdf staging/doc/      
 
-          cd staging
-          zip -r ../Assignment-01.zip . -x "*.aux" "*.log" "*.out" "*.toc" "*.fls" "*.fdb_latexmk" "*.synctex.gz" "*.bbl" "*.blg" "*.run.xml" "*.bcf"
+          cd staging4
+          zip -r ../Assignment-04.zip . -x "*.aux" "*.log" "*.out" "*.toc" "*.fls" "*.fdb_latexmk" "*.synctex.gz" "*.bbl" "*.blg" "*.run.xml" "*.bcf"
+          cd ..
 
           gh release upload "$LATEST_RELEASE" Assignment-01.zip
+          gh release upload "$LATEST_RELEASE" Assignment-02.zip
+          gh release upload "$LATEST_RELEASE" Assignment-03.zip
+          gh release upload "$LATEST_RELEASE" Assignment-04.zip
           
           # Get existing body
           EXISTING_BODY=$(gh release view "$LATEST_RELEASE" --json body -q '.body')
           
           # Append container images
           NEW_BODY="
-          # Assingment 1: source code and report
+          ##Assingment 1: source code and report
           What's new: $EXISTING_BODY
           This release contains everything you need to discuss the project with the professor"
               
