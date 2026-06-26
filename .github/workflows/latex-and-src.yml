@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - 'assignment-01/report/**'
+      - 'assignment-02/report/**'
+      - 'assignment-03/report/**'
+      - 'assignment-04/report/**'
   workflow_dispatch:
 
 permissions:
@@ -23,6 +26,10 @@ jobs:
         with:
           ruby-version: '3.0'
 
+      - name: Hide other LaTeX files from the compiler
+        run: |
+          find . -type f -name "*.tex" ! -path "./assignment-01/report/*" -delete
+
       - name: Compile LaTeX
         uses: DanySK/compile-and-publish-all-latex@2.2.3
         with:
@@ -35,17 +42,23 @@ jobs:
         run: |
           LATEST_RELEASE=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
 
-          zip -r source.zip assignment-01/thread-based/app/src/main/java/it/unibo/assignment-01/ assignment-01/executor-based/app/src/main/java/it/unibo/assignment-01/
+          mkdir -p staging/doc staging/src/thread-based staging/src/executor-based 
+          cp -r assignment-01/report/* staging/src/
+          cp -r assignment-01/thread-based/app/src/main/java/it/unibo/assignment-01/* staging/src/thread-based/      
+          cp -r assignment-01/thread-based/app/src/main/java/it/unibo/assignment-01/* staging/src/executor-based/       
 
-          gh release upload "$LATEST_RELEASE" source.zip
+          cd staging
+          zip -r ../Assignment-01.zip . -x "*.aux" "*.log" "*.out" "*.toc" "*.fls" "*.fdb_latexmk" "*.synctex.gz" "*.bbl" "*.blg" "*.run.xml" "*.bcf"
+
+          gh release upload "$LATEST_RELEASE" Assignment-01.zip
           
           # Get existing body
           EXISTING_BODY=$(gh release view "$LATEST_RELEASE" --json body -q '.body')
           
           # Append container images
           NEW_BODY="
+          # Assingment 1: source code and report
           What's new: $EXISTING_BODY
-          
           This release contains everything you need to discuss the project with the professor"
               
           gh release edit "$LATEST_RELEASE" -n "$NEW_BODY"
