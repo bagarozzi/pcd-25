@@ -86,16 +86,16 @@ Finally, \texttt{Promise.all\,()} call serves as aggregator, waiting for the com
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.75\textwidth]{figures/lsstat.png}\label{fig:lsstat}
-  \caption{Awaiting for the files' statistics}
+  \includegraphics[width=0.75\textwidth]{figures/lsstat.png}
+  \caption{Awaiting for the files' statistics}\label{fig:lsstat}
 \end{figure}
 
 In the final part the function goes over every file, updating the report according to the file's nature. At this point \texttt{scanDirectory} should be recursively called on directories found, as shown in Figure~\ref{fig:recursion}.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.80\textwidth]{figures/recursion.png}\label{fig:recursion}
-  \caption{Asynchronous calls to recursive function}
+  \includegraphics[width=0.80\textwidth]{figures/recursion.png}
+  \caption{Asynchronous calls to recursive function}\label{fig:recursion}
 \end{figure}
 
 We can see that the recursive calls are accumulated in the \texttt{statPromises} list then \texttt{await}-ed using \texttt{Promise.all\,()} so that the function resolves only once all the recursive calls have resolved, thus the root call to \texttt{scanDirectory} in \texttt{getFSReport} will keep waiting. We could say it acts as a \textit{barrier}.
@@ -137,8 +137,8 @@ The virtual threads have a significant perfomance gain against a platform thread
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.80\textwidth]{figures/platform-thread.png}\label{fig:platform-threads}
-  \caption{Creation a platform-thread-per-task executor}
+  \includegraphics[width=0.80\textwidth]{figures/platform-thread.png}
+  \caption{Creation a platform-thread-per-task executor}\label{fig:platform-threads}
 \end{figure}
 
 
@@ -146,14 +146,14 @@ From tests coducted by switching between a `thread-per-task' exectuor with tradi
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.80\textwidth]{figures/platform-time.png}\label{fig:platform-time}
-  \caption{Run on $\sim80000$ files using platform threads}
+  \includegraphics[width=0.80\textwidth]{figures/platform-time.png}
+  \caption{Run on $\sim80000$ files using platform threads}\label{fig:platform-time}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.80\textwidth]{figures/vthread-time.png}\label{fig:vthread-time}
-  \caption{Run on $\sim80000$ files using virtual threads}
+  \includegraphics[width=0.80\textwidth]{figures/vthread-time.png}
+  \caption{Run on $\sim80000$ files using virtual threads}\label{fig:vthread-time}
 \end{figure}
 
 
