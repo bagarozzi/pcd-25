@@ -44,8 +44,9 @@ jobs:
 
           mkdir -p staging/doc staging/src/thread-based staging/src/executor-based 
           cp -r assignment-01/report/* staging/src/
-          cp -r assignment-01/thread-based/app/src/main/java/it/unibo/assignment-01/* staging/src/thread-based/      
-          cp -r assignment-01/thread-based/app/src/main/java/it/unibo/assignment-01/* staging/src/executor-based/       
+          cp -r assignment-01/thread-based/app/src/main/java/it/unibo/assignment01/* staging/src/thread-based/      
+          cp -r assignment-01/executor-based/app/src/main/java/it/unibo/assignment01/* staging/src/executor-based/
+          mv assignment-01/report/*.pdf staging/doc/      
 
           cd staging
           zip -r ../Assignment-01.zip . -x "*.aux" "*.log" "*.out" "*.toc" "*.fls" "*.fdb_latexmk" "*.synctex.gz" "*.bbl" "*.blg" "*.run.xml" "*.bcf"
