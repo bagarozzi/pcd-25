@@ -103,7 +103,7 @@ and \texttt{OtherKeypadDisarmed} and used as in Figure~\ref{fig:topic}
 
 A note has to be made on shard creation: sharded actors are not created immediately, but are dinamically allocated
 when they are needed, and potentially deallocated when inactive (\textit{passivated}). So when the cluster is created for testing,
-a message has to be sent to the sharded actors so that they can be created and will be available immediately.
+a message has to be sent to the sharded actors so that they can be created and will be immediately available.
 
 In \texttt{AlarmUser} a simple cluster is created, including two Keypads, three zones and the AlarmNode, that acts as
 \textbf{seed node} and is created before every other node. In the same way as the previous assignment, sensors
