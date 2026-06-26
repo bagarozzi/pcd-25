@@ -9,7 +9,7 @@
 \node[place, tokens=1, label=below right:idle-3] at(7.81,5.4) (worker idle3) {};
 \node[transition, rotate=90,label=above:cycle start] at(4.84,6.64) (cycle start) {};
 \node[transition, label=right:task assigned] at(6.83,4.46) (task assigned) {};
-\node[transition, label=below:task done] at(6.83,1.72) (task done) {};
+\node[transition, label=below:task done (barrier)] at(6.83,1.72) (task done) {};
 \node[transition, rotate=90,label=below:output digested] at(4.84,0) (output digested) {};
 \draw[arc](cycle start) to  (task created);
 \draw[arc](worker idle1) to  (6.37,4.9) to (task assigned);
