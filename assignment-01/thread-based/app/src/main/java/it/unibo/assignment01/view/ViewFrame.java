@@ -46,8 +46,10 @@ public class ViewFrame extends JFrame {
     }
 
     public void showEndGame(String winner) {
-        JOptionPane.showMessageDialog(this, "Game Over! " + winner);
-        System.exit(0);
+        SwingUtilities.invokeLater(() -> {
+           JOptionPane.showMessageDialog(this, "Game Over! " + winner); 
+           System.exit(0);
+        });
     }
 
     public class PooolPanel extends JPanel {
