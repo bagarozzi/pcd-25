@@ -15,8 +15,8 @@ public class SimpleCollisionDetector implements CollisionDetector {
     	
     	/* compute dv = b.getPos - a.getPos vector */
 
-		Ball a_snap = a.getSnapshot();
-		Ball b_snap = b.getSnapshot();
+		BallView a_snap = a.getSnapshot();
+		BallView b_snap = b.getSnapshot();
 
     	double dx   = b_snap.getPos().x() - a_snap.getPos().x();
         double dy   = b_snap.getPos().y() - a_snap.getPos().y();

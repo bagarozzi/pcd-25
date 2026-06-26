@@ -7,7 +7,7 @@ public interface Ball {
 
     public void updateState(long dt, Board ctx);
 
-    public Ball getSnapshot();
+    public BallView getSnapshot();
 
     public Position getPos();
     
