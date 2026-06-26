@@ -1,5 +1,7 @@
 package it.unibo.assignment01.model;
 
+import it.unibo.assignment01.model.Position;
+
 public interface Ball {
 
     public static final double BALL_RADIUS = 0.01;
@@ -8,6 +10,8 @@ public interface Ball {
     public void updateState(long dt, Board ctx);
 
     public Position getPos();
+
+    public BallView getSnapshot();
     
     public double getMass();
     

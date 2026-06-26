@@ -3,14 +3,6 @@ package it.unibo.assignment01.model;
 public class SimpleCollisionDetector implements CollisionDetector {
     private static double RESTITUTION_FACTOR = 1; 
 
-    private boolean isColliding(Ball a, Ball b) {
-        double dx   = b.getPos().x() - a.getPos().x();
-        double dy   = b.getPos().y() - a.getPos().y();
-        double dist = Math.hypot(dx, dy);
-        double minD = a.getRadius() + b.getRadius();
-        return dist < minD && dist > 1e-6;
-    }
-
     @Override
     /**
      * 
@@ -22,16 +14,19 @@ public class SimpleCollisionDetector implements CollisionDetector {
     	
     	/* compute dv = b.getPos - a.getPos vector */
 
-    	double dx   = b.getPos().x() - a.getPos().x();
-        double dy   = b.getPos().y() - a.getPos().y();
+		BallView a_snap = a.getSnapshot();
+		BallView b_snap = b.getSnapshot();
+
+    	double dx   = b_snap.getPos().x() - a_snap.getPos().x();
+        double dy   = b_snap.getPos().y() - a_snap.getPos().y();
         double dist = Math.hypot(dx, dy);
-        double minD = a.getRadius() + b.getRadius();
+        double minD = a_snap.getRadius() + b_snap.getRadius();
         
         /* 
          * There is a collision if the distance between the two balls is less than the sum of the radii 
          * 
          */
-        if (isColliding(a, b))  {
+        if (dist < minD && dist > 1e-6)  {
 	        /* 
 	         * Collision case - what to do:
 	         * 
@@ -52,33 +47,33 @@ public class SimpleCollisionDetector implements CollisionDetector {
 	         * 
 	         */
 	        double overlap = minD - dist;
-	        double totalM  = a.getMass() + b.getMass();
+	        double totalM  = a_snap.getMass() + b_snap.getMass();
 	
-	        double a_factor = overlap * (b.getMass() / totalM);
+	        double a_factor = overlap * (b_snap.getMass() / totalM);
 	        double a_deltax = nx * a_factor; 
 	        double a_deltay = ny * a_factor; 
 	        
-	        a.setPos(new Position(a.getPos().x() - a_deltax, a.getPos().y() - a_deltay));
+	        a.setPos(new Position(a_snap.getPos().x() - a_deltax, a_snap.getPos().y() - a_deltay));
 	        
-	        double b_factor = overlap * (a.getMass() / totalM);
+	        double b_factor = overlap * (a_snap.getMass() / totalM);
 	        double b_deltax = nx * b_factor; 
 	        double b_deltay = ny * b_factor; 
 	
-	        b.setPos(new Position(b.getPos().x() + b_deltax, b.getPos().y() + b_deltay));
+	        b.setPos(new Position(b_snap.getPos().x() + b_deltax, b_snap.getPos().y() + b_deltay));
 	
 	        /* Update velocities  */
 	        
 	        /* relative speed along the normal vector*/
 	
-	        double dvx = b.getVel().x() - a.getVel().x();
-	        double dvy = b.getVel().y() - a.getVel().y(); 
+	        double dvx = b_snap.getVel().x() - a_snap.getVel().x();
+	        double dvy = b_snap.getVel().y() - a_snap.getVel().y(); 
 	        double dvn = dvx * nx + dvy * ny;
 	
 	        if (dvn <= 0) { /* if not already separating, update velocities */
 	        	
-	        	double imp = -(1 + RESTITUTION_FACTOR) * dvn / (1.0/a.getMass() + 1.0/b.getMass());        
-	        	a.setVel(new Speed(a.getVel().x() - (imp / a.getMass()) * nx, a.getVel().y() - (imp / a.getMass()) * ny));                
-	        	b.setVel(new Speed(b.getVel().x() + (imp / b.getMass()) * nx, b.getVel().y() + (imp / b.getMass()) * ny));
+	        	double imp = -(1 + RESTITUTION_FACTOR) * dvn / (1.0/a_snap.getMass() + 1.0/b_snap.getMass());        
+	        	a.setVel(new Speed(a_snap.getVel().x() - (imp / a_snap.getMass()) * nx, a_snap.getVel().y() - (imp / a_snap.getMass()) * ny));                
+	        	b.setVel(new Speed(b_snap.getVel().x() + (imp / b_snap.getMass()) * nx, b_snap.getVel().y() + (imp / b_snap.getMass()) * ny));
 	        }
         }
     }
