@@ -54,27 +54,27 @@ public class TestBoard implements Board {
     }
 
     @Override
-    public void checkHole(Ball b) {
-        if(balls.contains(b)){
-            if (inTheHole(b, playerHoles)) {
-                playerScore++;
-                b.setPos(new Position(-100, -100));
-                balls.remove(b);
-            } else if (inTheHole(b, enemyHoles)) {
-                enemyScore++;
-                balls.remove(b);
-            }
-        }else if(b.equals(playerBall)){
-            if (inTheHole(b, enemyHoles) || inTheHole(b, playerHoles)) {
-                endGame();
-                this.winner = "Enemy is the winner!";
-            }
-        }else if(b.equals(enemyBall)){
-            if (inTheHole(b, enemyHoles) || inTheHole(b, playerHoles)) {
-                endGame();
-                this.winner = "You are the winner!";
-            }
+    public boolean checkHole(Ball b) {
+        if (inTheHole(b, playerHoles)) {
+            playerScore++;
+            balls.remove(b);
+            allBalls.remove(b);
+            return true;
+        } else if (inTheHole(b, enemyHoles)) {
+            enemyScore++;
+            balls.remove(b);
+            allBalls.remove(b);
+            return true;
+        } else if(b.equals(playerBall) && inTheHole(b, enemyHoles) || inTheHole(b, playerHoles)){
+            endGame();
+            this.winner = "Enemy is the winner!";
+            return true;
+        }else if(b.equals(enemyBall) && inTheHole(b, enemyHoles) || inTheHole(b, playerHoles)){
+            endGame();
+            this.winner = "You are the winner!";
+            return true;
         }
+        return false;
     }
 
     private boolean inTheHole(Ball b, Position hole) {
