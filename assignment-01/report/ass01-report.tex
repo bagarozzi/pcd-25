@@ -185,6 +185,10 @@ to a specific cell and its hash code will reflect its position in the grid.
 This makes easier the the collision detection as the worker has to look only at 
 the adjacient cells for each ball.  
 
+To prevent lots of \texttt{synchronized} calls to the Ball's methods, a \texttt{BallView} class is
+created to represent a snapshot of the current state of the ball. This snapshot is used to calculate
+the collisions without interacting directly with the monitor, minimizing the interactions between workers.
+
 In the \textbf{task-based version} components such as the SynchCell are not needed because the
 Executor API manages the task delivery, but the latch is needed anyway to synchronise work.
 
