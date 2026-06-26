@@ -68,7 +68,7 @@ jobs:
           cd ..
 
           mkdir -p staging4/doc staging4/src/alarm-system staging4/src/critical-sections
-          cp -r assignment-04/src/main/scala/it/unibo/alarm/* staging4/src/alarm-system/      
+          cp -r assignment-04/alarm-system-extended/src/main/scala/it/unibo/alarm/* staging4/src/alarm-system/      
           cp -r assignment-04/critical-sections/*.java staging4/src/critical-sections/
           mv assignment-04/report/*.pdf staging4/doc/      
 
