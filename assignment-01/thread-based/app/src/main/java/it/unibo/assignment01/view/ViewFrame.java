@@ -132,15 +132,15 @@ public class ViewFrame extends JFrame {
         }
 
         public void updateViewModel(ViewModel vm, final long frameNumber) {
-            long nf = sync.nextFrameToRender();
+            //long nf = sync.nextFrameToRender();
             this.viewModel = vm;
             fps = frameNumber;
             repaint(0L);
-            try {
+            /*try {
 			    sync.waitForFrameRendered(nf);
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
-            }
+            }*/
         }
 
         
