@@ -352,8 +352,15 @@ minor efficinecies could be implemented.
 The greatest and unexpected improvement was given by the change mentioned in Section~\ref{sec:post-impl}.
 In fact, if we run the GUI version of the game with one worker, the game will be smooth and run at about 
 800FPS, whereas the 16-worker version will run at 1100FPS (on a 8-core physical machine).
+
 This means that the multi-thread extension of the game does not move the results as much as the collisions
-calculation optimization brought by the \texttt{SpatialHashGrid}.
+calculation optimization brought by the \texttt{SpatialHashGrid}. 
+Afterall, this is coherent with both concurrent programming and general programming principles: a simple collision detection algorithm
+using $O(n^2)$ techniques, even with threads, is impractical. 
+In this scenario the resource sharing is not efficient and the threads would always be waiting for some balls to check
+on them, even if they are across the map from the ball they are checking.
+Therefore a spatial structure of this kind is of utmost importance to divide work efficiently between threads, reduce
+race conditions on balls and check for collisions only where they are likely to happen. 
 
 \subsection{Further improvements}
 The overall structure of the controller loop is solid but a refactoring is certainly necessary
