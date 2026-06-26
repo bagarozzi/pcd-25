@@ -38,7 +38,7 @@ jobs:
         run: |
           LATEST_RELEASE=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
 
-          mkdir -p staging1/doc staging/src/thread-based staging/src/executor-based 
+          mkdir -p staging1/doc staging1/src/thread-based staging1/src/executor-based 
           cp -r assignment-01/thread-based/app/src/main/java/it/unibo/assignment01/* staging1/src/thread-based/      
           cp -r assignment-01/executor-based/app/src/main/java/it/unibo/assignment01/* staging1/src/executor-based/
           mv assignment-01/report/*.pdf staging1/doc/      
