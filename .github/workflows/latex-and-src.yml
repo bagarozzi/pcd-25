@@ -1,0 +1,61 @@
+name: Build LaTeX Report and Release source files
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'assignment-01/report/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-latex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+
+      - name: Install dependencies
+        run: |
+          gem install bibtex-ruby
+
+      - name: Generate bibliography
+        working-directory: assignment-01/report
+        run: |
+          ruby bibtex_prettifier.rb
+
+      - name: Compile LaTeX
+        uses: DanySK/compile-and-publish-all-latex@2.2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update release with container images
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST_RELEASE=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+
+          zip -r source.zip assignment-01/thread-based/app/src/main/java/it/unibo/assignment-01/ assignment-01/executor-based/app/src/main/java/it/unibo/assignment-01/
+
+          gh release upload "$LATEST_RELEASE" source.zip
+          
+          # Get existing body
+          EXISTING_BODY=$(gh release view "$LATEST_RELEASE" --json body -q '.body')
+          
+          # Append container images
+          NEW_BODY="
+          What's new: $EXISTING_BODY
+          
+          This release contains everything you need to discuss the project with the professor"
+              
+          gh release edit "$LATEST_RELEASE" -n "$NEW_BODY"
+
