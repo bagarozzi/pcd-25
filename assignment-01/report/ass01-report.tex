@@ -239,7 +239,8 @@ and complete the tests in a reasonable time.
 
 \texttt{PreciseRaceDetector} and \texttt{DeadlockAnalyzer} are used to model-check the program.
 
-\begin{center}
+\begin{table}
+    \centering
     \begin{tabular}{ c | c | c }% chktex 44
         Test listener & Time taken & State explored \\
         \hline\hline% chktex 44
@@ -247,7 +248,8 @@ and complete the tests in a reasonable time.
         PreciseRaceDetector & 01:13:19 & \num{25106911} \\
         PreciseRaceDetector (with collisions) & 01:11:09 & \num{25106911}
     \end{tabular}
-\end{center}
+    \caption{JPF model-checking running times}
+\end{table}
 
 However, the first test did not include a proper collision, just ball movement, so another test is perfomend
 where the balls are initially colliding.
