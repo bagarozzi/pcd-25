@@ -1,0 +1,57 @@
+﻿\usetikzlibrary{petri, arrows.meta}
+\tikzset {
+	arc/.style={
+		arrows={-Stealth[scale=1.25]},
+		thick,
+		rounded corners=.5cm
+	},
+	place/.style={
+		circle,
+		very thick,
+		draw=black,fill=black!5,
+		minimum size=10mm
+	},
+	transition/.style={
+	rectangle,
+	thick,
+	draw=black, fill=black!75,
+	minimum width=4mm,
+	minimum height=10mm
+	}
+}
+\begin{tikzpicture}
+\node[place, label=below:Event queue] at(2,0) (event queue) {}; % OK
+\node[place, label=below:Render] at(7.97,0) (render) {};
+\node[place, tokens=1, label=above:Cycle start] at(7.42,5.74) (cycle start) {}; % OK 
+\node[place, label=below:P4] at(12.4,4.17) (p4) {}; % OK
+\node[place, label=below:P5] at(12.4,2.13) (p5) {}; % OK 
+\node[place, label=right:P6] at(16.5,3.15) (p6) {}; % OK
+\node[place, label=below:P7] at(3.5,4.26) (p7) {}; % OK
+\node[place, label=below:P8] at(3.5,2.22) (p8) {}; % OK
+\node[place, label=below:prepare] at(7.7,3.15) (prepare) {}; % OK 
+\node[transition, label=below:consume event] at(5,0) (consume event) {}; % OK 
+\node[transition, label=below:assign move] at(15,3.15) (assign move) {}; % OK 
+\node[transition, label=below:T4] at(11,5.74) (t4) {}; % OK 
+\node[transition, label=below:move done] at(9.7,3.15) (move done) {}; % OK 
+\node[transition, label=above:T3] at(1,3.15) (collisions completed) {}; % OK
+\node[transition, label=right:render done] at(10,0) (render done) {};
+\node[transition, label={[xshift=0.4, yshift = 0.4]assign collisions}] at(6,3.15) (assign collisions) {}; % OK
+\draw[arc](p6) to  (assign move);
+\draw[arc](assign move) to  (14,3.15) to (14,4.17) to (p4);
+\draw[arc](assign move) to  (14,3.15) to (14,2.13) to (p5);
+\draw[arc](cycle start) to  (t4);
+\draw[arc](t4) to  (16.5,5.74) to (p6);
+\draw[arc](p4) to  (11, 4.17) to (11,3.15) to (move done); % OK 
+\draw[arc](p5) to  (11, 2.15) to (11,3.15) to (move done); % OK 
+\draw[arc](p7) to  (2.5,4.26) to (2.3,3.15) to (collisions completed); % OK
+\draw[arc](p8) to  (2.5,2.22) to (2.3,3.15) to (collisions completed); % OK 
+\draw[arc](collisions completed) to  (0.3,3.15) to (0.3,5.74) to (cycle start); % OK
+\draw[arc](collisions completed) to  (0.3,3.15) to (0.3,0) to (event queue); % OK
+\draw[arc](move done) to  (prepare);
+\draw[arc](prepare) to  (assign collisions);
+\draw[arc](assign collisions) to  (5,3.15) to (5,4.26) to (p7); % OK
+\draw[arc](assign collisions) to  (5,3.15) to (5,2.22) to (p8); % OK
+\draw[arc](event queue) to  (consume event);
+\draw[arc](consume event) to  (render);
+\draw[arc](render) to  (render done);
+\end{tikzpicture}

@@ -143,9 +143,11 @@ such as speed, position and boundary are implemented according to their
 specifications.
 
 \begin{figure}[H]
-    \input{./figures/petri/view-controller.tikz}
     \centering
-    \caption{Petri diagram of the barrier (\textit{render done}) between view and controller}\label{fig:vc-petri}
+    \makebox[\textwidth][c]{
+        \input{./figures/petri/view-threading.tikz}
+    }
+    \caption{Petri diagram of the asynchronous action between View and Controller}\label{fig:vc-petri}
 \end{figure}
 
 
