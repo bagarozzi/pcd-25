@@ -214,12 +214,12 @@ meaning that the frame rendering and some other checks not executed in the test 
 
 An explanation can be found in the \texttt{RenderSynch} class used in the View. This class was originally used
 in the initial sketches for the project and provided synchronization between the View and the Model, preventing
-the Model's next frame until the current frame was completely rendered by the View.
+the Model from calculating the next update until the current frame was completely rendered by the View.
 This negated the paradigm of the Event-Dispatch Thread (EDT), that should act asynchronously and receive
-communications from model's threads with methods such as \texttt{SwingUtilities}\texttt{.invokeLater()} to add
+communications from the model's threads with methods such as \texttt{SwingUtilities}\texttt{.invokeLater()} to add
 events to the queue.
 
-This means that the synchronous repaint took longer than the asynchronous one, this is likely because the painting
+This means that the synchronous repaint took longer than the asynchronous one, likely because the painting
 itself took around \qty{10}{\milli\second} and the synchronization mechanisms (\texttt{wait}s, \texttt{notify}s) took
 the other \qty{9}{\milli\second}.
 Forcing a synchronous behavior on the EDT voids potential optimization in the painting and forces
