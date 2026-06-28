@@ -13,119 +13,165 @@
 \subtitle{Concurrent and Distributed Programming\\a.y. 2025--2026}
 
 \author{
-  Bagattoni Federico \and Sbaraccani Pietro \and Venturini Luca
+    Bagattoni Federico \and Sbaraccani Pietro \and Venturini Luca
 }
 
 \date{\today}
 
 \begin{document}
 
-\counterwithin*{section}{part}
+    \counterwithin*{section}{part}
 
-\maketitle
+    \maketitle
 
-\tableofcontents
+    \tableofcontents
 
-\clearpage
-\part[Extension of Smart Home Alarm System]{Smart Home Alarm System \\ \LARGE{Asynchronous message passing based on actors, distributed in a cluster using Apache Pekko}}
+    \clearpage
+    \part[Extension of Smart Home Alarm System]{Smart Home Alarm System \\ \LARGE{Asynchronous message passing based on actors, distributed in a cluster using Apache Pekko}}
 
-\section{Analysis}
-The goal is to distribute the Smart Home Alarm System implemented in the \href{https://github.com/bagarozzi/pcd-25/tree/3f8c6f27e9e44c2a17f87c5eae827dfdc428e8c7/assignment-03}{previous assignment}.
+    \section{Analysis}
+    The goal is to distribute the Smart Home Alarm System implemented in the \href{https://github.com/bagarozzi/pcd-25/tree/3f8c6f27e9e44c2a17f87c5eae827dfdc428e8c7/assignment-03}{previous assignment}.
 
-Even thought this is a simulation and not an actual alarm system, the architecture
-must be coherent to a real-world scenario and somehow reflect the distribution of
-sensors in a large environment such as a big mansion or an industrial plant.
+    Even thought this is a simulation and not an actual alarm system, the architecture
+    must be coherent to a real-world scenario and somehow reflect the distribution of
+    sensors in a large environment such as a big mansion or an industrial plant.
 
-The most appropriate choice to do so is to distribute the previously modeled \textbf{Zone}s 
-and their relative actors across the nodes. In this scenario, the machines running the JVM nodes
-are connected in a large network (to the central alarm node) and communicate with their
-zone's sensors throught a smaller, local network.
+    The most appropriate choice to do so is to distribute the previously modeled \textbf{Zone}s
+    and their relative actors across the nodes. In this scenario, the machines running the JVM nodes
+    are connected in a large network (to the central alarm node) and communicate with their
+    zone's sensors throught a smaller, local network.
 
-The \textbf{Sensor}s would be likely uncoupled from the physical devices gathering the data,
-as running a JVM on constrained hardware such as a ESP-32, or worse an ESP-8266, is not ideal.
-These sensors may talk to the Pekko cluster throught a local network and with an appropriate protocol
-such as MQTT.\@ Given this, the \texttt{SensorActor}s may be placed in the same node as 
-their relative ZoneActor, and implement communications with their physical counterpart.
+    The \textbf{Sensor}s would be likely uncoupled from the physical devices gathering the data,
+    as running a JVM on constrained hardware such as a ESP-32, or worse an ESP-8266, is not ideal.
+    These sensors may talk to the Pekko cluster throught a local network and with an appropriate protocol
+    such as MQTT.\@ Given this, the \texttt{SensorActor}s may be placed in the same node as
+    their relative ZoneActor, and implement communications with their physical counterpart.
 
-The \textbf{central alarm} acts as the central manager of the alarm, acting the same as in the previous implementation.
+    The \textbf{central alarm} acts as the central manager of the alarm, acting the same as in the previous implementation.
 
-Finally, the \textbf{Keypad}s have to be distributed to allow control from different physical places. This
-changes the behavior of the Keypad: previously there was only one keypad so the control was centralized, now
-the central alarm has to communicate to multiple keypads and all the keypads have to agree with the same
-states and choices in case of an alarm. 
+    Finally, the \textbf{Keypad}s have to be distributed to allow control from different physical places. This
+    changes the behavior of the Keypad: previously there was only one keypad so the control was centralized, now
+    the central alarm has to communicate to multiple keypads and all the keypads have to agree with the same
+    states and choices in case of an alarm.
 
-\section{Implementation}
-In Pekko clusters, nodes are simply \texttt{ActorSystem} talking to each other, so separate ActorSystems are
-created.
+    \section{Implementation}
+    In Pekko clusters, nodes are simply \texttt{ActorSystem} talking to each other, so separate ActorSystems are
+    created.
 
-To distribute and track references to other actors, the \textbf{Sharding} extension of Pekko is used.
-Throught this extension, the actors can obtain a reference to another actor without knowing its location,
-this is done through a \textit{shard region} that acts as a router.
-To enable this, actors are not directly spawned in the node where we want them but rather is declared that
-a sharded actor \textit{can} be created on the node. This mechanism can be controlled even more throught \textit{roles}.
-By specifying the role an actor has to have to be able to create a shard, if a node hasn't got that role then a
-proxy is created to route messages to the shard. 
+    To distribute and track references to other actors, the \textbf{Sharding} extension of Pekko is used.
+    Throught this extension, the actors can obtain a reference to another actor without knowing its location,
+    this is done through a \textit{shard region} that acts as a router.
+    To enable this, actors are not directly spawned in the node where we want them but rather is declared that
+    a sharded actor \textit{can} be created on the node. This mechanism can be controlled even more throught \textit{roles}.
+    By specifying the role an actor has to have to be able to create a shard, if a node hasn't got that role then a
+    proxy is created to route messages to the shard.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.95\textwidth]{figures/alarm/zone-node.png}
-  \caption{The creation of a ZoneNode}\label{fig:zone-node}
-\end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.95\textwidth]{figures/alarm/zone-node.png}
+        \caption{The creation of a ZoneNode}\label{fig:zone-node}
+    \end{figure}
 
-In Figure~\ref{fig:zone-node} is illustrated the creation of a \texttt{ZoneNode}. The \texttt{init} commands
-are done for both the ZoneActor and AlarmActor, but different roles are given so that the AlarmActor is not 
-physically instantiated in the ZoneNode and a proxy is created for it.
-The rule of thumb is to initialize a shard in whatever node a reference is needed for it.
-Roles are given as in Figure~\ref{fig:roles} (line 3), by either using the configuration file or overriding it.
+    In Figure~\ref{fig:zone-node} is illustrated the creation of a \texttt{ZoneNode}. The \texttt{init} commands
+    are done for both the ZoneActor and AlarmActor, but different roles are given so that the AlarmActor is not
+    physically instantiated in the ZoneNode and a proxy is created for it.
+    The rule of thumb is to initialize a shard in whatever node a reference is needed for it.
+    Roles are given as in Figure~\ref{fig:roles} (line 3), by either using the configuration file or overriding it.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.75\textwidth]{figures/alarm/roles.png}
-  \caption{Assigning a role to a node}\label{fig:roles}
-\end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{figures/alarm/roles.png}
+        \caption{Assigning a role to a node}\label{fig:roles}
+    \end{figure}
 
-The implementation shards the \texttt{ZoneActor}s and the \texttt{AlarmActor}s but leaves as normal nodes
-the Keypads. The \texttt{SensorActor}s remain children of the ZoneActors, given that their behavior does not change. 
+    The implementation shards the \texttt{ZoneActor}s and the \texttt{AlarmActor}s but leaves as normal nodes
+    the Keypads. The \texttt{SensorActor}s remain children of the ZoneActors, given that their behavior does not change.
 
-The behavior of the keypads change: a pub-sub topic is created to group together all the keypad nodes so that
-the AlarmActor can talk to them at once, the same topic is used to keypad-to-keypad communication.
+    The behavior of the keypads change: a pub-sub topic is created to group together all the keypad nodes so that
+    the AlarmActor can talk to them at once, the same topic is used to keypad-to-keypad communication.
 
-For instance, when an entry is detected in one of the areas all the keypads enter the EntryAlert state
-and when the alarm is deactivated from one terminal it has to signal the other keypads to exit the state
-or else they would remain there. This is implemented with two new messages \texttt{OtherKeypadSilenced}
-and \texttt{OtherKeypadDisarmed} and used as in Figure~\ref{fig:topic}
+    For instance, when an entry is detected in one of the areas all the keypads enter the EntryAlert state
+    and when the alarm is deactivated from one terminal it has to signal the other keypads to exit the state
+    or else they would remain there. This is implemented with two new messages \texttt{OtherKeypadSilenced}
+    and \texttt{OtherKeypadDisarmed} and used as in Figure~\ref{fig:topic}
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.80\textwidth]{figures/alarm/keypad-topic.png}
-  \caption{Broadcasting the disarming to the other keypads (line 3)}\label{fig:topic}
-\end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.80\textwidth]{figures/alarm/keypad-topic.png}
+        \caption{Broadcasting the disarming to the other keypads (line 3)}\label{fig:topic}
+    \end{figure}
 
-A note has to be made on shard creation: sharded actors are not created immediately, but are dinamically allocated
-when they are needed, and potentially deallocated when inactive (\textit{passivated}). So when the cluster is created for testing,
-a message has to be sent to the sharded actors so that they can be created and will be immediately available.
+    A note has to be made on shard creation: sharded actors are not created immediately, but are dinamically allocated
+    when they are needed, and potentially deallocated when inactive (\textit{passivated}). So when the cluster is created for testing,
+    a message has to be sent to the sharded actors so that they can be created and will be available immediately.
 
-In \texttt{AlarmUser} a simple cluster is created, including two Keypads, three zones and the AlarmNode, that acts as
-\textbf{seed node} and is created before every other node. In the same way as the previous assignment, sensors
-are found throught the cluster's Receptionist to simulate their triggering.
+    In \texttt{AlarmUser} a simple cluster is created, including two Keypads, three zones and the AlarmNode, that acts as
+    \textbf{seed node} and is created before every other node. In the same way as the previous assignment, sensors
+    are found throught the cluster's Receptionist to simulate their triggering.
 
-\clearpage
-\part[Distributed TTT]{ Distributed TTT\\\LARGE{Distributed version of a Tic-Tac-Toe game with Java Remote Method Invocation}}
+    \clearpage
+    \part[Distributed TTT]{ Distributed TTT\\\LARGE{Distributed version of a Tic-Tac-Toe game with Java Remote Method Invocation}}
 
-\section{Analysis}
+    \section{Analysis}
 
-\section{Design}
+    \section{Design}
 
-\section{Implementation}
+    \section{Implementation}
 
-\clearpage
-\part[Distributed Critical Sections throught a MOM]{Distributed Critical Sections throught a MOM \\\LARGE{High-level, message-oriented middleware for critical sections between processes in distributed system}}
+    \clearpage
+    \part[Distributed Critical Sections throught a MOM]{Distributed Critical Sections throught a MOM \\\LARGE{High-level, message-oriented middleware for critical sections between processes in distributed system}}
 
-\section{Analysis}
+    \section{Analysis}
+    The problem of distributed mutual exclusion requires coordinating multiple independent processes to ensure that only one process can access a shared critical section at any given time. In a distributed environment, traditional synchronous mechanisms like RPC (Remote Procedure Call) are often inadequate due to tight coupling and the fact that a blocking nature can severely affect scalability and performance.  To overcome these limitations, this project leverages a Message-Oriented Middleware (MOM), defined as an infrastructure that provides messaging capabilities to enable flexible communication among different applications. By introducing a middle layer that decouples participants , the MOM shifts the paradigm from a synchronous interaction to an asynchronous one, where the producer does not need to block and retains control to continue processing.  Specifically, the system requires a persistent communication model, which supports the communication of processes that are not necessarily executing at the same time. This is achieved through message queues and brokers, which are the standard choice in large, distributed, and heterogeneous systems.  To implement a robust distributed lock, the system must guarantee three fundamental properties:
 
-\section{Design}
+    \begin{itemize}
+        \item Mutual Exclusion: Only one process can hold the lock simultaneously.
+        \item Fairness: Processes should acquire the lock in the order they requested it (no starvation).
+        \item Liveness: The system must progress. If a process crashes while holding the lock, the system must recover and not incur a distributed deadlock.
+    \end{itemize}
 
-\section{Implementation}
+    \section{Design}
 
+    The design of the distributed lock is based on a Token-Passing algorithm implemented over a MOM queue. The lock is represented by a single, unique message (the "Token") circulating within the middleware.
+
+    \subsection*{Messaging Model}
+    To guarantee mutual exclusion, the system utilizes a Point-to-Point messaging model. In this model, multiple producers and consumers can connect to a Point-to-Point Queue, but only one consumer receives the message. The queue strictly follows a First-In-First-Out (FIFO) policy.
+
+    \subsection*{Token Management in Critical Sections}
+    The lock management is divided into three logical phases to satisfy the required distributed properties:
+
+    \begin{enumerate}
+        \item \textbf{Safe Initialization (Leader Election):} When multiple asynchronous workers start simultaneously, there is a risk of generating multiple tokens. To prevent this, workers attempt to declare a temporary, exclusive "initialization queue". The middleware guarantees that only one worker will succeed in creating it. This elected worker injects the initial token into the main queue, ensuring strict mutual exclusion from the genesis of the system.
+
+        \item \textbf{Acquisition (Fairness):} Workers express their intent to enter the critical section by subscribing to the Point-to-Point queue as consumers. Fairness is intrinsically guaranteed by the MOM's FIFO queue: workers are queued in the exact order their subscription reaches the broker. Furthermore, the middleware is instructed to send only one unacknowledged message per worker (QoS = 1), preventing fast workers from hoarding the token.
+
+        \item \textbf{Release and Fault Tolerance (Liveness):} The system's liveness and reliability are improved by the message persistence typically implemented in MOM nodes. Instead of immediately acknowledging (ACK) the token upon receipt, the worker holds the message in an "Unacked" state during the critical section execution.
+        \begin{itemize}
+            \item \textit{Normal execution:} Upon leaving the critical section, the worker explicitly rejects the message and instructs the broker to requeue it, passing it to the next waiting worker.
+            \item \textit{Crash handling:} If a worker crashes while in the critical section, the TCP connection to the MOM drops. The broker detects this failure and automatically returns the "Unacked" token to the front of the queue. This completely eliminates the risk of a lost token and distributed deadlocks.
+        \end{itemize}
+    \end{enumerate}
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.7\textwidth]{figures/MOM/token_flow_diagram.pdf}
+        \caption{Token Lifecycle within the RabbitMQ MOM broker.}
+        \label{fig:token_flow}
+    \end{figure}
+    \section{Implementation}
+    The system is implemented in Java using the RabbitMQ AMQP client, leveraging a modular architecture that separates configuration concerns from the domain logic.
+
+    \subsection*{Connection Management}
+    The \texttt{DistributedLockManager} acts as a factory for locks. It manages the AMQP URI credentials and generates instances of \texttt{DistributedLock} for the workers. This design promotes decoupling, allowing the system to scale independently and making the connection logic reusable across different components.
+
+    \subsection*{Distributed Lock Core Logic}
+    The \texttt{DistributedLock} class implements the low-level AMQP interaction:
+
+    \begin{itemize}
+        \item \textbf{Initialization (\texttt{init()}):} The system uses \texttt{queueDeclarePassive} to check for the existence of the main lock queue. If missing, it attempts to declare an exclusive queue named \texttt{<queueName>\_init\_lock}. RabbitMQ's atomicity ensures that only the first thread succeeds; others receive an \texttt{IOException}. The "winner" thread suppresses this exception, creates the \texttt{PERSISTENT\_TEXT\_PLAIN} token, and publishes it to the main queue using \texttt{basicPublish}.
+
+        \item \textbf{Acquisition (\texttt{acquire()}):} Workers prepare to consume the token. We invoke \texttt{channel.basicQos(1)} to instruct the broker to dispatch exactly one token per channel. A \texttt{DeliverCallback} is registered via \texttt{basicConsume} with \texttt{autoAck} set to \texttt{false}. Upon token arrival, a \texttt{CompletableFuture} is resolved with the message's \texttt{deliveryTag}, allowing the main thread to unblock and enter the critical section while the message remains "unacknowledged".
+
+        \item \textbf{Release (\texttt{release()}):} Upon exiting the critical section, the worker executes \texttt{channel.basicCancel(consumerTag)} to unsubscribe, preventing immediate re-acquisition. Finally, it invokes \texttt{channel.basicReject(currentDeliveryTag, true)}. The \texttt{requeue} flag (set to \texttt{true}) is critical here, as it physically pushes the token back to the front of the RabbitMQ FIFO queue, making it immediately available for the next waiting consumer.
+    \end{itemize}
 
 \end{document}
