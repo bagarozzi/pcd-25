@@ -121,7 +121,14 @@ Figure~\ref{fig:workers-petri} explains how three workers (they could be more) r
 tasks from a shared buffer and complete them; the transition '\textit{task done}' serves
 as barrier so that the work is completed at once.
 
-\subsection{Modeling}
+\begin{figure}[H]
+    \centering
+    \input{./figures/petri/view-controller.tikz}
+    \caption{Petri diagram of the barrier between view and controller}\label{fig:vc-barrier}
+\end{figure}
+
+
+\subsection{Modeling}\label{sec:modeling}
 The components mentioned in Section~\ref{sec:comp} and Section~\ref{analysis:prob} are modeled as follows:
 \begin{itemize}
     \item The tasks identified in the Section~\ref{analysis:prob} are modeled as runnable functions
@@ -130,7 +137,7 @@ The components mentioned in Section~\ref{sec:comp} and Section~\ref{analysis:pro
     \item The barriers, one for each computational task, are modeled with objects exposing a
     method so that the active components can hit it once their work is done. % chktex 36
     
-    \item A barrier between the View and the Controller, as modeled in Figure~\ref{fig:vc-petri},
+    \item A barrier between the View and the Controller, as modeled in Figure~\ref{fig:vc-barrier},
     may be necessary so that an update doesn't start before the rendering of the current frame.
 
     \item Each ball is modeled as a monitor to prevent races during the collisions calculation.
@@ -176,9 +183,12 @@ swapped with the old frame.
 Although this does not improve directly performance, as the rendering time remains the same,
 it reduces visual artifacts such as tearing because the buffer swap is instantaneous.
 
-The barrier between the View and the Controller, referenced in Figure~\ref{fig:vc-petri}
-is not implemented as a standard barrier, it instead makes calls synchronous by first
+The barrier between the View and the Controller, referenced in Section~\ref{sec:modeling}
+is not implemented. In the original version of \texttt{Sketch01} a barrier would make 
+the controller's calls synchronous by first
 calling \texttt{wait()} and then \texttt{notify()} when the render is done. % chktex 36 
+After the observations made at Section~\ref{sec:post-impl}, the control flow is the one
+illustrated at Figure~\ref{fig:vc-petri}.
 
 As mentioned in Section~\ref{sec:analysis-solution}, collision detection can be 
 approached differently. It's introduced a \textbf{Spatial Hash Grid}: this structure creates
