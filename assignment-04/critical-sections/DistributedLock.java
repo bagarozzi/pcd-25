@@ -6,20 +6,21 @@ import java.util.concurrent.TimeoutException;
 
 public class DistributedLock {
     private final String queueName;
+    private final String amqpUrl;
     private Connection connection;
     private Channel channel;
 
     private String consumerTag;
     private long currentDeliveryTag = -1;
 
-    public DistributedLock(String queueName) {
+    public DistributedLock(String queueName, String amqpUrl) {
         this.queueName = queueName;
+        this.amqpUrl = amqpUrl;
     }
 
     public void init() throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
-        String amqpUrl = "amqps://metfivxb:pJd2_Nqv3HwjlyMQq1s9Q9mxaWvnSWHY@cow.rmq2.cloudamqp.com/metfivxb";
-        factory.setUri(amqpUrl);
+        factory.setUri(this.amqpUrl);
 
         this.connection = factory.newConnection();
         this.channel = this.connection.createChannel();
