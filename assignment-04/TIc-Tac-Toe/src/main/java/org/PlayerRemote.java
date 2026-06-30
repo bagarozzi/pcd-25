@@ -17,4 +17,5 @@ public interface PlayerRemote extends Remote {
     void notifyEndGame(Result res) throws RemoteException;
     void notifyWinOrLose(boolean winner) throws RemoteException;
     void enterGame(char sign) throws RemoteException;
+    public void notifyWaiting() throws RemoteException;
 }

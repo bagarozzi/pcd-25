@@ -30,18 +30,14 @@ public class GameFrame extends JFrame {
 
     public void setWaitingPanel(){
         base.removeAll();
-        for(Component c : gamePanel.getComponents()){
-            c.setEnabled(false);
-        }
         this.base.add(waitingPanel);
-        this.base.add(gamePanel);
-
         this.revalidate();
         this.repaint();
     }
 
     public void setGamePanel(){
-        base.remove(waitingPanel);
+        base.removeAll();
+        base.add(gamePanel);
         this.revalidate();
         this.repaint();
     }

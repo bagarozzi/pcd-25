@@ -29,7 +29,6 @@ public class StartingPanel extends JPanel {
             new Thread(() -> {
                 try {
                     p.joinGame();
-                    SwingUtilities.invokeLater(gp::setWaitingPanel);
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {

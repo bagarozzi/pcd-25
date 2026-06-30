@@ -75,4 +75,9 @@ public class PlayerImpl extends UnicastRemoteObject implements Player, PlayerRem
             System.err.println(e.getMessage());
         }
     }
+
+    @Override
+    public void notifyWaiting() throws RemoteException {
+        SwingUtilities.invokeLater(gui::setWaitingPanel);
+    }
 }

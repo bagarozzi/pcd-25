@@ -24,6 +24,11 @@ public class MatchManagerImpl extends UnicastRemoteObject implements MatchManage
         if(firstPlayer == null){
             System.out.println("trovato player 1");
             firstPlayer = player;
+            try {
+                firstPlayer.notifyWaiting();
+            } catch (RemoteException e) {
+                System.err.println(e.getMessage());
+            }
         } else {
             System.out.println("trovato player 2");
             secondPlayer = player;
