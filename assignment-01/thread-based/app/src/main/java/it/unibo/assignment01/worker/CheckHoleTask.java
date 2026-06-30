@@ -1,9 +1,9 @@
-package it.unibo.assignment01.controller;
+package it.unibo.assignment01.worker;
 
 import java.util.List;
 
-import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
+import it.unibo.assignment01.model.ball.Ball;
 import it.unibo.assignment01.util.Latch;
 
 public class CheckHoleTask implements Runnable {

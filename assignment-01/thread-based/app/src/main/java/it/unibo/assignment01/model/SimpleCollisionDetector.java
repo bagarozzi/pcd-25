@@ -1,5 +1,7 @@
 package it.unibo.assignment01.model;
 
+import it.unibo.assignment01.model.ball.Ball;
+import it.unibo.assignment01.model.ball.BallView;
 
 public class SimpleCollisionDetector implements CollisionDetector {
     private static double RESTITUTION_FACTOR = 1; 
@@ -15,20 +17,19 @@ public class SimpleCollisionDetector implements CollisionDetector {
     	
     	/* compute dv = b.getPos - a.getPos vector */
 
-		Ball a_snap = a.getSnapshot();
-		Ball b_snap = b.getSnapshot();
+		BallView a_snap = a.getSnapshot();
+		BallView b_snap = b.getSnapshot();
 
     	double dx   = b_snap.getPos().x() - a_snap.getPos().x();
         double dy   = b_snap.getPos().y() - a_snap.getPos().y();
-        double dist = Math.hypot(dx, dy);
+        double distSq = (dx * dx) + (dy * dy);
         double minD = a_snap.getRadius() + b_snap.getRadius();
         
         /* 
          * There is a collision if the distance between the two balls is less than the sum of the radii 
          * 
          */
-        if (dist < minD && dist > 1e-6)  {
-			synchronized(this) {
+        if (distSq < (minD*minD) && distSq > 1e-6)  {
 	        /* 
 	         * Collision case - what to do:
 	         * 
@@ -38,6 +39,8 @@ public class SimpleCollisionDetector implements CollisionDetector {
 	         */
 	        
         	/* dvn = V2d(nx,ny) = dv unit vector */
+
+			double dist = Math.sqrt(distSq);
     
         	double nx = dx / dist;
 	        double ny = dy / dist;
@@ -77,7 +80,6 @@ public class SimpleCollisionDetector implements CollisionDetector {
 	        	a.setVel(new Speed(a_snap.getVel().x() - (imp / a_snap.getMass()) * nx, a_snap.getVel().y() - (imp / a_snap.getMass()) * ny));                
 	        	b.setVel(new Speed(b_snap.getVel().x() + (imp / b_snap.getMass()) * nx, b_snap.getVel().y() + (imp / b_snap.getMass()) * ny));
 	        }
-		}
         }
     }
     

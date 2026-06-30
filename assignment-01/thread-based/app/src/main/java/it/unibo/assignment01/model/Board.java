@@ -2,6 +2,8 @@ package it.unibo.assignment01.model;
 
 import java.util.List;
 
+import it.unibo.assignment01.model.ball.Ball;
+
 public interface Board { 
 
     public List<Ball> getBalls();
@@ -16,7 +18,7 @@ public interface Board {
     
     public  Boundary getBounds();
 
-    public void checkHole(Ball b);
+    public boolean checkHole(Ball b);
     
     public void resolveCollision(Ball a, Ball b);
 

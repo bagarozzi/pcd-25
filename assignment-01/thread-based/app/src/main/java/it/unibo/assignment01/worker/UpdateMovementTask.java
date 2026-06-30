@@ -1,10 +1,10 @@
-package it.unibo.assignment01.controller;
+package it.unibo.assignment01.worker;
 
 
 import java.util.List;
 
-import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
+import it.unibo.assignment01.model.ball.Ball;
 import it.unibo.assignment01.util.Latch;
 
 public class UpdateMovementTask implements Runnable{
@@ -32,8 +32,8 @@ public class UpdateMovementTask implements Runnable{
     @Override
     public void run() {
         for(int i= this.index; i < ballBatch.size(); i += numWorker) {
-            board.checkHole(ballBatch.get(i));
-            ballBatch.get(i).updateState(timeElapsed, board);
+            if (board.checkHole(ballBatch.get(i))) continue;
+            else if (i < ballBatch.size()) ballBatch.get(i).updateState(timeElapsed, board);
         }
         latch.countDown();
     }

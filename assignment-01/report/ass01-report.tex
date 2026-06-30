@@ -6,9 +6,11 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{listings}
-\usepackage{xcolor}
+\usepackage[dvipsnames]{xcolor}
 \usepackage{siunitx}
 \usepackage{tikz}
+\usepackage{textcomp}
+\usepackage{pgfplots}
 \usetikzlibrary{petri, arrows.meta}
 \tikzset{
 	arc/.style={
@@ -30,6 +32,7 @@
 		minimum height=10mm
 	}
 }
+\pgfplotsset{width=10cm,compat=1.9,every mark/.append style={solid}}
 \usepackage{cleveref} % this must be the last package to be loaded
 
 \title{\LARGE
@@ -118,17 +121,24 @@ Figure~\ref{fig:workers-petri} explains how three workers (they could be more) r
 tasks from a shared buffer and complete them; the transition '\textit{task done}' serves
 as barrier so that the work is completed at once.
 
-\subsection{Modeling}
+\begin{figure}[H]
+    \centering
+    \input{./figures/petri/view-controller.tikz}
+    \caption{Petri diagram of the barrier between view and controller}\label{fig:vc-barrier}
+\end{figure}
+
+
+\subsection{Modeling}\label{sec:modeling}
 The components mentioned in Section~\ref{sec:comp} and Section~\ref{analysis:prob} are modeled as follows:
 \begin{itemize}
     \item The tasks identified in the Section~\ref{analysis:prob} are modeled as runnable functions
         so that the master can send them to the worker who will execute them.
 
     \item The barriers, one for each computational task, are modeled with objects exposing a
-    \texttt{hit()} method so that the active components can hit it once their work is done. % chktex 36
+    method so that the active components can hit it once their work is done. % chktex 36
     
-    \item A barrier between the View and the Controller, as modeled in Figure~\ref{fig:vc-petri},
-    is also necessary so that an update doesn't start before the rendering of the current frame.
+    \item A barrier between the View and the Controller, as modeled in Figure~\ref{fig:vc-barrier},
+    may be necessary so that an update doesn't start before the rendering of the current frame.
 
     \item Each ball is modeled as a monitor to prevent races during the collisions calculation.
 
@@ -140,9 +150,11 @@ such as speed, position and boundary are implemented according to their
 specifications.
 
 \begin{figure}[H]
-    \input{./figures/petri/view-controller.tikz}
     \centering
-    \caption{Petri diagram of the barrier (\textit{render done}) between view and controller}\label{fig:vc-petri}
+    \makebox[\textwidth][c]{
+        \input{./figures/petri/view-threading.tikz}
+    }
+    \caption{Petri diagram of the asynchronous action between View and Controller}\label{fig:vc-petri}
 \end{figure}
 
 
@@ -152,9 +164,17 @@ cores to exploit all the system's resources and keep the CPU busy.
 In fact creating a larger number of threads would mean more context switching
 and it would prove damaging to performance.
 
+The passive component used to pass tasks to the workers is implemented as a \texttt{Synchcell},
+a single buffer assigned to each worker.
+In this way, each worker will have a separate interaction while waiting for a task and prevent race
+conditions.
+
 The \textbf{tasks} are implemented as \texttt{Java.Runnable} classes and passed to
-the workers throught a bounded buffer, that itself implements monitor
-behaviour for concurrent access.
+the workers.
+
+The barrier to synchronise the work in each calculation phase is implemented as a \textbf{Latch}.
+When a worker hits this component an internal counter is decreased, when the counter hits zero
+the controller is woken up and can proceed to the next calculation.
 
 A \textbf{double buffer} is implemented in the \texttt{ViewFrame} class.
 This mechanism uses two images: while one image is displayed, 
@@ -163,9 +183,12 @@ swapped with the old frame.
 Although this does not improve directly performance, as the rendering time remains the same,
 it reduces visual artifacts such as tearing because the buffer swap is instantaneous.
 
-The barrier between the View and the Controller, referenced in Figure~\ref{fig:vc-petri}
-is not implemented as a standard barrier, it instead makes calls synchronous by first
+The barrier between the View and the Controller, referenced in Section~\ref{sec:modeling}
+is not implemented. In the original version of \texttt{Sketch01} a barrier would make 
+the controller's calls synchronous by first
 calling \texttt{wait()} and then \texttt{notify()} when the render is done. % chktex 36 
+After the observations made at Section~\ref{sec:post-impl}, the control flow is the one
+illustrated at Figure~\ref{fig:vc-petri}.
 
 As mentioned in Section~\ref{sec:analysis-solution}, collision detection can be 
 approached differently. It's introduced a \textbf{Spatial Hash Grid}: this structure creates
@@ -174,8 +197,40 @@ to a specific cell and its hash code will reflect its position in the grid.
 This makes easier the the collision detection as the worker has to look only at 
 the adjacient cells for each ball.  
 
-\section{Verification}
-\subsection{Model checking}
+To prevent lots of \texttt{synchronized} calls to the Ball's methods, a \texttt{BallView} class is
+created to represent a snapshot of the current state of the ball. This snapshot is used to calculate
+the collisions without interacting directly with the monitor, minimizing the interactions between workers.
+
+In the \textbf{task-based version} components such as the SynchCell are not needed because the
+Executor API manages the task delivery, but the latch is needed anyway to synchronise work.
+
+\subsection{Posthumous implementations}\label{sec:post-impl}
+After the verification and testing of the project, some tweaking has been made to answer the question on 
+performance.
+As Section~\ref{sec:perf} will later explain, the execution time to compute 5000 frames was measured to be
+rather quick, around $\qty{6506}{\milli\second}/5000=\qty{1.30}{\milli\second}$ with 16 worker threads.
+This figure was totally out of line from the framerate of 47FPS produced by the graphical version of the game,
+meaning that the frame rendering and some other checks not executed in the test environment would take \qty{19}{\milli\second}.
+
+An explanation can be found in the \texttt{RenderSynch} class used in the View. This class was originally used
+in the initial sketches for the project and provided synchronization between the View and the Model, preventing
+the Model from calculating the next update until the current frame was completely rendered by the View.
+This negated the paradigm of the Event-Dispatch Thread (EDT), that should act asynchronously and receive
+communications from the model's threads with methods such as \texttt{SwingUtilities}\texttt{.invokeLater()} to add
+events to the queue.
+
+This means that the synchronous repaint took longer than the asynchronous one, likely because the painting
+itself took around \qty{10}{\milli\second} and the synchronization mechanisms (\texttt{wait}s, \texttt{notify}s) took
+the other \qty{9}{\milli\second}.
+Forcing a synchronous behavior on the EDT voids potential optimization in the painting and forces
+the Model to wait for this process, effectively making the rendering sequential.
+Other than this, using the event queue assures that the controller always calculates the freshest game state
+and the EDT worries about painting, potentially packing multiple repaints in one update. 
+
+After this change the framerate (not the actual framerate, but the updates per second executed in the controller) reached
+around 1100FPS with 16 workers. It is not known the actual framerate produced by the UI.
+
+\section{Formal verification}
 Model checking is done throught Java Path Finder, a system to verify executable Java bytecode programs. A stripped-down
 version of the application is created specifically, by removing the View, calls to \texttt{Java.util.Random},
 use of \texttt{System.time.millis},
@@ -184,43 +239,146 @@ and complete the tests in a reasonable time.
 
 \texttt{PreciseRaceDetector} and \texttt{DeadlockAnalyzer} are used to model-check the program.
 
-\begin{center}
-    \begin{tabular}{ c | c | c }
+\begin{table}
+    \centering
+    \begin{tabular}{ c | c | c }% chktex 44
         Test listener & Time taken & State explored \\
-        \hline\hline
+        \hline\hline% chktex 44
         DeadlockAnalyzer & 01:12:06 & \num{25106911} \\
         PreciseRaceDetector & 01:13:19 & \num{25106911} \\
         PreciseRaceDetector (with collisions) & 01:11:09 & \num{25106911}
     \end{tabular}
-\end{center}
+    \caption{JPF model-checking running times}
+\end{table}
 
 However, the first test did not include a proper collision, just ball movement, so another test is perfomend
 where the balls are initially colliding.
 All the test display an output as in Figure~\ref{fig:jpf-out}.
 
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{figures/jpf-out.png} 
+    \includegraphics[width=\textwidth]{figures/verification/jpf-out.png} 
     \centering
     \caption{Output of Java PathFinder}\label{fig:jpf-out}
 \end{figure}
 
-\subsection{Performance tests}
-Performance test are conducted with \num{4500} balls on the board and a varying number of cores assigned:
-from 1 (sequential) to 16.
+It's important to note that after refactoring and removing a serious amount of objects created at 
+each run, the JPF running time dropped to 11:12 minutes. That is likely because the model checker has to track
+the state of less objects.
 
-As test platform, the final headless application is used and the workers' number is tuned accordingly.
-To test the sequential version, a special version of the application is made where the \texttt{Controller}
-also does the movement and collisions calculations inside it's loop.
-To calculate times and ensure that all the tests do the same amount of work 
+\section{Performance evaluation}\label{sec:perf}
 
+\subsection{Methodology}
+Performance test are conducted on the final, headless, application set up with \num{4500} balls
+on the board and a varying number of cores assigned for the workers: from 1 to 16.
+To create a repeatable testing environment, the game loop is modified to run a finite
+number of \num{10000} ticks. The high number of ticks is needed so that each test run can be distinguished from another and errors up to 
+\qty{100}{\milli\second} will not interfere with the calculations.
+
+The first \num{5000} ticks are to warm up the JVM, during this time the JIT (Just-In-Time) compiler
+creates optimized versions of the \textit{hot} methods. This can also be observed in the graphic version
+of the game where the FPS will rise significantly at the beginning of the execution.
+
+The second \num{5000} ticks are measured using \texttt{System.nanoTime} and use a specific, heavy and fast
+ball to scatter the other balls in a more predictable way, although it has been observed that the same collision
+can produce slightly different trajectories.
+
+Each run is performed by running the \texttt{.jar} executable file created by setting
+the \texttt{TestController} class each time with the number of workers needed for that 
+test instance. In this way a new JVM is created each time and the results are independent.
+In fact, running all the tests in the same \texttt{for}-loop, or using \texttt{gradle run}
+will use the same JVM and the latter instances will benefit from a fully-warmed up JVM.
+
+Seven execution times are gathered and outliers, the biggest and the lowest times, are removed
+to filter out eventual GC or OS slowdowns. An average is calcuated with the remaining five results.
+
+\subsection{Results and explanation}
+In Table~\ref{fig:test-table} are represented the execution times from 1 to 16 workers count together with the
+relative speedup.
+
+\begin{table}[H]
+    \input{./figures/verification/test-table.tex}
+    \caption{Execution times varying the workers' count}\label{fig:test-table}
+\end{table}
+
+Speedup is the ratio of improvement in speed execution between the sequential and parallel versions of a program,
+it's calculated as follows:
+
+\[
+    S = \frac{T_s}{T_N}
+\]
+Where $N$ is the number of processors used.
+
+We can observe that the lowest execution time is at 16 assigned cores.
+The same times are plotted in logarithmic scale in Figure~\ref{fig:test-plot}.
+\begin{figure}[H]
+    \input{./figures/verification/test-plot.tikz}
+    \centering
+    \caption{Executions times over number of worker for each test}\label{fig:test-plot}
+\end{figure}
+
+We can see that, the more workers are added, the execution time trends downward. Although this
+trend slows down towards 12 workers. This can be explained with Amdahl's law that
+mathematically expresses the upper limit on speedup while using $N$ processors:
+
+\[
+    S = \frac{1}{(1-P)+\frac{P}{N}} \,\,\text{ with }\,\, 0\le P\le1
+\]
+where $P$ is the parallelizable part of the program.
+
+The slowdown in performance gain from 12 cores and on is likely due to the fact that the non-parallel
+part of the program ($1-P$) is still too great relative to the paralellizable part, and adding 
+more workers is only granting a marginal gain.
+
+We can plot the speedup of the test instances against the ideal speedup, achieved if a program could be totally
+paralellizable ($P=1$), thus giving a linear increase in performance.
+
+\begin{figure}[H]
+    \input{./figures/verification/amdahl-plot.tikz}
+    \centering
+    \caption{Speedup of Poool against the ideal speedup}\label{fig:amdahl-plot}
+\end{figure}
+
+As we anticipated, the speedup is far lower than the ideal one, this is due to the sequential part
+of the program taking its toll (mainly the spatial grid's creation and many more small wastes).
+
+Another figure that we can calculate and that further explains the situation is Efficiency,
+that measures how effectively each processor is used.
+It's calculated by normalizing the speedup value to the number of processors $N$:
+\[
+E = \frac{S}{N}
+\]
+For each worker count we calculate the efficiency as the values in  Table~\ref{fig:eff-table}.
+\begin{table}[H]
+    \input{./figures/verification/eff-table.tex}
+    \centering
+    \caption{Efficiency for each worker count}\label{fig:eff-table}
+\end{table}
+
+Being related to speedup, a program with an ideal speedup will also have an ideal efficiency.
+We can see that the ideal efficiency value ($E=1$) is approached only for $N=2$.
 
 \section{Conclusion}
 \subsection{Perfomance improvement}
-Elicitate on performance gain against the sequential version.
+Performance was seriously improved from the sequential version, offering a pleasing gaming experience
+on a 8-core machine. Much more improvements could be done to the architecture and
+minor efficinecies could be implemented.
+
+The greatest and unexpected improvement was given by the change mentioned in Section~\ref{sec:post-impl}.
+In fact, if we run the GUI version of the game with one worker, the game will be smooth and run at about 
+800FPS, whereas the 16-worker version will run at 1100FPS (on a 8-core physical machine).
+
+This means that the multi-thread extension of the game does not move the results as much as the collisions
+calculation optimization brought by the \texttt{SpatialHashGrid}. 
+Afterall, this is coherent with both concurrent programming and general programming principles: a simple collision detection algorithm
+using $O(n^2)$ techniques, even with threads, is impractical. 
+In this scenario the resource sharing is not efficient and the threads would always be waiting for some balls to check
+on them, even if they are across the map from the ball they are checking.
+Therefore a spatial structure of this kind is of utmost importance to divide work efficiently between threads, reduce
+race conditions on balls and check for collisions only where they are likely to happen. 
 
 \subsection{Further improvements}
-\textbf{TODO:} mention other better data structure to hold the balls such as a QuadTree,
-mention a better approach in which the view requests updates to the controller at every frame.
-
+The overall structure of the controller loop is solid but a refactoring is certainly necessary
+to improve the components behavior. For instance a better way of work assignment could be implemented
+both to prevent resource sharing and to give an equal amount of work, better exploiting the resources. 
 
 \end{document}

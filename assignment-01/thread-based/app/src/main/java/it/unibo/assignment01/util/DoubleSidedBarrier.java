@@ -1,4 +1,4 @@
-package it.unibo.assignment01.controller;
+package it.unibo.assignment01.util;
 
 
 public class DoubleSidedBarrier {

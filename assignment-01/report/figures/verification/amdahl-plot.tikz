@@ -1,0 +1,34 @@
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={No. of workers},
+        ylabel={Speedup},
+        xmin=0, xmax=17,
+        ymin=0, ymax=17,
+        xtick={1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+        ytick={},
+        legend pos=north west,
+        xmajorgrids=true,
+        grid style=dashed,
+    ]
+
+    \addplot[
+        color=blue,
+        mark=square,
+        ]
+    coordinates {
+        (1,1)(2,2.01)(4,2.15)(6,2.26)(8,2.29)(10,2.38)
+        (12,2.46)(14,2.48)(16,2.57)
+    };
+    \addlegendentry{Speedup of Poool}
+    \addplot[
+        color=red,
+        mark=o,
+        style=densely dashed
+    ]
+    coordinates {
+            (1,1)(2,2)(4,4)(6,6)(8,8)(10,10)
+            (12,12)(14,14)(16,16)
+        };
+    \addlegendentry{Ideal speedup}
+    \end{axis}
+\end{tikzpicture}

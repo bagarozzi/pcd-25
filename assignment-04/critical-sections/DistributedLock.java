@@ -6,55 +6,82 @@ import java.util.concurrent.TimeoutException;
 
 public class DistributedLock {
     private final String queueName;
+    private final String amqpUrl;
     private Connection connection;
     private Channel channel;
 
-    public DistributedLock(String queueName) {
+    private String consumerTag;
+    private long currentDeliveryTag = -1;
+
+    public DistributedLock(String queueName, String amqpUrl) {
         this.queueName = queueName;
+        this.amqpUrl = amqpUrl;
     }
 
     public void init() throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
-        //user/host: metfivxb
-        //password: pJd2_Nqv3HwjlyMQq1s9Q9mxaWvnSWHY
-        String amqpUrl = "amqps://metfivxb:pJd2_Nqv3HwjlyMQq1s9Q9mxaWvnSWHY@cow.rmq2.cloudamqp.com/metfivxb";
-        factory.setUri(amqpUrl);
+        factory.setUri(this.amqpUrl);
 
         this.connection = factory.newConnection();
         this.channel = this.connection.createChannel();
 
-        // Dichiariamo una coda persistente per garantire che il token non vada perso
+        boolean queueExists = true;
+        try {
+            Channel testChannel = connection.createChannel();
+            testChannel.queueDeclarePassive(queueName);
+            testChannel.close();
+        } catch (IOException e) {
+            queueExists = false;
+        }
+
         this.channel.queueDeclare(queueName, true, false, false, null);
+
+        if (!queueExists) {
+            try {
+                Channel initChannel = connection.createChannel();
+                initChannel.queueDeclare(queueName + "_init_lock", false, true, false, null);
+
+                String tokenMessage = "TOKEN";
+                this.channel.basicPublish("", queueName, MessageProperties.PERSISTENT_TEXT_PLAIN, tokenMessage.getBytes());
+                System.out.println("Token iniziale inserito correttamente dal sistema!");
+
+                initChannel.close();
+            } catch (IOException e) {
+            }
+        }
     }
 
     public void acquire() throws IOException, InterruptedException {
-        CompletableFuture<Void> request = new CompletableFuture<>(); 
+        CompletableFuture<Long> request = new CompletableFuture<>();
 
-        DeliverCallback dcb = (consumerTag, delivery) -> {
-            channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-            request.complete(null);
+        channel.basicQos(1);
+
+        DeliverCallback dcb = (cTag, delivery) -> {
+            request.complete(delivery.getEnvelope().getDeliveryTag());
         };
 
-        CancelCallback ccb = (consumerTagInfo) -> request.completeExceptionally(new RuntimeException());
+        CancelCallback ccb = (cTag) -> request.completeExceptionally(new RuntimeException("Consumer cancellato"));
 
-        String consumerTag = channel.basicConsume(queueName, false, dcb, ccb);
+        this.consumerTag = channel.basicConsume(queueName, false, dcb, ccb);
+
         try {
-            request.get(); 
+            this.currentDeliveryTag = request.get();
         } catch (ExecutionException e) {
             throw new RuntimeException("Errore durante l'acquisizione del lock", e.getCause());
-        } finally {
-            channel.basicCancel(consumerTag);
         }
     }
 
     public void release() throws IOException {
-        String tokenMessage = "TOKEN";
-        channel.basicPublish("", queueName, MessageProperties.PERSISTENT_TEXT_PLAIN, tokenMessage.getBytes());
-        System.out.println("Lock rilasciato.");
+        if (this.currentDeliveryTag != -1) {
+            channel.basicCancel(this.consumerTag);
+            channel.basicReject(this.currentDeliveryTag, true);
+            this.currentDeliveryTag = -1;
+            System.out.println("Lock rilasciato.");
+        }
     }
 
     public void close() throws IOException, TimeoutException {
-        if (channel != null) channel.close();
-        if (connection != null) connection.close();
+        if (channel != null && channel.isOpen()) channel.close();
+        if (connection != null && connection.isOpen()) connection.close();
     }
 }

@@ -2,15 +2,15 @@ package it.unibo.assignment01.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import it.unibo.assignment01.model.Ball;
-import it.unibo.assignment01.model.BallImpl;
 import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.model.Speed;
+import it.unibo.assignment01.model.ball.Ball;
+import it.unibo.assignment01.model.ball.BallImpl;
+import it.unibo.assignment01.util.Barrier;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
 import it.unibo.assignment01.util.Latch;
@@ -19,6 +19,8 @@ import it.unibo.assignment01.util.SynchCell;
 import it.unibo.assignment01.view.View;
 import it.unibo.assignment01.view.ViewModel;
 import it.unibo.assignment01.worker.BallWorker;
+import it.unibo.assignment01.worker.CollisionTask;
+import it.unibo.assignment01.worker.UpdateMovementTask;
 
 public class PoolGameController extends Thread implements Controller {
 

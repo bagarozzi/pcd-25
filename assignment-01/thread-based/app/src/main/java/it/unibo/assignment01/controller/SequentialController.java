@@ -11,51 +11,42 @@ import it.unibo.assignment01.model.TestBoard;
 import it.unibo.assignment01.model.ball.Ball;
 import it.unibo.assignment01.model.ball.BallImpl;
 import it.unibo.assignment01.util.Latch;
-import it.unibo.assignment01.util.Pair;
-import it.unibo.assignment01.util.SynchCell;
-import it.unibo.assignment01.worker.BallWorker;
 import it.unibo.assignment01.worker.CollisionTask;
 import it.unibo.assignment01.worker.UpdateMovementTask;
 
-public class TestController extends Thread {
+public class SequentialController extends Thread {
 
 	private static final double MULTIPY_FACTOR_FOR_RADIOUS = 1.6;
     private static final long STATIC_ELAPSED_FRAME_TIME = 16;
 
-	private final int NUM_WORKERS;
 	private Board board;
 	private SpatialHashGrid spatialHashGrid;
+	private final Ball breakerBall;
 
-	private final List<Pair<SynchCell<Runnable>, BallWorker>> workers;
-	private final List<Pair<UpdateMovementTask, CollisionTask>> staticTasks;
+    private final UpdateMovementTask movementTask;
+    private final CollisionTask collisionTask;
     private final Latch latch;
+
 
     private final int testFrames;
     private final int warmupFrames;
 
 
-	public TestController(int workersNum, int testFrames, int warmupFrames) {
-		this.NUM_WORKERS = workersNum;
+	public SequentialController(int testFrames, int warmupFrames) {
         this.testFrames = testFrames;
         this.warmupFrames = warmupFrames;
 
+        latch = new Latch(1);
+
+		this.breakerBall = new BallImpl(new Position(-0.95, -0.35), new Speed(0,0), 15.0, Ball.BALL_RADIUS);
+		List<Ball> balls = createBalls(50, 90);
+		balls.add(breakerBall);
 		this.board = new TestBoard(createBalls(50, 90), new SimpleCollisionDetector());
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * MULTIPY_FACTOR_FOR_RADIOUS, board.getBounds());
 
-		this.workers = new ArrayList<>();
-		this.latch = new Latch(NUM_WORKERS);
-		this.staticTasks = new ArrayList<>();
-		for (int i = 0; i < NUM_WORKERS; i++) {
-			SynchCell<Runnable> cell = new SynchCell<>();
-			var worker = new BallWorker(cell);
-			this.workers.add(new Pair<SynchCell<Runnable>, BallWorker>(cell, worker));
-			staticTasks.add(
-				new Pair<>(
-					new UpdateMovementTask(board.getAllBall(), 0, board, latch, i, NUM_WORKERS),
-					new CollisionTask(board, latch, spatialHashGrid, i, NUM_WORKERS)
-			));
-			worker.start();
-		}
+        movementTask = new UpdateMovementTask(balls, STATIC_ELAPSED_FRAME_TIME, board, latch, 0, 1);
+        collisionTask = new CollisionTask(board, latch, spatialHashGrid, 0, 1);
+
 	}
 
 	@Override
@@ -67,14 +58,13 @@ public class TestController extends Thread {
 
             if(k == warmupFrames) {
                 testStartTime = System.nanoTime();
+				breakerBall.kick(new Speed(4,4));
             }
 
 			spatialHashGrid.clear();
 
-			for(int i = 0; i< NUM_WORKERS; i++) {
-				staticTasks.get(i).getX().updateParamethers(board.getAllBall(), STATIC_ELAPSED_FRAME_TIME);
-				addWorkerTask(staticTasks.get(i).getX(), this.workers.get(i).getX());
-			}
+            movementTask.updateParamethers(board.getAllBall(), STATIC_ELAPSED_FRAME_TIME);
+            movementTask.run();
 
 			try {
 				latch.await();
@@ -88,9 +78,7 @@ public class TestController extends Thread {
 
 			latch.refresh();
 
-			for (int i = 0; i < NUM_WORKERS; i++) {
-				addWorkerTask(staticTasks.get(i).getY(), this.workers.get(i).getX());
-			}
+            collisionTask.run();
 
 			try {
 				latch.await();
@@ -101,15 +89,8 @@ public class TestController extends Thread {
 		}
         var endTime = System.nanoTime();
         long testTime = (endTime - testStartTime)/1_000_000;
-        System.out.println("Test with " + NUM_WORKERS + " workers took " + testTime + " millis");
-		for(Pair<SynchCell<Runnable>, BallWorker> w : workers) {
-            addWorkerTask(() -> Thread.currentThread().interrupt(), w.getX());
-        }
+        System.out.println("Sequential test took " + testTime + " millis");
     }
-
-	private void addWorkerTask(Runnable task, SynchCell<Runnable> cell) {
-		cell.set(task);
-	}
 
 	private List<Ball> createBalls(final int rows, final int cols) {
 

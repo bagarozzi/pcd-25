@@ -1,4 +1,8 @@
-package it.unibo.assignment01.model;
+package it.unibo.assignment01.model.ball;
+
+import it.unibo.assignment01.model.Board;
+import it.unibo.assignment01.model.Position;
+import it.unibo.assignment01.model.Speed;
 
 public interface Ball {
 
@@ -7,7 +11,7 @@ public interface Ball {
 
     public void updateState(long dt, Board ctx);
 
-    public Ball getSnapshot();
+    public BallView getSnapshot();
 
     public Position getPos();
     
