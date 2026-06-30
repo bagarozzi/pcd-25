@@ -73,8 +73,8 @@ public class GameFrame extends JFrame {
 
             int opt = JOptionPane.showConfirmDialog(
                     this,
-                    message + "\nVuoi giocare ancora?",
-                    "Fine partita",
+                    message + "\nDo you want to play again?",
+                    "End Game",
                     JOptionPane.YES_NO_OPTION
             );
 

@@ -7,7 +7,7 @@ public class StartingPanel extends JPanel {
     public StartingPanel(Player p, GameFrame gp) {
         super(new BorderLayout());
         this.setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
-        JLabel label = new JLabel("Welcome to TAC Toe");
+        JLabel label = new JLabel("Welcome to Tic Tac Toe");
         label.setSize(300, 50);
         label.setVerticalAlignment(JLabel.CENTER);
         label.setHorizontalAlignment(JLabel.CENTER);
