@@ -18,3 +18,13 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
+tasks.register<JavaExec>("runServer") {
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "org.RunServer"
+}
+
+tasks.register<JavaExec>("runPlayer") {
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "org.RunPlayer"
+}
