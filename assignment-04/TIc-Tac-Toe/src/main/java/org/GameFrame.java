@@ -19,7 +19,7 @@ public class GameFrame extends JFrame {
         this.setSize(800, 600);
         base = new JPanel();
         base.setLayout(new OverlayLayout(base));
-        base.add(new StartingPanel(p, this));
+        base.add(startingPanel);
         this.add(base);
         this.setVisible(true);
     }
@@ -41,7 +41,7 @@ public class GameFrame extends JFrame {
     }
 
     public void setGamePanel(){
-        waitingPanel.setVisible(false);
+        base.remove(waitingPanel);
         this.revalidate();
         this.repaint();
     }
