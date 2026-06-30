@@ -28,8 +28,10 @@ public class GamePanel extends JPanel {
 
                 btn.addActionListener(_ -> {
                     if(buttons[row][col].getText().isEmpty()) {
-                        btn.setText(player.getSign().toString()); // poi colleghi RMI
-                        p.makeMove(new Pair(row, col));
+                        btn.setText(player.getSign().toString());
+                        new Thread(() -> {
+                            p.makeMove(new Pair(row, col));
+                        }).start();
                     }
                 });
 

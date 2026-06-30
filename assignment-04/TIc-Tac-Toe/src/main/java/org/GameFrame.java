@@ -92,6 +92,7 @@ public class GameFrame extends JFrame {
     }
 
     public void restartGame() {
+        base.removeAll();
         gamePanel = new GamePanel(player);
         base.add(startingPanel);
         this.revalidate();

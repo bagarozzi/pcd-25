@@ -13,16 +13,30 @@ public class StartingPanel extends JPanel {
         label.setHorizontalAlignment(JLabel.CENTER);
         label.setFont(new Font("Arial", Font.BOLD, 40));
         JPanel bottom = new JPanel(new FlowLayout());
-        JButton btn = new JButton("Find Game");
-        btn.setPreferredSize(new Dimension(200, 50));
-
-        btn.addActionListener((_) -> {
-            p.joinGame();
-            gp.setWaitingPanel();
-        });
+        JButton btn = getButton(p, gp);
 
         bottom.add(btn);
         this.add(label,  BorderLayout.CENTER);
         this.add(bottom,  BorderLayout.SOUTH);
+    }
+
+    private static JButton getButton(Player p, GameFrame gp) {
+        JButton btn = new JButton("Find Game");
+        btn.setPreferredSize(new Dimension(200, 50));
+
+        btn.addActionListener((_) -> {
+            btn.setEnabled(false);
+            new Thread(() -> {
+                try {
+                    p.joinGame();
+                    SwingUtilities.invokeLater(gp::setWaitingPanel);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    SwingUtilities.invokeLater(() -> btn.setEnabled(true));
+                }
+            }).start();
+        });
+        return btn;
     }
 }
