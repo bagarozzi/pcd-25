@@ -172,7 +172,7 @@
         To ensure that the worker requesting does not poll, resulting in a busy wait, a \texttt{DeliverCallback} is registered and a \texttt{Future} is created so that the thread can wait on its completion.
         Upon token arrival, the \texttt{CompletableFuture} is resolved with the message's \texttt{deliveryTag}, allowing the main thread to unblock and enter the critical section while the message remains `unacknowledged'.
 
-        \item \textbf{Release (\texttt{release()}):} Upon exiting the critical section, the worker executes \texttt{channel.basicCancel(consumerTag)} to unsubscribe, preventing immediate re-acquisition. Finally, it invokes \texttt{channel.basicReject(currentDeliveryTag, true)}. The \texttt{requeue} flag (set to \texttt{true}) is critical here, as it physically pushes the token back to the front of the RabbitMQ FIFO queue, making it immediately available for the next waiting consumer.% chktex 36
+        \item \textbf{Release (\texttt{release()}):} Upon exiting the critical section, the worker executes \texttt{channel.basicCancel(consumerTag)} to unsubscribe, preventing immediate re-acquisition. Finally, it invokes \texttt{channel\-.basicReject(currentDeliveryTag,\- true)}. The \texttt{requeue} flag (set to \texttt{true}) is critical here, as it physically pushes the token back to the front of the RabbitMQ FIFO queue, making it immediately available for the next waiting consumer.% chktex 36
     \end{itemize}
 
 \end{document}
