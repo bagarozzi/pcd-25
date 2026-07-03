@@ -1,4 +1,6 @@
-package org;
+package org.server;
+
+import org.utilities.Pair;
 
 public class GameBoard {
 
@@ -40,7 +42,7 @@ public class GameBoard {
         return true;
     }
 
-    private result checkForWinner(Pair lastMove,char sign){
+    private result checkForWinner(Pair lastMove, char sign){
         if(board[0][lastMove.y()] == sign
             & board[1][lastMove.y()] == sign
             & board[2][lastMove.y()] == sign
@@ -51,9 +53,14 @@ public class GameBoard {
             & board[lastMove.x()][2] == sign
         ){
             return result.WINNER_FOUND;
-        }else if(board[lastMove.x()][lastMove.y()] == sign
-            & board[(lastMove.x() + 1) % HEIGHT_WIDTH][(lastMove.y() + 1) % HEIGHT_WIDTH] == sign
-            &board[(lastMove.x() + 2) % HEIGHT_WIDTH][(lastMove.y() + 2) % HEIGHT_WIDTH] == sign
+        }else if(board[0][0] == sign
+            & board[1][1] == sign
+            &board[2][2] == sign
+        ){
+            return result.WINNER_FOUND;
+        } else if(board[0][2] == sign
+            & board[1][1] == sign
+            &board[2][0] == sign
         ){
             return result.WINNER_FOUND;
         }

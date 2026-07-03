@@ -1,7 +1,9 @@
-package org;
+package org.player;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+
+import org.utilities.Pair;
 
 public interface PlayerRemote extends Remote {
 

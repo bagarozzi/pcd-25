@@ -1,6 +1,11 @@
-package org;
+package org.gui;
 
 import javax.swing.*;
+
+import org.player.Player;
+import org.player.PlayerRemote;
+import org.utilities.Pair;
+
 import java.awt.*;
 
 public class GameFrame extends JFrame {

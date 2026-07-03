@@ -1,7 +1,10 @@
-package org;
+package org.server;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+
+import org.player.PlayerRemote;
+import org.utilities.Pair;
 
 public class MatchManagerImpl extends UnicastRemoteObject implements MatchManager, MatchManagerRemote {
     private final GameBoard board;

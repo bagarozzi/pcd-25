@@ -1,6 +1,9 @@
-package org;
+package org.gui;
 
 import javax.swing.*;
+
+import org.player.Player;
+
 import java.awt.*;
 
 public class StartingPanel extends JPanel {
@@ -24,13 +27,13 @@ public class StartingPanel extends JPanel {
         JButton btn = new JButton("Find Game");
         btn.setPreferredSize(new Dimension(200, 50));
 
-        btn.addActionListener((_) -> {
+        btn.addActionListener(e -> {
             btn.setEnabled(false);
             new Thread(() -> {
                 try {
                     p.joinGame();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
                 } finally {
                     SwingUtilities.invokeLater(() -> btn.setEnabled(true));
                 }

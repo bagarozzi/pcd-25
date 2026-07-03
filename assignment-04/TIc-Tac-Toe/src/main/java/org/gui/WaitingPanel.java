@@ -1,4 +1,4 @@
-package org;
+package org.gui;
 
 import javax.swing.*;
 import java.awt.*;

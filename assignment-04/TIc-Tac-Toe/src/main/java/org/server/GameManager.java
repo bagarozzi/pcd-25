@@ -1,9 +1,11 @@
-package org;
+package org.server;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import org.player.PlayerRemote;
 
 public class GameManager implements Server{
     List<MatchManager> matches;

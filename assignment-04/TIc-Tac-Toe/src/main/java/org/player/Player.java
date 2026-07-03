@@ -1,5 +1,6 @@
-package org;
+package org.player;
 
+import org.utilities.Pair;
 
 public interface Player{
 

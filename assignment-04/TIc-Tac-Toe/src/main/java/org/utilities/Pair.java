@@ -1,4 +1,4 @@
-package org;
+package org.utilities;
 
 import java.io.Serializable;
 

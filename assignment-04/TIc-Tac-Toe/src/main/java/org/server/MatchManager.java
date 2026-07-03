@@ -1,4 +1,6 @@
-package org;
+package org.server;
+
+import org.player.PlayerRemote;
 
 public interface MatchManager {
 

@@ -4,6 +4,9 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
+import org.server.GameManager;
+import org.server.Server;
+
 public class RunServer {
     public static String SERVER_NAME = "MyServer";
     public static void main(String[] args){

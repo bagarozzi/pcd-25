@@ -1,6 +1,12 @@
-package org;
+package org.player;
 
 import javax.swing.*;
+
+import org.gui.GameFrame;
+import org.server.MatchManagerRemote;
+import org.server.Server;
+import org.utilities.Pair;
+
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 

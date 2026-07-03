@@ -1,7 +1,11 @@
-package org;
+package org.gui;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+
+import org.player.Player;
+import org.utilities.Pair;
+
 import java.awt.*;
 
 public class GamePanel extends JPanel {
@@ -26,7 +30,7 @@ public class GamePanel extends JPanel {
                 int row = i;
                 int col = j;
 
-                btn.addActionListener(_ -> {
+                btn.addActionListener(e -> {
                     if(buttons[row][col].getText().isEmpty()) {
                         btn.setText(player.getSign().toString());
                         new Thread(() -> {
