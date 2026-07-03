@@ -16,7 +16,6 @@ public class GameManager implements Server{
     }
 
     private MatchManagerImpl createGame(PlayerRemote player) {
-        System.out.println("creating a new game");
         try {
             MatchManagerImpl match = new MatchManagerImpl();
             matches.add(match);
@@ -30,7 +29,6 @@ public class GameManager implements Server{
 
     @Override
     public synchronized MatchManagerRemote joinGame(PlayerRemote player) throws RemoteException {
-        System.out.println("joining a new game");
         Optional<MatchManager> res = matches.stream().filter(MatchManager::matchNotFull)
                 .findFirst();
         if(res.isPresent()){

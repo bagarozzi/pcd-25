@@ -25,7 +25,6 @@ public class MatchManagerImpl extends UnicastRemoteObject implements MatchManage
 
     public synchronized void addPlayer(PlayerRemote player) {
         if(firstPlayer == null){
-            System.out.println("trovato player 1");
             firstPlayer = player;
             try {
                 firstPlayer.notifyWaiting();
@@ -33,7 +32,6 @@ public class MatchManagerImpl extends UnicastRemoteObject implements MatchManage
                 System.err.println(e.getMessage());
             }
         } else {
-            System.out.println("trovato player 2");
             secondPlayer = player;
             try {
                 if((int)(Math.random()*2) == 0) {
