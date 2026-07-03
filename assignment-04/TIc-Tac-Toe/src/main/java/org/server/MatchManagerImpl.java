@@ -23,7 +23,7 @@ public class MatchManagerImpl extends UnicastRemoteObject implements MatchManage
         board = new GameBoard();
     }
 
-    public void addPlayer(PlayerRemote player) {
+    public synchronized void addPlayer(PlayerRemote player) {
         if(firstPlayer == null){
             System.out.println("trovato player 1");
             firstPlayer = player;
@@ -55,11 +55,11 @@ public class MatchManagerImpl extends UnicastRemoteObject implements MatchManage
         }
     }
 
-    public boolean matchNotFull(){
+    public synchronized boolean matchNotFull(){
         return secondPlayer == null;
     }
 
-    public void notifyMove(Pair pos,char sign) throws RemoteException {
+    public synchronized void notifyMove(Pair pos,char sign) throws RemoteException {
         if (state == State.PLAYER_1_MOVE) {
             GameBoard.result res = board.makeMove(pos, sign);
             if (res == GameBoard.result.WINNER_FOUND) {

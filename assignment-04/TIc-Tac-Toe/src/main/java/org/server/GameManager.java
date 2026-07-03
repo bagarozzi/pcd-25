@@ -29,7 +29,7 @@ public class GameManager implements Server{
     }
 
     @Override
-    public MatchManagerRemote joinGame(PlayerRemote player) throws RemoteException {
+    public synchronized MatchManagerRemote joinGame(PlayerRemote player) throws RemoteException {
         System.out.println("joining a new game");
         Optional<MatchManager> res = matches.stream().filter(MatchManager::matchNotFull)
                 .findFirst();
