@@ -25,6 +25,7 @@ public class DistributedLock {
         this.connection = factory.newConnection();
         this.channel = this.connection.createChannel();
 
+        System.out.println("Lock init: checking for queue's existence");
         boolean queueExists = true;
         try {
             Channel testChannel = connection.createChannel();
@@ -37,17 +38,22 @@ public class DistributedLock {
         this.channel.queueDeclare(queueName, true, false, false, null);
 
         if (!queueExists) {
+            System.out.println("Lock init: queue does not exist, trying to initialize the token...");
             try {
                 Channel initChannel = connection.createChannel();
                 initChannel.queueDeclare(queueName + "_init_lock", false, true, false, null);
 
                 String tokenMessage = "TOKEN";
                 this.channel.basicPublish("", queueName, MessageProperties.PERSISTENT_TEXT_PLAIN, tokenMessage.getBytes());
-                System.out.println("Token iniziale inserito correttamente dal sistema!");
-
+                System.out.println("Lock init: initial token inserted");
+ 
                 initChannel.close();
             } catch (IOException e) {
+                System.out.println("Lock init: token inserted by another process");
             }
+        }
+        else {
+            System.out.println("Lock init: queue already exists");
         }
     }
 

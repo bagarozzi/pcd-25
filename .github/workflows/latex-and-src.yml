@@ -67,9 +67,10 @@ jobs:
           zip -r ../Assignment-03.zip . -x "*.aux" "*.log" "*.out" "*.toc" "*.fls" "*.fdb_latexmk" "*.synctex.gz" "*.bbl" "*.blg" "*.run.xml" "*.bcf"
           cd ..
 
-          mkdir -p staging4/doc staging4/src/alarm-system staging4/src/critical-sections
+          mkdir -p staging4/doc staging4/src/alarm-system staging4/src/critical-sections staging4/src/tic-tac-toe
           cp -r assignment-04/alarm-system-extended/src/main/scala/it/unibo/alarm/* staging4/src/alarm-system/      
           cp -r assignment-04/critical-sections/*.java staging4/src/critical-sections/
+          cp -r assignment-04/TIc-Tac-Toe/src/main/java/org/*.java staging4/src/tic-tac-toe/
           mv assignment-04/report/*.pdf staging4/doc/      
 
           cd staging4

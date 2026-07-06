@@ -17,20 +17,22 @@ public class WorkerManager {
     }
 
     private static void runWorker(int id, DistributedLock lock) {
+        System.out.println("Worker-" + id + " inizializzato, creazione coda.");
         try {
             lock.init();
             System.out.println("Worker-" + id + " pronto. Attende il lock...");
-
-            lock.acquire();
-            try {
-                System.out.println("Worker-" + id + " HA ACQUISITO IL LOCK e lavora nella sezione critica.");
-                Thread.sleep(1000);
-            } finally {
-                lock.release();
-                lock.close();
+            for(int i = 0; i < 4; i++) {
+                lock.acquire();
+                try {
+                    System.out.println("Worker-" + id + " HA ACQUISITO IL LOCK e lavora nella sezione critica.");
+                    Thread.sleep(1000);
+                } finally {
+                    lock.release();
+                }
             }
+            lock.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }   
 }

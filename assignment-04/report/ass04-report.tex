@@ -122,7 +122,7 @@
     \part[Distributed Critical Sections throught a MOM]{Distributed Critical Sections throught a MOM \\\LARGE{High-level, message-oriented middleware for critical sections between processes in distributed system}}
 
     \section{Analysis}
-    The problem of distributed mutual exclusion requires coordinating multiple independent processes to ensure that only one process can access a shared critical section at any given time. In a distributed environment, traditional synchronous mechanisms like RPC (Remote Procedure Call) are often inadequate due to tight coupling and the fact that a blocking nature can severely affect scalability and performance.  To overcome these limitations, this project leverages a Message-Oriented Middleware (MOM), defined as an infrastructure that provides messaging capabilities to enable flexible communication among different applications. By introducing a middle layer that decouples participants , the MOM shifts the paradigm from a synchronous interaction to an asynchronous one, where the producer does not need to block and retains control to continue processing.  Specifically, the system requires a persistent communication model, which supports the communication of processes that are not necessarily executing at the same time. This is achieved through message queues and brokers, which are the standard choice in large, distributed, and heterogeneous systems.  To implement a robust distributed lock, the system must guarantee three fundamental properties:
+    The problem of distributed mutual exclusion requires coordinating multiple independent processes to ensure that only one process can access a shared critical section at any given time. In a distributed environment, traditional synchronous mechanisms like RPC (Remote Procedure Call) are often inadequate due to tight coupling and the fact that a blocking nature can severely affect scalability and performance.  To overcome these limitations, this project leverages a Message-Oriented Middleware (MOM), defined as an infrastructure that provides messaging capabilities to enable flexible communication among different applications. By introducing a middle layer that decouples participants, the MOM shifts the paradigm from a synchronous interaction to an asynchronous one, where the producer does not need to block and retains control to continue processing.  Specifically, the system requires a persistent communication model, which supports the communication of processes that are not necessarily executing at the same time. This is achieved through message queues and brokers, which are the standard choice in large, distributed, and heterogeneous systems.  To implement a robust distributed lock, the system must guarantee three fundamental properties:
 
     \begin{itemize}
         \item Mutual Exclusion: Only one process can hold the lock simultaneously.
@@ -132,7 +132,7 @@
 
     \section{Design}
 
-    The design of the distributed lock is based on a Token-Passing algorithm implemented over a MOM queue. The lock is represented by a single, unique message (the "Token") circulating within the middleware.
+    The design of the distributed lock is based on a Token-Passing algorithm implemented over a MOM queue. The lock is represented by a single, unique message (the `Token') circulating within the middleware.
 
     \subsection*{Messaging Model}
     To guarantee mutual exclusion, the system utilizes a Point-to-Point messaging model. In this model, multiple producers and consumers can connect to a Point-to-Point Queue, but only one consumer receives the message. The queue strictly follows a First-In-First-Out (FIFO) policy.
@@ -141,21 +141,20 @@
     The lock management is divided into three logical phases to satisfy the required distributed properties:
 
     \begin{enumerate}
-        \item \textbf{Safe Initialization (Leader Election):} When multiple asynchronous workers start simultaneously, there is a risk of generating multiple tokens. To prevent this, workers attempt to declare a temporary, exclusive "initialization queue". The middleware guarantees that only one worker will succeed in creating it. This elected worker injects the initial token into the main queue, ensuring strict mutual exclusion from the genesis of the system.
+        \item \textbf{Safe Initialization (Leader Election):} When multiple asynchronous workers start simultaneously, there is a risk of generating multiple tokens. To prevent this, workers attempt to declare a temporary, exclusive `initialization queue'. The middleware guarantees that only one worker will succeed in creating it. This elected worker injects the initial token into the main queue, ensuring strict mutual exclusion from the genesis of the system.
 
         \item \textbf{Acquisition (Fairness):} Workers express their intent to enter the critical section by subscribing to the Point-to-Point queue as consumers. Fairness is intrinsically guaranteed by the MOM's FIFO queue: workers are queued in the exact order their subscription reaches the broker. Furthermore, the middleware is instructed to send only one unacknowledged message per worker (QoS = 1), preventing fast workers from hoarding the token.
 
-        \item \textbf{Release and Fault Tolerance (Liveness):} The system's liveness and reliability are improved by the message persistence typically implemented in MOM nodes. Instead of immediately acknowledging (ACK) the token upon receipt, the worker holds the message in an "Unacked" state during the critical section execution.
+        \item \textbf{Release and Fault Tolerance (Liveness):} The system's liveness and reliability are improved by the message persistence typically implemented in MOM nodes. Instead of immediately acknowledging (ACK) the token upon receipt, the worker holds the message in an `Unacked' state during the critical section execution.
         \begin{itemize}
             \item \textit{Normal execution:} Upon leaving the critical section, the worker explicitly rejects the message and instructs the broker to requeue it, passing it to the next waiting worker.
-            \item \textit{Crash handling:} If a worker crashes while in the critical section, the TCP connection to the MOM drops. The broker detects this failure and automatically returns the "Unacked" token to the front of the queue. This completely eliminates the risk of a lost token and distributed deadlocks.
+            \item \textit{Crash handling:} If a worker crashes while in the critical section, the TCP connection to the MOM drops. The broker detects this failure and automatically returns the `Unacked' token to the front of the queue. This completely eliminates the risk of a lost token and distributed deadlocks.
         \end{itemize}
     \end{enumerate}
     \begin{figure}[h]
         \centering
-        \includegraphics[width=0.7\textwidth]{figures/MOM/token_flow_diagram.pdf}
-        \caption{Token Lifecycle within the RabbitMQ MOM broker.}
-        \label{fig:token_flow}
+        \includegraphics[height=0.8\textheight]{figures/MOM/token_flow_diagram.png}
+        \caption{Token Lifecycle within the RabbitMQ MOM broker.}\label{fig:token_flow}
     \end{figure}
     \section{Implementation}
     The system is implemented in Java using the RabbitMQ AMQP client, leveraging a modular architecture that separates configuration concerns from the domain logic.
@@ -167,11 +166,13 @@
     The \texttt{DistributedLock} class implements the low-level AMQP interaction:
 
     \begin{itemize}
-        \item \textbf{Initialization (\texttt{init()}):} The system uses \texttt{queueDeclarePassive} to check for the existence of the main lock queue. If missing, it attempts to declare an exclusive queue named \texttt{<queueName>\_init\_lock}. RabbitMQ's atomicity ensures that only the first thread succeeds; others receive an \texttt{IOException}. The "winner" thread suppresses this exception, creates the \texttt{PERSISTENT\_TEXT\_PLAIN} token, and publishes it to the main queue using \texttt{basicPublish}.
+        \item \textbf{Initialization (\texttt{init()}):} The system uses \texttt{queueDeclarePassive} to check for the existence of the main lock queue. If missing, it attempts to declare an exclusive queue named \texttt{<queueName>\_init\_lock}. RabbitMQ's atomicity ensures that only the first thread succeeds; others receive an \texttt{IOException}. The `winner' thread suppresses this exception, creates the \texttt{PERSISTENT\_TEXT\_PLAIN} token, and publishes it to the main queue using \texttt{basicPublish}. % chktex 36
 
-        \item \textbf{Acquisition (\texttt{acquire()}):} Workers prepare to consume the token. We invoke \texttt{channel.basicQos(1)} to instruct the broker to dispatch exactly one token per channel. A \texttt{DeliverCallback} is registered via \texttt{basicConsume} with \texttt{autoAck} set to \texttt{false}. Upon token arrival, a \texttt{CompletableFuture} is resolved with the message's \texttt{deliveryTag}, allowing the main thread to unblock and enter the critical section while the message remains "unacknowledged".
+        \item \textbf{Acquisition (\texttt{acquire()}):} Workers prepare to consume the token. We invoke \texttt{channel.basicQos(1)} to instruct the broker to dispatch exactly one token per channel. % chktex 36
+        To ensure that the worker requesting does not poll, resulting in a busy wait, a \texttt{DeliverCallback} is registered and a \texttt{Future} is created so that the thread can wait on its completion.
+        Upon token arrival, the \texttt{CompletableFuture} is resolved with the message's \texttt{deliveryTag}, allowing the main thread to unblock and enter the critical section while the message remains `unacknowledged'.
 
-        \item \textbf{Release (\texttt{release()}):} Upon exiting the critical section, the worker executes \texttt{channel.basicCancel(consumerTag)} to unsubscribe, preventing immediate re-acquisition. Finally, it invokes \texttt{channel.basicReject(currentDeliveryTag, true)}. The \texttt{requeue} flag (set to \texttt{true}) is critical here, as it physically pushes the token back to the front of the RabbitMQ FIFO queue, making it immediately available for the next waiting consumer.
+        \item \textbf{Release (\texttt{release()}):} Upon exiting the critical section, the worker executes \texttt{channel.\-basicCancel()} to unsubscribe the consumer, preventing immediate re-acquisition. Finally, it invokes \texttt{channel.\-basicReject()} to reject the message. The \texttt{requeue} flag is set to \texttt{true} and instructs the MOM to put the token back to the front of the queue, making it immediately available for the next waiting consumer.% chktex 36
     \end{itemize}
 
 \end{document}
