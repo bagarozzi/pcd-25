@@ -32,6 +32,7 @@ public class GamePanel extends JPanel {
 
                 btn.addActionListener(e -> {
                     if(buttons[row][col].getText().isEmpty()) {
+                        btn.setEnabled(false);
                         btn.setText(player.getSign().toString());
                         new Thread(() -> {
                             p.makeMove(new Pair(row, col));

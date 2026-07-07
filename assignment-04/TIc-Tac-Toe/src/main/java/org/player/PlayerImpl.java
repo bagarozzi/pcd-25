@@ -14,7 +14,7 @@ public class PlayerImpl extends UnicastRemoteObject implements Player, PlayerRem
     private final Server gm;
     private MatchManagerRemote match;
     private final GameFrame gui;
-    private char sign;
+    private volatile char sign;
 
     public PlayerImpl(Server gm) throws RemoteException {
         super();
