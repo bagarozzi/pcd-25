@@ -23,12 +23,12 @@ public class GameBoard {
         DRAW
     }
 
-    public result makeMove(Pair pos, char sign){
+    public synchronized result makeMove(Pair pos, char sign){
         board[pos.x()][pos.y()] = sign;
         return checkForWinner(pos, sign);
     }
 
-    public char[][] getBoard(){
+    public synchronized char[][] getBoard(){
         return board;
     }
 
