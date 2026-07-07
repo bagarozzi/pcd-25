@@ -219,9 +219,7 @@ On the client side, GamePanel displays the board as a 3x3 button grid.
 When a player clicks a button, the ActionListener checks if the cell is 
 empty and sends the move to the server via PlayerImpl.makeMove(). Server callbacks are received by 
 PlayerImpl and forwarded to the GUI thread using SwingUtilities.invokeLater() 
-to maintain Swing thread safety. Additionally, PlayerImpl declares sign as 
-volatile to ensure visibility between the RMI thread that updates it and 
-the GUI thread that reads it.
+to maintain Swing thread safety.
 
 
     \clearpage
