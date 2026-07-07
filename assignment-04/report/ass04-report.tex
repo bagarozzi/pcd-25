@@ -114,9 +114,115 @@
 
     \section{Analysis}
 
-    \section{Design}
+The project consists of the development of a distributed Tic-Tac-Toe game based on Java RMI. Multiple players can connect to the server and request to participate in a match. The server is responsible for pairing players by assigning a newly connected player to an existing waiting match whenever possible, or creating a new match otherwise. Since several connection requests may arrive concurrently, the matchmaking mechanism must ensure consistency and prevent synchronization issues.
+
+Once a match starts, each pair of players interacts within its own game instance. The server must therefore support multiple matches running simultaneously while keeping their states completely independent. Actions performed in one game must not affect any other ongoing match, guaranteeing proper isolation between game sessions.
+
+A key aspect of the system is the management of turns and shared game state. Although client requests are executed concurrently through remote method invocations, the game logic requires players to act in a strictly sequential manner. At any given time, only the player whose turn it is can perform a move, while the opponent must wait. This guarantees that moves are processed atomically and prevents race conditions that could compromise the correctness of the game.
+
+The game board represents a shared resource accessed by both players. The system must ensure that every move is correctly reflected in the board state, that no two players can occupy the same cell, and that all game information, including the current turn and match outcome, remains consistent throughout the execution. Furthermore, updates performed by one player must become immediately visible to the opponent so that both clients always observe the same state of the game.
+
+As the application is implemented as a distributed system using Java RMI, special attention must be paid to concurrency and synchronization. Remote requests can be handled by different server-side threads, making concurrent access to shared resources unavoidable. Appropriate synchronization mechanisms are therefore required to guarantee data consistency, correct turn management, and reliable communication between clients and server.
+  \section{Design}
+
+The system adopts a client-server architecture where the server manages 
+game state and match coordination, while clients handle user interaction 
+through a graphical interface.
+
+To clearly delineate component responsibilities and facilitate synchronization, 
+the design employs two distinct interface types:
+
+\textbf{Remote interfaces} define contracts for RMI method invocations that 
+cross the network boundary:
+\begin{itemize}
+    \item \textbf{Server}: exposed for client connection and match joining
+    \item \textbf{MatchManagerRemote}: defines remote operations on a match
+    \item \textbf{PlayerRemote}: defines server-to-client callbacks
+\end{itemize}
+These methods execute in different RMI dispatcher threads on the server, 
+requiring explicit synchronization to handle concurrent access.
+
+\textbf{Local interfaces} define contracts for in-process communication 
+within the same JVM:
+\begin{itemize}
+    \item \textbf{Player}: GUI-to-logic communication on the client
+    \item \textbf{MatchManager}: internal server-side match management
+\end{itemize}
+This separation of concerns ensures that each component is aware of its 
+execution context and the synchronization requirements it entails. Remote 
+implementations must protect against concurrent RMI calls, while local 
+implementations can employ simpler patterns. As a result, race conditions 
+are localized to specific synchronized methods rather than scattered 
+throughout the codebase.
+
+Critical sections on the server that receive concurrent RMI requests are 
+protected through synchronized methods. This serializes access to shared 
+state (match list, game board, turn management) and ensures atomicity of 
+operations. The strategy maintains isolation between independent matches 
+while preventing race conditions within each match.
 
     \section{Implementation}
+
+The game execution begins on the client side when a player initiates a join 
+request through the GUI. GamePanel invokes PlayerImpl.joinGame(), which 
+performs an RMI call to the server's GameManager.
+
+GameManager receives the remote request and executes its synchronized 
+joinGame() method to ensure atomic match-pairing. It searches for an 
+incomplete match; if found, assigns the player to that match, otherwise 
+creates a new one. The method returns a reference to MatchManagerRemote, 
+which the client stores for subsequent game operations.
+
+\begin{verbatim}
+public synchronized MatchManagerRemote joinGame(PlayerRemote player) {
+    Optional<MatchManager> res = matches.stream()
+            .filter(MatchManager::matchNotFull)
+            .findFirst();
+    if(res.isPresent()){
+        res.get().addPlayer(player);
+        return (MatchManagerImpl) res.get();
+    }
+    return createGame(player);
+}
+\end{verbatim}
+
+Once both players have joined, MatchManagerImpl (the remote match handler) 
+is responsible for orchestrating the game. It manages player references, 
+game state, and board updates. The MatchManagerImpl.addPlayer() method is 
+synchronized to prevent race conditions during player assignment and state 
+initialization. Similarly, the synchronized notifyMove() method serializes 
+move execution and enforces strict turn alternation, ensuring that only one 
+player can act at a time.
+
+\begin{verbatim}
+public synchronized void notifyMove(Pair pos, char sign) throws RemoteException {
+    if (state == State.PLAYER_1_MOVE) {
+        GameBoard.result res = board.makeMove(pos, sign);
+        // ... handle result
+        state = State.PLAYER_2_MOVE;
+    } else if (state == State.PLAYER_2_MOVE) {
+        // ... similar logic
+        state = State.PLAYER_1_MOVE;
+    }
+}
+\end{verbatim}
+
+Board updates are protected through the synchronized GameBoard.makeMove() 
+method, which ensures that moves are atomic and immediately visible to all 
+threads.
+
+After each move, MatchManagerImpl sends RMI callbacks to both players 
+(via PlayerRemote) to notify them of the move result and whose turn it is. 
+These callbacks trigger GUI updates on the client side.
+
+On the client side, GamePanel displays the board as a 3x3 button grid. 
+When a player clicks a button, the ActionListener checks if the cell is 
+empty and sends the move to the server via PlayerImpl.makeMove(). Server callbacks are received by 
+PlayerImpl and forwarded to the GUI thread using SwingUtilities.invokeLater() 
+to maintain Swing thread safety. Additionally, PlayerImpl declares sign as 
+volatile to ensure visibility between the RMI thread that updates it and 
+the GUI thread that reads it.
+
 
     \clearpage
     \part[Distributed Critical Sections throught a MOM]{Distributed Critical Sections throught a MOM \\\LARGE{High-level, message-oriented middleware for critical sections between processes in distributed system}}
