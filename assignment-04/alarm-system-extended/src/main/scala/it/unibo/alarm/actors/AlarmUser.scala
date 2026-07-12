@@ -79,9 +79,9 @@ object AlarmUser:
     println("-" * 50 + " STARTING ZONE NODES " + "-" * 50)
     println("-" * 100)
 
-    ZoneNode(FiniteDuration(10, TimeUnit.SECONDS), FiniteDuration(15, TimeUnit.SECONDS))
-    ZoneNode(FiniteDuration(10, TimeUnit.SECONDS), FiniteDuration(20, TimeUnit.SECONDS))
-    ZoneNode(FiniteDuration(10, TimeUnit.SECONDS), FiniteDuration(22, TimeUnit.SECONDS))
+    ZoneNode()
+    ZoneNode()
+    ZoneNode()
 
     firstFloorSensors.foreach( (id, st) => SensorNode(id,st, "firstFloor"))
     groundFloorSensors.foreach( (id, st) => SensorNode(id,st, "groundFloor"))
@@ -121,6 +121,14 @@ object AlarmUser:
     kitchenKeypad ! KeypadActor.DisarmAll("1234")
 
     Thread.sleep(5000)
+
+    println("-" * 100)
+    println("-" * 50 + " RECOVERY MODE: DISABLING IT WITH PIN " + "-" * 50)
+    println("-" * 100)
+
+    kitchenKeypad ! KeypadActor.Recover("1234")
+
+    Thread.sleep(4000)
 
     println("-"*50 + "INITIALIZATION DONE" + "-"*50)
     println("-"*100)
