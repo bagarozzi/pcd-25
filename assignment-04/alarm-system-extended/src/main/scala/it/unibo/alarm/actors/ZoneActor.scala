@@ -11,6 +11,7 @@ import com.typesafe.config.ConfigFactory
 import it.unibo.alarm.actors.AlarmActor.Command.Trigger
 import org.apache.pekko.cluster.sharding.ShardRegion.ClusterShardingStats
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
 /**
@@ -35,19 +36,27 @@ object ZoneActor:
   /**
    * Initialize the Zone actor and the sensors passed.
    * @param zoneId the name of this zone
-   * @param sensors the sensors' type managed by the actor
-   * @param entryTimeout the time to wait between a sensor's triggering and the alarm ringing
-   * @param exitTimeout the time to wait between the zone's arming command and the actual arming
    * @return the actor's behavior
    */
-  def apply(zoneId: String, sensors: Set[SensorActor.Type], entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Behavior[Command] =
+  def apply(zoneId: String): Behavior[Command] =
     Behaviors.setup: context =>
         Behaviors.withTimers: timers  =>
-          context.log.info(s"Spawned sharded ZoneActor for $zoneId")
+          val config = context.system.settings.config
 
-          sensors.zipWithIndex.foreach((s, i) => context.spawn(SensorActor(context.self, s), s"sensor-$i"))
+          def getTimeout(configKey: String): FiniteDuration =
+            val specificPath = s"alarm-system.zones.$zoneId.$configKey"
+            val defaultPath = s"alarm-system.zones.default.$configKey"
 
-          context.log.info(s"Spawned sensors for ZoneActor $zoneId")
+            val pathToUse = if (config.hasPath(specificPath)) specificPath else defaultPath
+            val durationStr = config.getDuration(pathToUse).toMillis
+            FiniteDuration(durationStr, TimeUnit.MILLISECONDS)
+
+          // 4. Retrieve the timeouts
+          val entryTimeout = getTimeout("entry-timeout")
+          val exitTimeout = getTimeout("exit-timeout")
+
+          context.log.info(s"Spawned sharded ZoneActor for $zoneId with timeouts $entryTimeout/$exitTimeout")
+
 
           val sharding = ClusterSharding(context.system)
           val alarmActorRef: EntityRef[AlarmActor.Command] = sharding.entityRefFor(AlarmActor.TypeKey, "central-alarm")
