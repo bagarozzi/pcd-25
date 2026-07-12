@@ -5,7 +5,7 @@ import it.unibo.alarm.actors.KeypadActor.Command
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import it.unibo.alarm.cluster.CborSerializable
 import org.apache.pekko.actor.typed.pubsub.Topic
-import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.actor.typed.scaladsl.{ActorContext, Behaviors}
 import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityRef, EntityTypeKey}
 
 import java.util.concurrent.TimeUnit
@@ -28,6 +28,8 @@ object AlarmActor:
     case object Trigger extends Command
     case class Alert(from: String) extends Command
     case object Silence extends Command
+    case object Activate extends Command
+    case object RecoveryMode extends Command
 
   export Command.*
 
@@ -41,9 +43,35 @@ object AlarmActor:
       val zoneActors: Map[String, EntityRef[ZoneActor.Command]] =
         zones.map(z => z -> sharding.entityRefFor(ZoneActor.TypeKey, z)).toMap
 
-      zoneActors.values.foreach(zoneRef => zoneRef ! ZoneActor.Command.Disarm)
+      zoneActors.values.foreach(zoneRef => zoneRef ! ZoneActor.Command.RecoveryMode)
 
-      activeState(zoneActors, Map.empty, keypadTopic)
+      recoveryState(zoneActors, Map.empty, keypadTopic)
+
+  private def handleRecoveryMessage(context: ActorContext[Command], message: Command,
+                                    disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
+                                    armedZones: Map[String, EntityRef[ZoneActor.Command]],
+                                    keypad: ActorRef[Topic.Command[KeypadActor.Command]])
+                                   (specificState: => Behavior[Command]): Behavior[Command] =
+    message match
+      case RecoveryMode =>
+        context.log.info(s"[CENTRAL-ALARM]: Recovery mode message received from a Zone, going into recovery...")
+        sendMessage((armedZones ++ disarmedZones).values, ZoneActor.Command.RecoveryMode)
+        keypad ! Topic.publish(KeypadActor.Command.RecoveryMode)
+        recoveryState(disarmedZones, armedZones, keypad)
+      case _ => specificState
+
+  private def recoveryState(
+    disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
+    armedZones: Map[String, EntityRef[ZoneActor.Command]],
+    keypad: ActorRef[Topic.Command[KeypadActor.Command]]
+  ): Behavior[Command] =
+    Behaviors.receive: (context, message) =>
+      message match
+        case Activate =>
+          context.log.info("[CENTRAL-ALARM]: Recovery message received, activating all the zones...")
+          sendMessage((armedZones ++ disarmedZones).values, ZoneActor.Command.Initialize)
+          disarm(armedZones.keySet, disarmedZones, armedZones, keypad)
+        case _ => Behaviors.same
 
   private def activeState(
        disarmedZones: Map[String, EntityRef[ZoneActor.Command]],
@@ -108,3 +136,6 @@ object AlarmActor:
     validZonesMap.values.foreach(consumer)
 
     validZonesMap
+
+  private def sendMessage(target: Iterable[EntityRef[ZoneActor.Command]], message: ZoneActor.Command): Unit =
+    target.foreach(t => t ! message)
