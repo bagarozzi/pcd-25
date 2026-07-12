@@ -10,12 +10,12 @@ import it.unibo.alarm.actors.{AlarmActor, SensorActor, ZoneActor}
 
 object ZoneNode:
 
-    def apply(entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Unit =
+    def apply(): Unit =
         val config = ConfigFactory.parseString("pekko.remote.artery.canonical.port = 0")
             .withFallback(ConfigFactory.load("application.conf"))
-        val _ = ActorSystem(initialization(entryTimeout, exitTimeout), "AlarmCluster", config)
+        val _ = ActorSystem(initialization(), "AlarmCluster", config)
 
-    private def initialization(entryTimeout: FiniteDuration, exitTimeout: FiniteDuration): Behavior[Nothing] =
+    private def initialization(): Behavior[Nothing] =
         Behaviors.setup: context =>
             val sharding = ClusterSharding(context.system)
 
