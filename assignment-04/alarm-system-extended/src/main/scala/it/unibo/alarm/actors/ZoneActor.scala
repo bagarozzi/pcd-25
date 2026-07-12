@@ -30,6 +30,8 @@ object ZoneActor:
     case object Alert extends Command
     case object EntryDelayOver extends Command
     case object ArmDelayOver extends Command
+    case object Initialize extends Command
+    case object RecoveryMode extends Command
 
   export Command.*
 
@@ -61,7 +63,8 @@ object ZoneActor:
           val sharding = ClusterSharding(context.system)
           val alarmActorRef: EntityRef[AlarmActor.Command] = sharding.entityRefFor(AlarmActor.TypeKey, "central-alarm")
 
-          new ZoneActor(zoneId, alarmActorRef, timers, entryTimeout, exitTimeout).disarmed()
+          alarmActorRef ! AlarmActor.Command.RecoveryMode
+          new ZoneActor(zoneId, alarmActorRef, timers, entryTimeout, exitTimeout).recoveryMode()
 
 
   class ZoneActor(
@@ -72,55 +75,81 @@ object ZoneActor:
     val exitTimeout: FiniteDuration,
                  ):
 
-    def disarmed(): Behavior[Command] =
-      Behaviors.receive: (context, message) =>
+    private def handleRecoveryMessage(context: ActorContext[Command], message: Command)
+                                     (specificState: => Behavior[Command]): Behavior[Command] =
+      message match
+        case RecoveryMode =>
+          context.log.info(s"[ZONE-$zoneId]: Recovery mode message received from Central Alarm, going into recovery...")
+          recoveryMode()
+        case _ => specificState
+
+    def recoveryMode(): Behavior[Command] =
+    Behaviors.receive: (context, message) =>
         message match
-          case Arm =>
-            context.log.info(s"Zone $zoneId started arming.")
-            exitDelay()
+          case Initialize =>
+            context.log.info(s"[ZONE-$zoneId]: Recovery message received, going into disarmed state")
+            disarmed()
           case _ => Behaviors.same
+
+    private def disarmed(): Behavior[Command] =
+      Behaviors.receive: (context, message) =>
+        handleRecoveryMessage(context, message) {
+          message match
+            case Arm =>
+              context.log.info(s"Zone $zoneId started arming.")
+              exitDelay()
+            case _ => Behaviors.same
+        }
 
     private def exitDelay(): Behavior[Command] =
       timers.startSingleTimer(ArmDelayOver, exitTimeout)
       Behaviors.receive: (context, message) =>
-        message match
-          case Disarm =>
-            context.log.info(s"Zone $zoneId disarmed.")
-            disarmed()
-          case ArmDelayOver =>
-            context.log.info(s"Zone $zoneId armed.")
-            armed()
-          case _ => Behaviors.same
+          handleRecoveryMessage(context, message) {
+            message match
+              case Disarm =>
+                context.log.info(s"Zone $zoneId disarmed.")
+                disarmed()
+              case ArmDelayOver =>
+                context.log.info(s"Zone $zoneId armed.")
+                armed()
+              case _ => Behaviors.same
+          }
 
     private def armed(): Behavior[Command] =
       Behaviors.receive: (context, message) =>
-        message match
-          case Alert =>
-            alarmActor ! AlarmActor.Command.Alert(context.self.path.toStringWithoutAddress)
-            context.log.info(s"Zone $zoneId intrusion detected, started timer.")
-            entryDelay()
-          case Disarm =>
-            context.log.info(s"Zone $zoneId disarmed.")
-            disarmed()
-          case _ => Behaviors.same
+          handleRecoveryMessage(context, message) {
+            message match
+              case Alert =>
+                alarmActor ! AlarmActor.Command.Alert(context.self.path.toStringWithoutAddress)
+                context.log.info(s"Zone $zoneId intrusion detected, started timer.")
+                entryDelay()
+              case Disarm =>
+                context.log.info(s"Zone $zoneId disarmed.")
+                disarmed()
+              case _ => Behaviors.same
+          }
 
     private def alarm() : Behavior[Command] =
       Behaviors.receive: (context, message) =>
-        message match
-          case Disarm =>
-            context.log.info(s"Zone $zoneId disarmed.")
-            disarmed()
-          case _ => Behaviors.same
+          handleRecoveryMessage(context, message) {
+            message match
+              case Disarm =>
+                context.log.info(s"Zone $zoneId disarmed.")
+                disarmed()
+              case _ => Behaviors.same
+          }
 
     private def entryDelay(): Behavior[Command] =
       timers.startSingleTimer(EntryDelayOver, entryTimeout)
       Behaviors.receive: (context, message) =>
-        message match
-        case Disarm  =>
-          context.log.info(s"Zone $zoneId disarmed.")
-          disarmed()
-        case EntryDelayOver =>
-          context.log.info(s"Entry delay over in zone $zoneId")
-          alarmActor ! Trigger
-          alarm()
-        case _ => Behaviors.same
+          handleRecoveryMessage(context, message) {
+            message match
+              case Disarm =>
+                context.log.info(s"Zone $zoneId disarmed.")
+                disarmed()
+              case EntryDelayOver =>
+                context.log.info(s"Entry delay over in zone $zoneId")
+                alarmActor ! Trigger
+                alarm()
+              case _ => Behaviors.same
+          }
