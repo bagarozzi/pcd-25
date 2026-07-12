@@ -5,12 +5,15 @@ import it.unibo.alarm.cluster.CborSerializable
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
 import org.apache.pekko.actor.typed.scaladsl.*
+import org.apache.pekko.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityRef, EntityTypeKey}
 
 import scala.reflect.ClassTag
 
 object SensorActor:
 
   sealed trait Command extends CborSerializable
+
+  val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("SensorEntity")
 
   enum Type:
     case Motion
@@ -26,16 +29,20 @@ object SensorActor:
     ServiceKey[T](sensorId)
   }
 
-  def apply(father: ActorRef[ZoneActor.Command], sensorType: Type): Behavior[Command] =
+  def apply(sensorId: String, zoneId: String, sensorType: Type): Behavior[Command] =
     Behaviors.setup: context =>
       context.system.receptionist ! Receptionist.Register(createSensorKey("sensor"), context.self)
-      context.log.info("Spawned " + context.self.path.name + " of type " + sensorType.toString + " in zone " + context.self.path.parent.name + ".")
-      active(father)
 
-  private def active(father: ActorRef[ZoneActor.Command]): Behavior[Command] =
+      val sharding = ClusterSharding(context.system)
+      val father: EntityRef[ZoneActor.Command] = sharding.entityRefFor(ZoneActor.TypeKey, zoneId)
+
+      context.log.info("Spawned " + sensorId + " of type " + sensorType.toString + " in zone " + zoneId + ".")
+      active(father, sensorId)
+
+  private def active(father: EntityRef[ZoneActor.Command], sensorId: String): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
         case Trigger =>
-          context.log.info( context.self.path.name + "-" + context.self.path.parent.name + " triggered!" )
+          context.log.info( sensorId + " triggered!" )
           father ! Alert
           Behaviors.same
