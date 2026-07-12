@@ -3,7 +3,7 @@ package it.unibo.alarm.actors
 import com.typesafe.config.ConfigFactory
 import it.unibo.alarm.actors.KeypadActor.Command.Silence
 import it.unibo.alarm.actors.ZoneActor.Command.Alert
-import it.unibo.alarm.cluster.{AlarmNode, KeypadNode, ZoneNode}
+import it.unibo.alarm.cluster.{AlarmNode, KeypadNode, SensorNode, ZoneNode}
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
 import org.apache.pekko.actor.typed.scaladsl.*
@@ -46,17 +46,32 @@ object AlarmUser:
   @main
   def run(): Unit =
 
-    val homeMap = Map(
-      "kitchen" -> Set(SensorActor.Type.Door, SensorActor.Type.Motion),
-      "outside" -> Set(SensorActor.Type.Door, SensorActor.Type.Motion),
-      "bedroom" -> Set(SensorActor.Type.Door, SensorActor.Type.Motion)
+    val zones = Set(
+        "firstFloor",
+        "groundFloor",
+        "garden"
     )
+
+    val firstFloorSensors = Map(
+        "hallway-motion" -> SensorActor.Type.Motion,
+        "bedroom-window" -> SensorActor.Type.Door
+    )
+
+      val groundFloorSensors = Map(
+          "kitchen-motion" -> SensorActor.Type.Motion,
+          "front-door" -> SensorActor.Type.Door
+      )
+
+      val outsideSensors = Map(
+          "porch-motion" -> SensorActor.Type.Motion,
+          "garden-motion" -> SensorActor.Type.Motion,
+      )
 
     println("-" * 100)
     println("-" * 50 + " STARTING CENTRAL ALARM NODE " + "-" * 50)
     println("-" * 100)
 
-    AlarmNode(homeMap.keySet)
+    AlarmNode(zones)
 
     Thread.sleep(3000)
 
@@ -64,9 +79,13 @@ object AlarmUser:
     println("-" * 50 + " STARTING ZONE NODES " + "-" * 50)
     println("-" * 100)
 
+    ZoneNode(FiniteDuration(10, TimeUnit.SECONDS), FiniteDuration(15, TimeUnit.SECONDS))
+    ZoneNode(FiniteDuration(10, TimeUnit.SECONDS), FiniteDuration(20, TimeUnit.SECONDS))
+    ZoneNode(FiniteDuration(10, TimeUnit.SECONDS), FiniteDuration(22, TimeUnit.SECONDS))
 
-    homeMap.foreach(entry => ZoneNode(entry._2, FiniteDuration(10, TimeUnit.SECONDS), FiniteDuration(15, TimeUnit.SECONDS)))
-
+    firstFloorSensors.foreach( (id, st) => SensorNode(id,st, "firstFloor"))
+    groundFloorSensors.foreach( (id, st) => SensorNode(id,st, "groundFloor"))
+    outsideSensors.foreach( (id, st) => SensorNode(id,st, "garden"))
 
     Thread.sleep(5000)
 
@@ -112,11 +131,11 @@ object AlarmUser:
     Thread.sleep(1000)
 
     println("-" * 100)
-    println("-" * 50 + "Arming zone \"kitchen\"" + "-" * 50 + "\n")
+    println("-" * 50 + "Arming zone \"First Floor\"" + "-" * 50 + "\n")
 
-    kitchenKeypad ! KeypadActor.Arm("1234", "kitchen")
+    kitchenKeypad ! KeypadActor.Arm("1234", "firstFloor")
 
-    Thread.sleep(16500)
+    Thread.sleep(19500)
 
     println("-" * 100)
     println("-" * 50 + "Triggering sensors" + "-" * 50 + "\n")
@@ -126,14 +145,14 @@ object AlarmUser:
     println("-" * 100)
     println("-" * 50 + "Disarming within the entry-delay" + "-" * 50 + "\n")
 
-    kitchenKeypad ! KeypadActor.Disarm("1234","kitchen")
+    kitchenKeypad ! KeypadActor.Disarm("1234","firstFloor")
 
     Thread.sleep(2000)
 
     println("-" * 100)
-    println("-" * 50 + "Arming zone \"outside\"" + "-" * 50 + "\n")
+    println("-" * 50 + "Arming zone \"Garden\"" + "-" * 50 + "\n")
 
-    bedroomKeypad ! KeypadActor.Arm("4321", "outside")
+    bedroomKeypad ! KeypadActor.Arm("4321", "garden")
 
     Thread.sleep(16500)
 
@@ -147,7 +166,7 @@ object AlarmUser:
     println("-" * 100)
     println("-" * 50 + "Wrong pin on entry-delay, alarm should sound immediately" + "-" * 50 + "\n")
 
-    bedroomKeypad ! KeypadActor.Disarm("5678","outside")
+    bedroomKeypad ! KeypadActor.Disarm("5678","garden")
 
     Thread.sleep(5000)
 
