@@ -29,7 +29,7 @@
     \clearpage
     \part[Extension of Smart Home Alarm System]{Smart Home Alarm System \\ \LARGE{Asynchronous message passing based on actors, distributed in a cluster using Apache Pekko}}
 
-    \section{Analysis}
+    \section{Analysis}\label{sec:alarm-analysis}
     The goal is to distribute the Smart Home Alarm System implemented in the \href{https://github.com/bagarozzi/pcd-25/tree/3f8c6f27e9e44c2a17f87c5eae827dfdc428e8c7/assignment-03}{previous assignment}.
 
     Even thought this is a simulation and not an actual alarm system, the architecture
@@ -63,7 +63,7 @@
     this is done through a \textit{shard region} that acts as a router.
     To enable this, actors are not directly spawned in the node where we want them but rather is declared that
     a sharded actor \textit{can} be created on the node. This mechanism can be controlled even more throught \textit{roles}.
-    By specifying the role an actor has to have to be able to create a shard, if a node hasn't got that role then a
+    By specifying the role a node has to have to be able to create a shard, if a node hasn't got that role then a
     proxy is created to route messages to the shard.
 
     \begin{figure}[H]
@@ -85,7 +85,28 @@
     \end{figure}
 
     The implementation shards the \texttt{ZoneActor}s and the \texttt{AlarmActor}s but leaves as normal nodes
-    the Keypads. The \texttt{SensorActor}s remain children of the ZoneActors, given that their behavior does not change.
+    the Keypads. In contrary with what is said in Section~\ref{sec:alarm-analysis}
+    the \texttt{SensorActor}s are distributed and statically placed in some nodes (not sharded).
+
+    \subsection{Zone configuration injection}\label{sec:zone-config}
+
+    Sharding an actor means it can be instantiated everywhere, so the \texttt{init()} method gives the node
+    a \textit{blueprint} of how to create it. This is a double-edged sword, as static configurations such as 
+    IDs and custom timeouts can't be passed to the \texttt{init()} method.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.80\textwidth]{figures/alarm/config.png}
+        \caption{A \texttt{ZoneActor} reads the \texttt{.conf} file}\label{fig:zone-config}
+    \end{figure}
+
+    To solve this, it's exploited the configuration \texttt{application.conf} file, where actors take their values
+    from. In this way the shard creation is purely dynamic and does not depend on any value passed.
+    This also brings flexiblity to the cluster: if a node with a ZoneActor crashes, the shard coordinator
+    will create it elsewhere and the ZoneActor will take its configuration automatically. The sensors
+    will not experience any change, as their messages are proxied throught the shard coordinator.
+
+    \subsection{Keypads grouping with Pub-Sub}
 
     The behavior of the keypads change: a pub-sub topic is created to group together all the keypad nodes so that
     the AlarmActor can talk to them at once, the same topic is used to keypad-to-keypad communication.
@@ -100,6 +121,23 @@
         \includegraphics[width=0.80\textwidth]{figures/alarm/keypad-topic.png}
         \caption{Broadcasting the disarming to the other keypads (line 3)}\label{fig:topic}
     \end{figure}
+
+    \subsection{Recovery mechanisms}
+    As mentioned in Section~\ref{sec:zone-config}, sharding bring flexibility. As \texttt{ZoneActor}s
+    are simply logical entities and are not physically tied to a specific zone they can be spawned eveywhere.
+    In case of a node's crash, the ZoneActors can be spawned anywhere else, with the Shard Coordinator managing 
+    the message passing.
+
+    If the central alarm or one of the zones crashes, upon recovery of that zone the
+    failure is propagated to everyone and the system enters a recovery mode where 
+    the user has to re-activate it. At that point the system resumes its work but is
+    totally disarmed.
+
+    A better approach could be taken, maybe by remembering which zones where armed before
+    the crash to restore as much of the previous state as possible.
+
+
+    \subsection{Shard creation order and Testing}
 
     A note has to be made on shard creation: sharded actors are not created immediately, but are dinamically allocated
     when they are needed, and potentially deallocated when inactive (\textit{passivated}). So when the cluster is created for testing,
