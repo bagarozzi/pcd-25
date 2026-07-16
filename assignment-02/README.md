@@ -1,41 +1,27 @@
-PCD a.y. 2025-2026 - ISI LM UNIBO - Cesena Campus
+# Assignment 02 - FSStat
 
-# Assignment #02 -  `FSStat`
-
-v1.0.0-20260412
-
-The assignment is about implementing a library called `FSStatLib` providing an **asynchronous  method** called `getFSReport` (details in the following) and a simple program exemplifying the use of the library.  
-
-The library and the example program must be developed using the three different programming approaches discussed in the course, so producing three different versions:  
-1. Asynchronous programming based on event-loops 
-2. Reactive programming using Rx
-3. Virtual Threads
-
-**Important remark**: each version should be designed focussing exclusively on the programming discipline that characterises each approach. That is: don't generalise or reuse code when this would negatively impact on the design and programming discipline promoted by each individual approach.
-
-### Details
-
-The asynchronous method `getFSReport` must compute some statistics about the size of the files of some directory `D`, including recursively its subdirectories. In particular, the method should asynchronously compute and return a report `R` including:
-- The total number of files that belongs to `D` (including subdirectories, recursively);
-- The distribution of file sizes, that is: given a file size `MaxFS` and a number of file size bands `NB` dividing the file size range `[0, MaxFS]`, the method computes for each band the number of files with a size included in it and the number of files with a size bigger that `MaxFS` (so complexively `NB` + 1 size ranges).
-
-`D`, `MaxFS`, `NB`are parameters of the method. 
-
-### Optional point [*]
-
-Develop an *interactive* extension of the library, which should provide the possibility to:
-- possibly stop the generation of a report;
-- dynamically get updates about statitistics, in order to e.g. visualise them.
-
-A minimal GUI program can be used to show the features of the extended version, with e.g. buttons to start and stop the generation of report and a text area (or, a graphic panel) to visulise dynamically the statitics.
-  
-
-**[*]** mandatory for students aiming at excellence grade (30 cum laude).
-
-### The deliverable
-
-The deliverable must be a zipped folder `Assignment-02`, to be submitted on the course web site, including:  
-- `src` directory with sources
-- `doc` directory with a short report in PDF (`report.pdf`). The report should include:
-	- A brief analsysis of the problem, focusing in particular aspects that are relevant from a  concurrent point of view.
-	- A brief description of the strategy adopted
+The assignment 2 implements and recalls the following theory topics:
+- **Event-loop based control flow architecture**:
+	- the event-loop
+	- never-blocking rule
+	- use of asynchrnous tasks exhttps://meet.google.com/ucy-fqih-cfoecuted by other threads
+- **Continuation Passing Style** (CPS): callbacks, how they relate with the Event queue (*who executes the callbacks?*), the callback of hell and desperation 
+- **Advantages of async programming**: single thread for multiple tasks, no races, no deadlocks (always same thread)
+- **Promises**: flattening the pyramid of hell, elegant way of representing a future, async result.
+- **Async/Await language extension**: writing asynchronous programs in a sequential way. Doesn't block
+the control flow (*co-routine based*) and can pass arguments.
+- **Reactive programming**: declarative development of event-drive problems. Solving the problems
+of the *inversion of control*, abstracting from time-varying events, doing what classic async can't do
+- **Type of abstractions**: **event streams** (discrete, intermittent values), signals (dense, continuous)
+- Propagation of change: useful in a declarative way
+- **Propagation models**: push (source pushes new data), **pull** (consumer requests it)
+- Lifting: a variable is part of a reactive chain so it's updated
+- **Hot vs. Cold**: every subscriber either gets every element of the stream or start receiving from
+when it has subscribed 
+- **Lightweigth threads - _Fibers_**: preemptive, cooperative, lightweight thread useful for multitasking. Like coroutines but at different level of abstraction (*coroutines are language*)
+- **Memory footprint**: solving practical limits on how many threads one can spawn.
+- **Thread-per-task applications**: useful when serving many requests, higher throughput (***project is based on this, in a fork-join architecture***)
+- **Mounting on carrier threads and _pinning_**:  vthreads are easily assigned to a platform thread
+and unmount when a blocking operation happens, although they can be pinned by a synchronized call.
+- **Little's law**: throughput only depends from execution speed and concurrent operations.
+- 
