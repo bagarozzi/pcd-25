@@ -10,7 +10,6 @@ public class Poool {
     public static void main(String[] args) {
         View view = new View(FRAME_WIDTH, FRAME_HEIGHT);
         PoolGameController controller = new PoolGameController(view);
-        view.setController(controller);
         controller.start();
         view.display();
     }

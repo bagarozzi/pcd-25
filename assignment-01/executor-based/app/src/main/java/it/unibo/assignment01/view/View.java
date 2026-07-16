@@ -1,7 +1,4 @@
 package it.unibo.assignment01.view;
-
-import it.unibo.assignment01.controller.Controller;
-
 import javax.swing.SwingUtilities;
 public class View {
 
@@ -24,10 +21,6 @@ public class View {
     // Aggiorna il rendering in modo thread-safe
     public void update(ViewModel viewModel, final long frameNumber) {
         frame.updateView(viewModel, frameNumber);
-    }
-
-    public void setController(Controller controller) {
-        this.frame.setController(controller);
     }
 
     public boolean[] getPressedKeys() {

@@ -3,8 +3,6 @@ package it.unibo.assignment01.model;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import javax.annotation.processing.SupportedSourceVersion;
-
 import it.unibo.assignment01.model.ball.Ball;
 import it.unibo.assignment01.model.ball.BallImpl;
 import it.unibo.assignment01.model.ball.EnemyBall;

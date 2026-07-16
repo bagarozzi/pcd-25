@@ -18,8 +18,6 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import it.unibo.assignment01.controller.Controller;
-import it.unibo.assignment01.controller.MoveCmd;
 import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.model.ball.Ball;
@@ -29,7 +27,6 @@ public class ViewFrame extends JFrame {
 
     private final PooolPanel panel;
     private final RenderSynch sync;
-    private Controller controller;
 
     public ViewFrame(int width, int height) {
         setTitle("Poool");
@@ -45,10 +42,6 @@ public class ViewFrame extends JFrame {
 
     public void updateView(ViewModel viewModel, final long frameNumber) {
         panel.updateViewModel(viewModel, frameNumber);
-    }
-
-    public void setController(Controller controller) {
-        this.controller = controller;
     }
 
     public PooolPanel getPanel() {
