@@ -18,7 +18,7 @@ public interface Board {
     
     public  Boundary getBounds();
 
-    public void checkHole(Ball b);
+    public boolean checkHole(Ball b);
     
     public void resolveCollision(Ball a, Ball b);
 
