@@ -74,8 +74,6 @@ public class PoolGameController extends Thread implements Controller {
 		int nFrames = 0;
 		long t0 = System.currentTimeMillis();
 		long lastUpdateTime = System.currentTimeMillis();
-		// For enemy player movement
-		//var pb = board.getPlayerBall();
 
 		while(!board.endedGame()){
 
@@ -94,13 +92,6 @@ public class PoolGameController extends Thread implements Controller {
 				addWorkerTask(staticTasks.get(i).getX(), this.workers.get(i).getX());
 			}
 
-			// By hitting the barrier the BallWorkers are release and can execute the task
-			// try {
-			// 	moveBarrier.hitAndWait();
-			// } catch (InterruptedException e) {
-
-			// 	e.printStackTrace();
-			// }
 			try {
 				latch.await();
 			} catch (InterruptedException e) {
@@ -137,15 +128,8 @@ public class PoolGameController extends Thread implements Controller {
 				framePerSec = (int)(nFrames*1000/dt);
 			}
 
-            // Render the view after calculating how many frames have passed during the calculation
 			vm.update(board);
 			view.update(vm, framePerSec);
-			/*try {
-				VCBarrier.hitAndWait();
-			} catch (InterruptedException e) {
-				 
-				e.printStackTrace();
-			}*/
 			latch.refresh();
 		}
 		for(Pair<SynchCell<Runnable>, BallWorker> w : workers) {
