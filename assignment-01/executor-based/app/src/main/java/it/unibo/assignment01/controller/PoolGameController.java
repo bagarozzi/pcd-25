@@ -16,6 +16,7 @@ import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.model.Speed;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
+import it.unibo.assignment01.util.Latch;
 import it.unibo.assignment01.view.View;
 import it.unibo.assignment01.view.ViewModel;
 
@@ -28,6 +29,7 @@ public class PoolGameController extends Thread implements Controller {
 	private SpatialHashGrid spatialHashGrid;
 
 	private final BoundedBuffer<Cmd> cmdBuffer;
+	private final Latch latch;
 	private final Executor exec;
 	private final SpatialHashGrid bigBallSpatialHashGrid;
 	private final ViewModel vm;
@@ -46,6 +48,7 @@ public class PoolGameController extends Thread implements Controller {
 		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS*2);
 		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS);
+		latch = new Latch(NUM_WORKERS);
 
 		this.exec = Executors.newFixedThreadPool(NUM_WORKERS);
 		vm = new ViewModel(board);
@@ -68,8 +71,6 @@ public class PoolGameController extends Thread implements Controller {
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
 			lastUpdateTime = System.currentTimeMillis();
 			spatialHashGrid.clear();
-			CountDownLatch moveLatch = new CountDownLatch(NUM_WORKERS);
-			CountDownLatch collideLatch = new CountDownLatch(NUM_WORKERS);
 			bigBallSpatialHashGrid.clear();
 
 			// Process continuous keyboard input
@@ -89,7 +90,7 @@ public class PoolGameController extends Thread implements Controller {
 
 			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
-				moveLatch.await();
+				latch.await();
 			} catch (InterruptedException e) {
 
 				e.printStackTrace();
@@ -109,9 +110,9 @@ public class PoolGameController extends Thread implements Controller {
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);
-			// Maybe another hitAndWait()...
+			latch.refresh();
 			try {
-			 	collideLatch.await();
+			 	latch.await();
 			} catch (InterruptedException e) {
 
 			 	e.printStackTrace();
@@ -129,6 +130,7 @@ public class PoolGameController extends Thread implements Controller {
             // Render the view after calculating how many frames have passed during the calculation
 			vm.update(board);
 			view.update(vm, framePerSec);
+			latch.refresh();
 		}
 		view.showEndGame(board.getWinner());
 
