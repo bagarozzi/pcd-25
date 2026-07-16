@@ -22,14 +22,14 @@ public class SimpleCollisionDetector implements CollisionDetector {
 
     	double dx   = b_snap.getPos().x() - a_snap.getPos().x();
         double dy   = b_snap.getPos().y() - a_snap.getPos().y();
-        double dist = Math.hypot(dx, dy);
+        double distSq = (dx * dx) + (dy * dy);
         double minD = a_snap.getRadius() + b_snap.getRadius();
         
         /* 
          * There is a collision if the distance between the two balls is less than the sum of the radii 
          * 
          */
-        if (dist < minD && dist > 1e-6)  {
+        if (distSq < (minD*minD) && distSq > 1e-6)  {
 	        /* 
 	         * Collision case - what to do:
 	         * 
@@ -39,6 +39,8 @@ public class SimpleCollisionDetector implements CollisionDetector {
 	         */
 	        
         	/* dvn = V2d(nx,ny) = dv unit vector */
+
+			double dist = Math.sqrt(distSq);
     
         	double nx = dx / dist;
 	        double ny = dy / dist;
