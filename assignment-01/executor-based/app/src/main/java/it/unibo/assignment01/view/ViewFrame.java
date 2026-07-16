@@ -17,6 +17,7 @@ import java.util.Optional;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
@@ -49,7 +50,10 @@ public class ViewFrame extends JFrame {
     }
 
     public void showEndGame(String winner) {
-        JOptionPane.showMessageDialog(this, "Game Over! " + winner);
+        SwingUtilities.invokeLater(() -> {
+           JOptionPane.showMessageDialog(this, "Game Over! " + winner); 
+           System.exit(0);
+        });
     }
 
     public class PooolPanel extends JPanel {
