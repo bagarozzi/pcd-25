@@ -76,8 +76,6 @@ public class PoolGameController extends Thread implements Controller {
 			// Process continuous keyboard input
 			processHeldKeys();
 
-			cmdBuffer.lazyGet().ifPresent(cmd -> cmd.execute(board.getPlayerBall()));
-
 			//updateBallBatches();
 			for(int i = 0; i < NUM_WORKERS; i++) {
 				exec.execute(new UpdateMovementTask(board.getAllBall(), elapsed, board, latch, i, NUM_WORKERS));
