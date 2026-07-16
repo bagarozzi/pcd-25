@@ -2,7 +2,6 @@ package it.unibo.assignment01.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -154,16 +153,6 @@ public class PoolGameController extends Thread implements Controller {
 		if (keys[RIGHT]) {
 			board.getPlayerBall().kick(new Speed(0.4, 0));
 		}
-	}
-
-	private <T> List<List<T>> splitList(List<T> list, int nList) {
-		List<List<T>> res = new ArrayList<>();
-		for (int i = 0; i < nList; i++) {
-			int start = i * list.size() / nList;
-			int end = (i + 1) * list.size() / nList;
-			res.add(list.subList(start, end));
-		}
-		return res;
 	}
 
 	private List<Ball> createBalls(final int rows, final int cols) {
