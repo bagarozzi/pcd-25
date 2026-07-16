@@ -38,7 +38,7 @@ public class PoolGameController extends Thread implements Controller {
 
 	public PoolGameController(final View view) {
 		this.view = view;
-		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
+		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors() - 1;
 
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS*2, board.getBounds());
@@ -66,8 +66,6 @@ public class PoolGameController extends Thread implements Controller {
 			for(int i = 0; i < NUM_WORKERS; i++) {
 				exec.execute(new UpdateMovementTask(board.getAllBall(), elapsed, board, latch, i, NUM_WORKERS));
 			}
-			board.getPlayerBall().updateState(elapsed, board);
-			board.getEnemyBall().updateState(elapsed, board);
 
 			try {
 				latch.await();
@@ -76,7 +74,7 @@ public class PoolGameController extends Thread implements Controller {
 				e.printStackTrace();
 			}
 			
-			for (Ball ball : board.getAllBall()) {
+			for (Ball ball : board.getBalls()) {
 				spatialHashGrid.insert(ball);
 				bigBallSpatialHashGrid.insert(ball);
 			}
