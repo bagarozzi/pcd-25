@@ -1,12 +1,20 @@
 package it.unibo.assignment01.model;
 
 public class Speed {
-    private final double x;
-    private final double y;
+    private double x;
+    private double y;
 
     public Speed(double x, double y) {
         this.x = x;
         this.y = y;
+    }
+
+    public double x() {
+        return x;
+    }
+
+    public double y() {
+        return y;
     }
 
     public Speed sum(Speed v){
@@ -18,14 +26,6 @@ public class Speed {
             Math.max(-max, Math.min(max, x + v.x)),
             Math.max(-max, Math.min(max, y + v.y))
         );
-    }
-
-    public double x() {
-    	return x;
-    }
-
-    public double y() {
-    	return y;
     }
 
     public double abs(){
