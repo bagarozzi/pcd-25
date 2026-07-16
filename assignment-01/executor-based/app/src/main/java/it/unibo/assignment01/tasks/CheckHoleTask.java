@@ -2,9 +2,9 @@ package it.unibo.assignment01.tasks;
 
 import java.util.List;
 
-import it.unibo.assignment01.controller.Barrier;
 import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.ball.Ball;
+import it.unibo.assignment01.util.Barrier;
 
 public class CheckHoleTask implements Runnable {
     private final List<Ball> ballBatch;
