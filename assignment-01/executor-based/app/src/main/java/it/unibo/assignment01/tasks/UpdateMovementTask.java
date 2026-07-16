@@ -1,11 +1,11 @@
-package it.unibo.assignment01.controller;
+package it.unibo.assignment01.tasks;
 
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.Board;
+import it.unibo.assignment01.model.ball.Ball;
 
 public class UpdateMovementTask implements Runnable{
     private final List<Ball> ballBatch;

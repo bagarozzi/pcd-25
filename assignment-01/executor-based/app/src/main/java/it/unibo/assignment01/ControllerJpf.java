@@ -8,17 +8,17 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import it.unibo.assignment01.controller.Cmd;
-import it.unibo.assignment01.controller.CollisionTask;
 import it.unibo.assignment01.controller.Controller;
 import it.unibo.assignment01.controller.SpatialHashGrid;
-import it.unibo.assignment01.controller.UpdateMovementTask;
-import it.unibo.assignment01.model.Ball;
-import it.unibo.assignment01.model.BallImpl;
 import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.model.Speed;
+import it.unibo.assignment01.model.ball.Ball;
+import it.unibo.assignment01.model.ball.BallImpl;
+import it.unibo.assignment01.tasks.CollisionTask;
+import it.unibo.assignment01.tasks.UpdateMovementTask;
 
 
 public class ControllerJpf extends Thread implements Controller {

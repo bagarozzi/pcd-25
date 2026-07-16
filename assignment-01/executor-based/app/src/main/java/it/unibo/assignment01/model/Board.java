@@ -2,6 +2,8 @@ package it.unibo.assignment01.model;
 
 import java.util.List;
 
+import it.unibo.assignment01.model.ball.Ball;
+
 public interface Board { 
 
     public List<Ball> getBalls();

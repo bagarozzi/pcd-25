@@ -7,13 +7,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import it.unibo.assignment01.model.Ball;
-import it.unibo.assignment01.model.BallImpl;
 import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.model.SimpleCollisionDetector;
 import it.unibo.assignment01.model.Speed;
+import it.unibo.assignment01.model.ball.Ball;
+import it.unibo.assignment01.model.ball.BallImpl;
+import it.unibo.assignment01.tasks.CollisionTask;
+import it.unibo.assignment01.tasks.UpdateMovementTask;
 import it.unibo.assignment01.util.BoundedBuffer;
 import it.unibo.assignment01.util.BoundedBufferImpl;
 import it.unibo.assignment01.util.Latch;

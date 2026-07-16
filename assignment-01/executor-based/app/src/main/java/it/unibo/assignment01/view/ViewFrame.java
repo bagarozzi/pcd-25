@@ -20,9 +20,9 @@ import javax.swing.JPanel;
 
 import it.unibo.assignment01.controller.Controller;
 import it.unibo.assignment01.controller.MoveCmd;
-import it.unibo.assignment01.model.Ball;
 import it.unibo.assignment01.model.BoardImpl;
 import it.unibo.assignment01.model.Position;
+import it.unibo.assignment01.model.ball.Ball;
 import it.unibo.assignment01.util.RenderSynch;
 
 public class ViewFrame extends JFrame {

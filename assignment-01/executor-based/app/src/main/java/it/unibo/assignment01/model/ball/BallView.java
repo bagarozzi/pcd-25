@@ -1,4 +1,4 @@
-package it.unibo.assignment01.model;
+package it.unibo.assignment01.model.ball;
 
 import it.unibo.assignment01.model.Position;
 import it.unibo.assignment01.model.Speed;
