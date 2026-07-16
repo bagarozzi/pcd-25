@@ -14,8 +14,6 @@ import it.unibo.assignment01.model.ball.Ball;
 import it.unibo.assignment01.model.ball.BallImpl;
 import it.unibo.assignment01.tasks.CollisionTask;
 import it.unibo.assignment01.tasks.UpdateMovementTask;
-import it.unibo.assignment01.util.BoundedBuffer;
-import it.unibo.assignment01.util.BoundedBufferImpl;
 import it.unibo.assignment01.util.Latch;
 import it.unibo.assignment01.view.View;
 import it.unibo.assignment01.view.ViewModel;
@@ -28,7 +26,6 @@ public class PoolGameController extends Thread implements Controller {
 	private Board board;
 	private SpatialHashGrid spatialHashGrid;
 
-	private final BoundedBuffer<Cmd> cmdBuffer;
 	private final Latch latch;
 	private final Executor exec;
 	private final SpatialHashGrid bigBallSpatialHashGrid;
@@ -45,7 +42,6 @@ public class PoolGameController extends Thread implements Controller {
 		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
-		cmdBuffer = new BoundedBufferImpl<>(10);
 		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS*2, board.getBounds());
 		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS, board.getBounds());
 		latch = new Latch(NUM_WORKERS);
@@ -128,14 +124,6 @@ public class PoolGameController extends Thread implements Controller {
 		view.showEndGame(board.getWinner());
 
     }
-
-	public void notifyCommand(Cmd cmd) {
-		try {
-			cmdBuffer.put(cmd);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-	}
 
 	private void processHeldKeys() {
 		boolean[] keys = view.getPressedKeys();

@@ -257,22 +257,5 @@ public class ViewFrame extends JFrame {
             }
         }
 
-        protected void handleKeyPress(int keyCode) {
-            switch (keyCode) {
-                case KeyEvent.VK_UP:
-                    controller.notifyCommand(MoveCmd.UP_CMD());
-                    break;
-                case KeyEvent.VK_DOWN:
-                    controller.notifyCommand(MoveCmd.DOWN_CMD());
-                    break;
-                case KeyEvent.VK_LEFT:
-                    controller.notifyCommand(MoveCmd.LEFT_CMD());
-                    break;
-                case KeyEvent.VK_RIGHT:
-                    controller.notifyCommand(MoveCmd.RIGHT_CMD());
-                    break;
-            }
-        }
-
     }
 }
