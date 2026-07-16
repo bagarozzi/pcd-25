@@ -20,7 +20,7 @@ public class View {
 
     // Aggiorna il rendering in modo thread-safe
     public void update(ViewModel viewModel, final long frameNumber) {
-        frame.updateView(viewModel, frameNumber);
+        SwingUtilities.invokeLater(() -> frame.updateView(viewModel, frameNumber));
     }
 
     public boolean[] getPressedKeys() {
