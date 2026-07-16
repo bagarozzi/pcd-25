@@ -38,11 +38,11 @@ public class PoolGameController extends Thread implements Controller {
 
 	public PoolGameController(final View view) {
 		this.view = view;
-		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors() - 1;
+		this.NUM_WORKERS = Runtime.getRuntime().availableProcessors();
 
 		this.board = new BoardImpl(createBalls(50, 90), new SimpleCollisionDetector());
-		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS*2, board.getBounds());
-		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS, board.getBounds());
+		this.spatialHashGrid = new SpatialHashGrid(Ball.BALL_RADIUS * 1.6, board.getBounds());
+		this.bigBallSpatialHashGrid = new SpatialHashGrid(Ball.AGENT_BALL_RADIUS * 1.6, board.getBounds());
 		latch = new Latch(NUM_WORKERS);
 
 		this.exec = Executors.newFixedThreadPool(NUM_WORKERS);
@@ -79,13 +79,15 @@ public class PoolGameController extends Thread implements Controller {
 				bigBallSpatialHashGrid.insert(ball);
 			}
 
+			latch.refresh();
+
 			for (int i = 0; i < NUM_WORKERS; i++) {
 				exec.execute(new CollisionTask(board, latch, spatialHashGrid, i, NUM_WORKERS));
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			bigBallSpatialHashGrid.insert(board.getPlayerBall());
 			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);
-			latch.refresh();
+
 			try {
 			 	latch.await();
 			} catch (InterruptedException e) {
