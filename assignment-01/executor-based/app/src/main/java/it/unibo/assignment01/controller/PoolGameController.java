@@ -31,7 +31,6 @@ public class PoolGameController extends Thread implements Controller {
 	private final SpatialHashGrid bigBallSpatialHashGrid;
 	private final ViewModel vm;
 
-	// Key indices for boolean array
 	private static final int UP = 0;
 	private static final int DOWN = 1;
 	private static final int LEFT = 2;
@@ -55,32 +54,21 @@ public class PoolGameController extends Thread implements Controller {
 		int nFrames = 0;
 		long t0 = System.currentTimeMillis();
 		long lastUpdateTime = System.currentTimeMillis();
-        
-
-
-		// For enemy player movement
-		//var pb = board.getPlayerBall();
-
 		while (!board.endedGame()){
 
-			// Upgrade ball movements and collisions, knowing the last time the board was updated and the current time.
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
 			lastUpdateTime = System.currentTimeMillis();
 			spatialHashGrid.clear();
 			bigBallSpatialHashGrid.clear();
 
-			// Process continuous keyboard input
 			processHeldKeys();
 
-			//updateBallBatches();
 			for(int i = 0; i < NUM_WORKERS; i++) {
 				exec.execute(new UpdateMovementTask(board.getAllBall(), elapsed, board, latch, i, NUM_WORKERS));
 			}
 			board.getPlayerBall().updateState(elapsed, board);
 			board.getEnemyBall().updateState(elapsed, board);
 
-
-			// By hitting the barrier the BallWorkers are release and can execute the task
 			try {
 				latch.await();
 			} catch (InterruptedException e) {
@@ -106,8 +94,6 @@ public class PoolGameController extends Thread implements Controller {
 
 			 	e.printStackTrace();
 			}
-			
-
 
 			nFrames++;
 			int framePerSec = 0;
@@ -116,7 +102,6 @@ public class PoolGameController extends Thread implements Controller {
 				framePerSec = (int)(nFrames*1000/dt);
 			}
 
-            // Render the view after calculating how many frames have passed during the calculation
 			vm.update(board);
 			view.update(vm, framePerSec);
 			latch.refresh();
