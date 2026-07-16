@@ -1,5 +1,8 @@
 package it.unibo.assignment01.view;
+
 import javax.swing.SwingUtilities;
+
+
 public class View {
 
     private final ViewFrame frame;
@@ -20,7 +23,7 @@ public class View {
 
     // Aggiorna il rendering in modo thread-safe
     public void update(ViewModel viewModel, final long frameNumber) {
-        SwingUtilities.invokeLater(() -> frame.updateView(viewModel, frameNumber));
+        frame.updateView(viewModel, frameNumber);
     }
 
     public boolean[] getPressedKeys() {
@@ -30,4 +33,5 @@ public class View {
     public void showEndGame(String winner) {
         frame.showEndGame(winner);
     }
+
 }
