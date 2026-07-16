@@ -3,7 +3,6 @@ package it.unibo.assignment01.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -82,9 +81,7 @@ public class PoolGameController extends Thread implements Controller {
 
 			//updateBallBatches();
 			for(int i = 0; i < NUM_WORKERS; i++) {
-				int start = i * board.getAllBall().size() / NUM_WORKERS;
-				int end = (i + 1) * board.getAllBall().size() / NUM_WORKERS;
-				exec.execute(new UpdateMovementTask(board.getAllBall(), start, end, elapsed, board, moveLatch));
+				exec.execute(new UpdateMovementTask(board.getAllBall(), elapsed, board, latch, i, NUM_WORKERS));
 			}
 			board.getPlayerBall().updateState(elapsed, board);
 			board.getEnemyBall().updateState(elapsed, board);
@@ -108,7 +105,7 @@ public class PoolGameController extends Thread implements Controller {
 			// Calculate collisions with pair-wise checking to eliminate redundancy
 			List<List<Map.Entry<Long,List<Ball>>>> ballBatches = splitList(cells, NUM_WORKERS);
 			for (int i = 0; i < ballBatches.size(); i++) {
-				exec.execute(new CollisionTask(ballBatches.get(i), board, collideLatch, spatialHashGrid));
+				exec.execute(new CollisionTask(board, latch, spatialHashGrid, i, NUM_WORKERS));
 			}
 			CollisionTask.resolveNearbyCollisions(board.getPlayerBall(), bigBallSpatialHashGrid, board);
 			CollisionTask.resolveNearbyCollisions(board.getEnemyBall(), bigBallSpatialHashGrid, board);

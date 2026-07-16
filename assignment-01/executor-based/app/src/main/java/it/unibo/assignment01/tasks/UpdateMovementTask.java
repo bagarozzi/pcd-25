@@ -2,36 +2,39 @@ package it.unibo.assignment01.tasks;
 
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 import it.unibo.assignment01.model.Board;
 import it.unibo.assignment01.model.ball.Ball;
+import it.unibo.assignment01.util.Latch;
 
 public class UpdateMovementTask implements Runnable{
-    private final List<Ball> ballBatch;
-    private final long timeElapsed;
+    private List<Ball> ballBatch;
+    private long timeElapsed;
     private final Board board;
-    private final CountDownLatch latch;
-    private final int startIndex;
-    private final int endIndex;
+    private final Latch latch;
+    private int index;
+    private int numWorker;
     
-    public UpdateMovementTask(List<Ball> ballBatch, int startIndex, int endIndex, long timeElapsed, Board board, CountDownLatch latch){
+    public UpdateMovementTask(List<Ball> ballBatch, long timeElapsed, Board board, Latch latch, int workerIndex, int numWorker){
         this.ballBatch = ballBatch;
         this.timeElapsed = timeElapsed;
         this.board = board;
         this.latch = latch;
-        this.startIndex = startIndex;
-        this.endIndex = endIndex;
+        this.index = workerIndex;
+        this.numWorker = numWorker;
+    }
+
+    public void updateParamethers(final List<Ball> ballBatch, long timeElapsed) {
+        this.ballBatch = ballBatch;
+        this.timeElapsed = timeElapsed;
     }
 
     @Override
     public void run() {
-        for (int i = startIndex; i < endIndex; i++) {
-            Ball ball = ballBatch.get(i);
-            board.checkHole(ball);
-            ball.updateState(timeElapsed, board);
+        for(int i= this.index; i < ballBatch.size(); i += numWorker) {
+            if (board.checkHole(ballBatch.get(i))) continue;
+            else if (i < ballBatch.size()) ballBatch.get(i).updateState(timeElapsed, board);
         }
-
         latch.countDown();
     }
     
